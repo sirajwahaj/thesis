@@ -1,0 +1,38 @@
+name: Thesis Ticket
+description: Structured task for thesis work (experiment, setup, analysis, writing)
+title: "[THESIS-XXX] "
+labels: []
+body:
+  - type: input
+    id: story_points
+    attributes:
+      label: Story Points
+      placeholder: e.g. 1, 2, 3, 5
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done and why
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Checklist of what must be true for completion
+      placeholder: |
+        - [ ] Task 1
+        - [ ] Task 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Other tickets or prerequisites
+      placeholder: e.g. THESIS-000
