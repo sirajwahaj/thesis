@@ -1,0 +1,10 @@
+[
+	{"name": "setup", "color": "1f77b4", "description": "Environment and infra setup"},
+	{"name": "experiment", "color": "d62728", "description": "Running experiments"},
+	{"name": "measurement", "color": "9467bd", "description": "Metrics and data collection"},
+	{"name": "analysis", "color": "2ca02c", "description": "Data analysis"},
+	{"name": "latex", "color": "ff7f0e", "description": "Thesis writing"},
+	{"name": "infra", "color": "17becf", "description": "Infrastructure related"},
+	{"name": "blocked", "color": "7f7f7f", "description": "Blocked work"},
+	{"name": "dagster", "color": "8c564b", "description": "Dagster related"}
+]
