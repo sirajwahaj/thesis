@@ -1,0 +1,24 @@
+\section{Pillar 4 --- Fault Isolation and Blast Radius in Distributed Systems}
+\textit{(Theoretical basis for \sq{2})}
+
+A foundational principle of distributed systems design is that failures should be contained
+within the smallest possible boundary \citep{tran2022}. The concept of blast radius --- the
+scope of system impact from a single failure event --- is central to reliability
+architecture in microservices and cloud-native systems.
+
+In a single-\vm{} shared execution environment, the blast radius of any individual job
+failure is potentially the entire system. A job that exhausts memory can trigger
+out-of-memory process termination affecting all other jobs on the same host. In a
+Kubernetes pod model, each job runs in an isolated namespace with enforced resource limits,
+meaning a failing pod is terminated by the \textsc{oom} killer without directly affecting
+other pods on the same node.
+
+This theoretical blast radius reduction is one of the primary architectural motivations for
+the Kubernetes migration. Whether this reduction holds in practice at the workflow execution
+level --- and by how much it reduces execution time variance and improves job success rate
+for concurrently running pipelines --- is an empirical question that existing literature
+at the infrastructure level does not answer for application-level workflow systems.
+
+\textbf{Research connection:} \sq{2} empirically tests the blast radius reduction at the
+workflow execution level, measuring whether pod isolation contains failures and reduces
+execution time variance under equivalent concurrent workload conditions.

@@ -1,0 +1,23 @@
+\section{Pillar 3 --- Autoscaling Behaviour and Response Latency}
+\textit{(Context for scalability ceiling in \sq{4})}
+
+Kubernetes Horizontal Pod Autoscaler (\textsc{hpa}) scales pod count based on observed
+\textsc{cpu} or memory metrics \citep{nguyen2020}. Research on autoscaling consistently
+shows that scaling is not instantaneous \citep{choi2021, li2025}: the reaction window
+between a load spike and new capacity becoming available can range from tens of seconds to
+several minutes.
+
+\citet{casalicchio2019} show that proactive or predictive scaling strategies can reduce the
+unprotected window. \citet{yuan2024} demonstrate time-series-based approaches that improve
+scale-out responsiveness. However, all these mechanisms add operational complexity that
+does not exist in a fixed-capacity \vm{} deployment.
+
+This thesis uses a single-node Kind cluster, which removes node-level scaling from the
+experimental scope. This choice is deliberate: it isolates the pod isolation and overhead
+effects from autoscaling behaviour, producing cleaner measurements for \sq{1} through
+\sq{3}. Autoscaling behaviour is documented as a direction for future research rather than
+measured directly.
+
+\textbf{Research connection:} \sq{4} characterises the scalability ceiling of both
+architectures, showing where each deployment model reaches its concurrency limit under the
+fixed-resource constraint of the study environment.

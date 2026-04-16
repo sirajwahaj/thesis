@@ -1,0 +1,23 @@
+% =============================================================================
+% 2.2 Pillar 2 — Kubernetes Performance Overhead and Fault Isolation
+% =============================================================================
+
+\section{Pillar 2 --- Kubernetes Performance Overhead and Fault Isolation}
+\label{sec:pillar2}
+
+\emph{Theoretical basis for SQ2 and SQ3.}
+
+This pillar combines two tightly related concerns: the overhead Kubernetes introduces and the fault isolation it provides. Both are trade-offs of the same architectural decision.
+
+\subsection{Scheduling and Startup Overhead}
+\label{subsec:scheduling-overhead}
+
+A substantial body of research documents the performance overhead of containerisation and Kubernetes orchestration. The primary sources of overhead relevant to this study are \emph{pod scheduling latency}---the time between job submission and pod assignment to a node---and \emph{container startup time}---the time between pod assignment and first application instruction. Both overheads also exist in the VM Docker executor (Docker container startup time), but Kubernetes adds the pod scheduling layer on top. \citet{choi2021} cite Google Borg data showing a median container startup latency of 25 seconds, with 90th-percentile microservice startup at approximately 15 seconds. \citet{liu2024} report that scheduling latency has become a new bottleneck in Kubernetes-based systems, particularly for short-duration workloads where fixed overhead constitutes a large fraction of total execution time. For a workflow orchestration system like Dagster using the Kubernetes Run Launcher, each pipeline run pays both container startup cost and Kubernetes pod scheduling cost---whereas the VM DockerRunLauncher pays only Docker container startup, without the pod scheduling overhead.
+
+\subsection{Fault Isolation and Blast Radius}
+\label{subsec:fault-isolation}
+
+A foundational principle of distributed systems design is that failures should be contained within the smallest possible boundary. The \emph{blast radius}---the scope of a system affected by a single failure---is central to reliability architecture \citep{cilic2023}. In a single-VM shared execution environment, the blast radius of any individual job failure is potentially the entire system: a job that exhausts memory can trigger an out-of-memory kill that terminates all running jobs. In the Kubernetes pod model, each job runs with enforced resource limits, and a failing pod is terminated without directly affecting other pods. However, \citet{casalicchio2019} demonstrates that pod isolation is not absolute---containers on the same host still generate interference through physical resource contention even when they have defined resource limits.
+
+\paragraph{Research connection.}
+SQ2 empirically tests whether pod isolation contains failures at the workflow execution level. SQ3 quantifies the scheduling overhead at each concurrency level. Together, they provide the data needed to compute the crossover point (SQ4).

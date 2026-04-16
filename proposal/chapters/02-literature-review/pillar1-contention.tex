@@ -1,0 +1,22 @@
+\section{Pillar 1 --- Resource Contention and Performance Collapse}
+\textit{(Theoretical basis for \sq{1})}
+
+Resource contention arises when multiple concurrent tasks compete for finite shared
+resources --- most commonly \textsc{cpu} cycles and memory --- on a single host. Unlike
+bandwidth-limited degradation, resource contention causes non-linear throughput collapse as
+load approaches system capacity \citep{nanda1991}.
+
+\citet{nanda1991} demonstrate that as resource utilisation approaches 100\%, response time
+grows super-linearly. For a Docker executor on a single VM, this means that adding one additional
+concurrent job container beyond the system's stable operating region does not produce a
+proportional decrease in throughput --- it produces a disproportionately large degradation,
+which can cascade into complete system failure.
+
+In the context of workflow orchestration, this manifests as individual job containers failing
+due to \textsc{cpu} starvation or memory exhaustion through the Docker daemon, which can
+cause the orchestration process itself to become unresponsive, delaying or failing other
+running containers. This is the failure mode that \sq{1} empirically measures and quantifies
+for the specific workload profiles defined in this study.
+
+\textbf{Research connection:} \sq{1} identifies the empirical concurrency threshold at
+which non-linear collapse occurs for \dagster{} pipeline workloads on a single \vm{}.

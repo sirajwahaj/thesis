@@ -1,0 +1,40 @@
+---
+# Role: python312
+# Installs Python 3.12 from the deadsnakes PPA and creates the thesis venv.
+
+- name: Add deadsnakes PPA for Python 3.12
+  ansible.builtin.apt_repository:
+    repo: ppa:deadsnakes/ppa
+    state: present
+    update_cache: true
+
+- name: Install Python 3.12 and dev headers
+  ansible.builtin.apt:
+    name:
+      - python3.12
+      - python3.12-dev
+      - python3.12-venv
+      - python3-pip
+    state: present
+
+- name: Create install directory
+  ansible.builtin.file:
+    path: "{{ install_dir }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0755"
+
+- name: Create Python 3.12 venv for Dagster
+  ansible.builtin.command:
+    cmd: "python3.12 -m venv {{ venv_dir }}"
+    creates: "{{ venv_dir }}/bin/activate"
+  become_user: ubuntu
+
+- name: Upgrade pip in venv
+  ansible.builtin.pip:
+    name: pip
+    extra_args: "--upgrade"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_python: python3.12
+  become_user: ubuntu

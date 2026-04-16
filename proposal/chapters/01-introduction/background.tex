@@ -1,0 +1,36 @@
+\section{Background and Motivation}
+
+Modern data engineering relies on pipeline orchestration frameworks to automate, schedule,
+and monitor workflows across variable and unpredictable workloads. A common initial
+deployment strategy is to host such a framework on a single virtual machine (\vm{}) using a
+Docker executor, where each pipeline job runs as an isolated Docker container on the \vm{}
+host. While more controlled than bare process execution, this architecture still contains a
+fundamental bottleneck: all pipeline job containers share the same Docker daemon and the
+same pool of \textsc{cpu} and memory on a single host.
+
+As concurrent job execution increases, resource contention arises. Docker containers compete
+for the same host \textsc{cpu} and memory through the shared Docker daemon, performance
+degrades non-linearly, and under sufficient load the system fails entirely. Critically,
+this degradation does not scale gradually --- it accelerates as contention approaches
+capacity limits, producing a collapse effect rather than a smooth performance curve
+\citep{nanda1991}.
+
+During a three-month internship (\textsc{lia1}) at Insighta Inc., a small analytics
+company, the author participated in evaluating whether the existing \dagster{}-based data
+platform---running on a single \vm{} with the \textsc{dockerrunlauncher}---should be
+migrated to the Kubernetes Run Launcher on Google Kubernetes Engine (\textsc{gke}). The
+migration used \textsc{cdktf} for infrastructure and Helm for application deployment.
+While the tools worked, the decision lacked empirical grounding: no controlled measurements
+existed to confirm at what workload level the Kubernetes architecture would actually
+outperform the \vm{} deployment.
+
+\dagster{} is used in this thesis as a representative modern workflow orchestration system.
+It provides a Kubernetes Run Launcher that dispatches each pipeline run as an isolated pod
+on a Kubernetes cluster, where each pod receives defined \textsc{cpu} and memory resources.
+Failures are theoretically contained within individual pods rather than propagating across
+the system.
+
+This study uses local infrastructure --- a UTM \vm{} (Ubuntu, provisioned via Ansible)
+and a Kind (Kubernetes in Docker) single-node cluster on the same physical host --- which
+eliminates cloud cost variability and ensures equivalent underlying hardware across both
+conditions.

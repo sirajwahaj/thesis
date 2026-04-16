@@ -77,8 +77,7 @@ all: bootstrap k8s-setup vm-provision experiments analyze
 # K8s-only workflow (no VM required)
 k8s-only: bootstrap k8s-setup exp2a-k8s exp2b-blast exp2c-spike analyze
 
-# Deprecated alias kept for backwards compatibility
-all-pdf: pdf
+# PDF is built on Overleaf — no local build target needed
 
 # ==========================
 # Help
@@ -107,8 +106,8 @@ help:
 	@echo "  make validate-setup   — Validate all systems (VM + K8s + local)"
 	@echo ""
 	@echo "LaTeX Targets:"
-	@echo "  make pdf              — Build thesis PDF"
-	@echo "  make clean            — Clean LaTeX temporaries"
+	@echo "  make pdf              — Show Overleaf upload instructions (no local build)"
+	@echo "  make clean            — Remove LaTeX aux files (from Overleaf downloads)"
 	@echo ""
 	@echo "Container Targets (podman):"
 	@echo "  make build            — Build workload image locally"
@@ -234,22 +233,35 @@ validate-setup:
 	bash scripts/validate-experiment-setup.sh
 
 # ==========================
-# LaTeX Targets
+# LaTeX / Overleaf Targets
 # ==========================
+# PDF compilation is done via Overleaf (https://www.overleaf.com).
+# Do NOT install latexmk or MacTeX locally.
+# Workflow: make copy-figures -> upload docs/ folder to Overleaf project -> compile there.
 
-pdf: copy-figures
-	@echo "Building PDF..."
-	latexmk -pdf -interaction=nonstopmode -output-directory=docs $(TEX_MAIN)
-	@echo "[OK] PDF built at $(PDF_OUT)"
+pdf:
+	@echo "----------------------------------------------------------------"
+	@echo "PDF compilation uses Overleaf (online, https://www.overleaf.com)"
+	@echo ""
+	@echo "  1. Run:  make copy-figures"
+	@echo "  2. Zip the docs/ folder and upload to your Overleaf project"
+	@echo "  3. Compile on Overleaf — no local LaTeX install needed"
+	@echo ""
+	@echo "Do NOT install latexmk or MacTeX locally."
+	@echo "----------------------------------------------------------------"
 
 copy-figures:
 	@echo "Copying figures from $(RESULTS) to $(FIGURES)..."
 	mkdir -p $(FIGURES)
 	cp -u $(RESULTS)/* $(FIGURES)/ 2>/dev/null || true
+	@echo "[OK] Figures ready in $(FIGURES)/ — zip docs/ and upload to Overleaf."
 
 clean:
-	@echo "Cleaning temporary LaTeX files..."
-	latexmk -C -output-directory=docs $(TEX_MAIN)
+	@echo "Cleaning LaTeX auxiliary files..."
+	find docs/ \( -name "*.aux" -o -name "*.log" -o -name "*.toc" \
+	  -o -name "*.out" -o -name "*.bbl" -o -name "*.blg" \
+	  -o -name "*.synctex.gz" -o -name "*.fls" -o -name "*.fdb_latexmk" \) \
+	  -delete 2>/dev/null || true
 	@echo "[OK] Clean complete"
 
 # ==========================

@@ -1,0 +1,15 @@
+% =============================================================================
+% 1.5 Primary Contribution --- The Crossover Point
+% =============================================================================
+
+\section{Primary Contribution --- The Crossover Point}
+\label{sec:crossover-point}
+
+The primary contribution is the identification and measurement of a crossover point, defined through two complementary thresholds:
+
+\begin{description}[style=nextline]
+  \item[Reliability crossover] The concurrent workload level at which the VM deployment's job success rate drops below 95\% due to resource contention.
+  \item[Performance crossover] The concurrent workload level at which the Kubernetes deployment's total execution time (including pod scheduling overhead and container startup latency) becomes lower than the VM's execution time under active contention.
+\end{description}
+
+These two thresholds may occur at different concurrency levels. If so, both are reported, along with a \textbf{combined crossover point}---the level at which both conditions are simultaneously met. This dual definition prevents the analysis from missing scenarios where the VM is already severely degraded in performance but has not yet crossed the success rate threshold.

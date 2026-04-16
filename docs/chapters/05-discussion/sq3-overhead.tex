@@ -1,0 +1,23 @@
+% =============================================================================
+% 5.3 Discussion of SQ3 — Kubernetes Scheduling Overhead
+% =============================================================================
+
+\section{Discussion of SQ3 --- Kubernetes Scheduling Overhead}
+\label{sec:discuss-sq3}
+
+% TODO: Complete after experimental phase.
+%
+% This section discusses the measured overhead against literature values.
+%
+% Key points to address:
+% - How does the measured pod scheduling latency compare to the 25-second
+%   median reported by Choi et al. (2021)?
+% - Did K8s overhead remain relatively constant or increase with concurrency?
+% - What is the Docker container startup time on the VM baseline?
+% - How does the VM Docker startup time compare to K8s (startup + scheduling)?
+% - Liu et al. (2024) identify scheduling as a new bottleneck for
+%   short-duration workloads — did this manifest in the Dagster context?
+% - What fraction of total execution time was consumed by overhead at
+%   each concurrency level on each environment?
+% - At low concurrency, how large was the K8s overhead penalty compared to
+%   the VM's Docker-only startup time?

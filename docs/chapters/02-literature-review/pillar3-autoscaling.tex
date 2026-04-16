@@ -1,0 +1,15 @@
+% =============================================================================
+% 2.3 Pillar 3 — Autoscaling Behaviour and Response Latency
+% =============================================================================
+
+\section{Pillar 3 --- Autoscaling Behaviour and Response Latency}
+\label{sec:pillar3}
+
+\emph{Contextual basis for understanding Kubernetes operational behaviour.}
+
+Kubernetes Horizontal Pod Autoscaler (HPA) scales pod count based on observed CPU or memory metrics, while the cluster autoscaler provisions new nodes when scheduling demand exceeds current capacity. Both mechanisms introduce reaction latency absent from a fixed-capacity VM deployment.
+
+\citet{nguyen2020} provide a comprehensive empirical analysis of HPA's operational behaviour, revealing that scaling decisions are sensitive to metric scraping periods, cluster size, and the type of metric used---knowledge ``not available on the official website and other sources.'' \citet{tran2022} survey the state of the art and identify that default HPA has ``slow adaptation performances against dynamic workloads'' because it triggers scaling only after thresholds are exceeded. \citet{yuan2024} demonstrate that predictive scaling reduced cold start time by 1 hour 41 minutes compared to purely reactive HPA, illustrating the magnitude of reactive scaling's performance cost. \citet{li2025} identify that Kubernetes default scaling mechanisms ``fail to effectively distinguish and manage resource consumption of idle containers, leading to resource waste and degraded system performance.''
+
+\paragraph{Research connection.}
+While this thesis does not include autoscaling as a separate experiment (due to scope constraints), autoscaling behaviour is observed during the spike workload level in Experiment~2 and reported as supplementary data. The literature contextualises those observations.

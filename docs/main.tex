@@ -1,0 +1,217 @@
+% =============================================================================
+% main.tex — Master document
+% When Does Kubernetes Become Worth It?
+% Jensen Yrkeshögskola — DevOps Examensarbete
+% =============================================================================
+\documentclass[12pt, a4paper, oneside]{report}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% ENCODING & LANGUAGE
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}          % Change to [swedish]{babel} if writing in Swedish
+
+% ─────────────────────────────────────────────────────────────────────────────
+% FONTS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{lmodern}                 % Latin Modern — clean, professional
+\usepackage{microtype}               % Improved typographic quality
+
+% ─────────────────────────────────────────────────────────────────────────────
+% PAGE LAYOUT (matching Jensen template: generous margins, single-spaced body)
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage[
+  top=2.5cm,
+  bottom=2.5cm,
+  left=3cm,
+  right=3cm,
+  headheight=15pt
+]{geometry}
+
+\usepackage{setspace}
+\onehalfspacing                       % 1.5 line spacing (common for theses)
+
+% ─────────────────────────────────────────────────────────────────────────────
+% HEADERS & FOOTERS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{%              % Chapter-opening pages
+  \fancyhf{}
+  \fancyfoot[C]{\small\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% COLOURS & HYPERLINKS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\usepackage[
+  colorlinks=true,
+  linkcolor=MidnightBlue,
+  citecolor=MidnightBlue,
+  urlcolor=MidnightBlue,
+  bookmarks=true,
+  pdfauthor={Förnamn Efternamn},
+  pdftitle={When Does Kubernetes Become Worth It?}
+]{hyperref}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% TABLES, FIGURES, FLOATS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{booktabs}                 % Professional table rules
+\usepackage{tabularx}                 % Tables that fill page width
+\usepackage{longtable}                % Tables spanning multiple pages
+\usepackage{multirow}                 % Merged table rows
+\usepackage{graphicx}                 % Images
+\graphicspath{{figures/}}             % Default figure path
+\usepackage{float}                    % Precise float placement [H]
+\usepackage{caption}                  % Caption customisation
+\usepackage{subcaption}               % Sub-figures
+
+% ─────────────────────────────────────────────────────────────────────────────
+% CODE LISTINGS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{MidnightBlue}\bfseries,
+  commentstyle=\color{Gray},
+  stringstyle=\color{OliveGreen},
+  numbers=left,
+  numberstyle=\tiny\color{Gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  captionpos=b,
+  showstringspaces=false
+}
+
+% Specific language styles
+\lstdefinestyle{yaml}{
+  language={},
+  morekeywords={kind,apiVersion,nodes,role,kubeadmConfigPatches,dagster,runLauncher,type,config,k8sRunLauncher,jobNamespace,resources,requests,cpu,memory,limits},
+  morecomment=[l]{\#},
+  morestring=[b]",
+  morestring=[b]'
+}
+\lstdefinestyle{python}{
+  language=Python,
+  morekeywords={self,True,False,None}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% BIBLIOGRAPHY (natbib for author-year citations)
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage[round, authoryear, sort&compress]{natbib}
+\bibliographystyle{plainnat}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% MATHS (minimal — for formal definitions)
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% MISCELLANEOUS
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{enumitem}                 % List customisation
+\usepackage{parskip}                  % Paragraph spacing instead of indent
+\usepackage{csquotes}                 % Proper quotation marks
+\usepackage[toc,page]{appendix}       % Appendix support
+\usepackage{pdfpages}                 % Include external PDFs if needed
+
+% ─────────────────────────────────────────────────────────────────────────────
+% CHAPTER HEADING STYLE (clean, matching Jensen template feel)
+% ─────────────────────────────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}
+  {\chaptertitlename\ \thechapter}
+  {20pt}
+  {\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% CUSTOM COMMANDS
+% ─────────────────────────────────────────────────────────────────────────────
+\newcommand{\thesistitle}{When Does Kubernetes Become Worth It?}
+\newcommand{\thesissubtitle}{Measuring Reliability, Stability, and Execution Overhead in Workflow Orchestration Systems Moving from Shared VM to Isolated Kubernetes Execution}
+\newcommand{\authorname}{Sirajulhaq Wahaj}       % <-- Replace with your name
+\newcommand{\classname}{DevOps-2024}             % <-- Replace with your class
+\newcommand{\supervisor}{Ludvig Malm}            % <-- Replace with supervisor name
+\newcommand{\supervisoremail}{ludvig.malm@zocom.se} % <-- Replace with supervisor email
+\newcommand{\semester}{Vårterminen 2026}           % <-- Replace with your semester
+
+
+% =============================================================================
+% DOCUMENT START
+% =============================================================================
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% FRONT MATTER (Roman page numbering, no chapter numbers)
+% ─────────────────────────────────────────────────────────────────────────────
+\pagenumbering{roman}
+
+% Title Page
+\input{frontmatter/titlepage}
+
+% Abstract / Sammanfattning
+\input{frontmatter/abstract}
+
+% Table of Contents
+\tableofcontents
+\clearpage
+
+% List of Figures (uncomment when you have figures)
+% \listoffigures
+% \clearpage
+
+% List of Tables (uncomment when you have tables)
+% \listoftables
+% \clearpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+% MAIN MATTER (Arabic page numbering, numbered chapters)
+% ─────────────────────────────────────────────────────────────────────────────
+\pagenumbering{arabic}
+
+% Chapter 1 — Introduction
+\input{chapters/01-introduction/chapter}
+
+% Chapter 2 — Literature Review
+\input{chapters/02-literature-review/chapter}
+
+% Chapter 3 — Method and Experimental Design
+\input{chapters/03-method/chapter}
+
+% Chapter 4 — Results
+\input{chapters/04-results/chapter}
+
+% Chapter 5 — Discussion
+\input{chapters/05-discussion/chapter}
+
+% Chapter 6 — Conclusions
+\input{chapters/06-conclusions/chapter}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% BACK MATTER
+% ─────────────────────────────────────────────────────────────────────────────
+
+% References
+\clearpage
+\addcontentsline{toc}{chapter}{References}
+\bibliography{references}
+
+% Appendices
+\input{backmatter/appendices}
+
+\end{document}

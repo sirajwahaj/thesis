@@ -1,0 +1,31 @@
+% =============================================================================
+% 3.8 Metrics Summary
+% =============================================================================
+
+\section{Metrics Summary}
+\label{sec:metrics}
+
+\begin{table}[H]
+  \centering
+  \caption{Complete metrics table.}
+  \label{tab:metrics}
+  \small
+  \begin{tabularx}{\textwidth}{lXccl}
+    \toprule
+    \textbf{Metric} & \textbf{Definition} & \textbf{VM} & \textbf{K8s} & \textbf{Answers} \\
+    \midrule
+    Job success rate        & \% runs completing without error   & \checkmark & \checkmark & SQ1, SQ2 \\
+    Mean execution time     & End-to-end time per run            & \checkmark & \checkmark & SQ1--SQ3 \\
+    Execution time variance & Std deviation under load           & \checkmark & \checkmark & SQ1, SQ2 \\
+    CPU utilisation         & Per-job CPU consumption            & \checkmark & \checkmark & SQ1, SQ2 \\
+    Memory utilisation      & Per-job memory consumption         & \checkmark & \checkmark & SQ1, SQ2 \\
+    MTTR                    & Failure to successful re-run       & \checkmark & \checkmark & SQ1, SQ2 \\
+    Failure blast radius    & Does one failure affect others?    & \checkmark & \checkmark & SQ2 \\
+    Pod scheduling latency  & Submission to pod running          & ---        & \checkmark & SQ3 \\
+    Container startup time  & Pod running to job executing       & ---        & \checkmark & SQ3 \\
+    Net execution time $\Delta$ & VM vs.\ K8s per job per level  & \checkmark & \checkmark & SQ3, SQ4 \\
+    Reliability crossover   & Level where VM success $<95\%$    & \checkmark & ---        & SQ4 \\
+    Performance crossover   & Level where K8s time $<$ VM time  & \checkmark & \checkmark & SQ4 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

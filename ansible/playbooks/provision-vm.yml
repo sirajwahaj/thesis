@@ -1,0 +1,111 @@
+---
+# =============================================================================
+# Thesis VM Provisioning Playbook
+#
+# Provisions a fresh Ubuntu 22.04 VM with everything needed to run the
+# thesis VM benchmarking experiments:
+#   - Python 3.12
+#   - PostgreSQL 16
+#   - Docker CE (for DockerRunLauncher — each job runs as a Docker container)
+#   - Dagster 1.12.7 (with DockerRunLauncher)
+#   - Thesis workload (Docker image + gRPC server as systemd service)
+#
+# Invoked by: make vm-provision
+# Target: hosts in [thesis_vm] group in ansible/inventory.ini
+#
+# Variables (override with -e key=value or in group_vars/):
+#   dagster_version:     1.12.7   (Dagster version to install)
+#   postgres_password:   dagster  (PostgreSQL dagster role password)
+#   workload_duration:   30       (SHA-256 workload duration seconds)
+# =============================================================================
+
+- name: Provision Thesis VM
+  hosts: thesis_vm
+  become: true
+  gather_facts: true
+
+  vars:
+    dagster_version: "1.12.7"
+    postgres_version: "16"
+    postgres_user: "dagster"
+    postgres_password: "dagster"
+    postgres_db: "dagster"
+    workload_duration: 30
+    install_dir: /opt/thesis
+    dagster_home: /opt/thesis/dagster_home
+    venv_dir: /opt/thesis/venv
+
+  pre_tasks:
+    - name: Verify Ubuntu 22.04
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_major_version | int >= 22
+        fail_msg: "This playbook requires Ubuntu 22.04 or later"
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - gnupg
+          - ca-certificates
+          - software-properties-common
+          - build-essential
+          - libpq-dev
+          - git
+          - netcat-openbsd
+          - lsof
+          - avahi-daemon        # mDNS: enables thesis-vm.local for auto IP discovery
+        state: present
+
+  roles:
+    - python312
+    - postgresql16
+    - docker          # installs Docker CE — required for DockerRunLauncher
+    - dagster
+    - workload
+
+  post_tasks:
+    - name: Verify Python version
+      ansible.builtin.command: "{{ venv_dir }}/bin/python3 --version"
+      register: python_ver
+      changed_when: false
+
+    - name: Verify PostgreSQL is running
+      ansible.builtin.command: pg_isready -U {{ postgres_user }} -d {{ postgres_db }}
+      register: pg_ready
+      changed_when: false
+
+    - name: Verify Docker is running
+      ansible.builtin.command: docker info --format '{{.ServerVersion}}'
+      become_user: ubuntu
+      register: docker_info
+      changed_when: false
+
+    - name: Verify Docker image is available
+      ansible.builtin.command: docker image inspect thesis-workload:latest --format '{{.Id}}'
+      become_user: ubuntu
+      register: image_check
+      changed_when: false
+
+    - name: Verify Dagster gRPC server is running
+      ansible.builtin.command: "{{ venv_dir }}/bin/dagster api grpc-health-check -p 4000"
+      register: grpc_health
+      changed_when: false
+      become_user: ubuntu
+
+    - name: Provisioning complete
+      ansible.builtin.debug:
+        msg: |
+          VM provisioning complete.
+          Python:  {{ python_ver.stdout }}
+          Docker:  {{ docker_info.stdout }}
+          Image:   thesis-workload:latest available
+          gRPC:    Dagster server running on port 4000
+          Status:  Ready for experiments

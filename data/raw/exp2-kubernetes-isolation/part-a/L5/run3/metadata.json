@@ -1,0 +1,12 @@
+{
+    "experiment": "exp2a",
+    "env": "k8s",
+    "level": "L5",
+    "rep": 3,
+    "timestamp": "2026-04-16T04:17:08Z",
+    "host": "Sirajulhaqs-MacBook-Air",
+    "concurrent_jobs": 5,
+    "workload_duration_s": 30,
+    "start_timestamp": "2026-04-16T04:17:08Z",
+    "end_timestamp": "2026-04-16T04:20:09Z"
+}

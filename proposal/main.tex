@@ -1,0 +1,184 @@
+%% ============================================================
+%%  JENSEN Yrkeshögskola — Examensarbete
+%%  When Does Kubernetes Become Worth It?
+%%  Author: Sirajulhaq Wahaj
+%%
+%%  ROOT DOCUMENT — use \input{} calls to include all parts.
+%%  Build with: latexmk -pdf main.tex
+%% ============================================================
+
+\documentclass[12pt, a4paper, oneside]{report}
+
+%% ── Encoding & Language ──────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+%% ── Typography ───────────────────────────────────────────────
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+%% ── Page Layout ──────────────────────────────────────────────
+\usepackage[
+  a4paper,
+  top=2.5cm,
+  bottom=2.5cm,
+  left=3cm,
+  right=2.5cm
+]{geometry}
+
+%% ── Headers & Footers ────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+%% ── Tables ───────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+
+%% ── Figures ──────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+%% ── Colors ───────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{jensenblue}{RGB}{0, 70, 127}
+\definecolor{lightgray}{RGB}{245, 245, 245}
+\definecolor{darkgray}{RGB}{80, 80, 80}
+
+%% ── Code Listings ────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{lightgray},
+  frame=single,
+  rulecolor=\color{darkgray},
+  breaklines=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{darkgray},
+  keywordstyle=\color{jensenblue}\bfseries,
+  commentstyle=\color{darkgray}\itshape,
+  stringstyle=\color{BrickRed}
+}
+
+%% ── References (natbib — consistent with docs/) ─────────────
+\usepackage[round, authoryear]{natbib}
+
+%% ── Hyperlinks ───────────────────────────────────────────────
+\usepackage[
+  colorlinks=true,
+  linkcolor=jensenblue,
+  citecolor=jensenblue,
+  urlcolor=jensenblue,
+  pdftitle={When Does Kubernetes Become Worth It?},
+  pdfauthor={Sirajulhaq Wahaj},
+  pdfsubject={DevOps Thesis -- JENSEN Yrkeshogskola}
+]{hyperref}
+
+%% ── Miscellaneous ────────────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{csquotes}
+\usepackage{emptypage}
+\usepackage{tocloft}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+%% ── Chapter & Section Title Style ────────────────────────────
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]
+  {\normalfont\huge\bfseries\color{jensenblue}}
+  {\thechapter}{1em}{}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{jensenblue}}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection}{1em}{}
+
+%% ============================================================
+%%  DOCUMENT METADATA — edit only these commands to update
+%%  the title page, headers, and PDF metadata consistently.
+%% ============================================================
+\newcommand{\thesistitle}{When Does Kubernetes Become Worth It?}
+\newcommand{\thesissubtitle}{%
+  Measuring Reliability, Stability, and Execution Overhead\\
+  in Workflow Orchestration Systems Moving from\\
+  Shared VM to Isolated Kubernetes Execution%
+}
+\newcommand{\authorname}{Sirajulhaq Wahaj}
+\newcommand{\classname}{DevOps-2024}
+\newcommand{\supervisor}{Ludvig Malm}
+\newcommand{\supervisoremail}{ludvig.malm@zocom.se}
+\newcommand{\semester}{V\aa rterminen 2026}
+
+%% ── Shorthand Commands ───────────────────────────────────────
+\newcommand{\dagster}{\textit{Dagster}}
+\newcommand{\vm}{\textsc{vm}}
+\newcommand{\mttr}{\textsc{mttr}}
+\newcommand{\sre}{\textsc{sre}}
+\newcommand{\iac}{\textsc{ia}C}
+\newcommand{\dora}{\textsc{dora}}
+\newcommand{\sq}[1]{SQ\textsubscript{#1}}
+
+%% ============================================================
+%%  DOCUMENT BEGIN
+%% ============================================================
+\begin{document}
+
+%% ── Title Page ───────────────────────────────────────────────
+\input{frontmatter/titlepage}
+
+%% ── Front Matter ─────────────────────────────────────────────
+\pagenumbering{roman}
+\setcounter{page}{2}
+
+\input{frontmatter/abstract}
+\input{frontmatter/acknowledgements}
+
+\tableofcontents
+\newpage
+
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+\newpage
+
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+\newpage
+
+\input{frontmatter/abbreviations}
+
+%% ── Main Matter ──────────────────────────────────────────────
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapters/01-introduction/chapter}
+\input{chapters/02-literature-review/chapter}
+\input{chapters/03-method/chapter}
+\input{chapters/04-results/chapter}
+\input{chapters/05-discussion/chapter}
+\input{chapters/06-conclusions/chapter}
+
+%% ── References ───────────────────────────────────────────────
+\bibliographystyle{plainnat}
+\bibliography{references}
+\addcontentsline{toc}{chapter}{References}
+
+\end{document}

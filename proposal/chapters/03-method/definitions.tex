@@ -1,0 +1,37 @@
+\section{Operational Definitions}
+
+\begin{description}[leftmargin=3cm, style=nextline]
+
+\item[Reliability]
+Three measurable properties: (1) \textit{job success rate} --- the percentage of
+\dagster{} runs completing without error at each concurrency level; (2) \textit{failure
+isolation} --- whether one failing job measurably affects other concurrently running jobs;
+(3) \textit{\mttr{}} --- time in seconds from failure detection to successful job
+re-execution.
+
+\item[System Stability]
+Measured primarily through \textit{execution time variance} --- the standard deviation of
+job execution time across repeated runs at each concurrency level. Variance reveals whether
+system behaviour is consistent under load, which mean performance metrics cannot capture.
+A system with high variance is operationally unstable even if its mean execution time is
+acceptable.
+
+\item[Scalability]
+Measured as \textit{concurrency capacity} --- the maximum number of concurrent jobs the
+system sustains while maintaining a job success rate above 95\%.
+
+\item[Operational Overhead]
+Three measurable components: (1) \textit{pod scheduling latency} --- time from \dagster{}
+job submission to pod entering running state; (2) \textit{container startup time} --- time
+from pod running state to first job instruction executing; (3) \textit{net execution time
+delta} --- difference in total end-to-end execution time between \vm{} and Kubernetes for
+identical jobs at identical concurrency levels.
+
+\item[Crossover Point]
+Formally defined as the concurrent workload level at which \textbf{(1)} the \vm{} job
+success rate drops below 95\% due to resource contention, \textbf{AND (2)} the Kubernetes
+total execution time including overhead becomes lower than the \vm{} execution time under
+active contention. This is a computable result derived directly from experimental data, not
+an interpretation.
+
+\end{description}

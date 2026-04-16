@@ -1,0 +1,13 @@
+\section{Limitations}
+
+\begin{itemize}
+  \item Environments differ in scheduling mechanisms and networking --- treated as part of
+        the behavioural comparison, not eliminated
+  \item Single physical host --- results may not generalise to multi-node or cloud-hosted
+        infrastructure
+  \item Synthetic workloads --- may not capture all real-world pipeline behaviour patterns
+  \item \dagster{} as representative system --- other workflow frameworks may behave
+        differently
+  \item No autoscaling measured --- the single-node Kind setup eliminates node-level
+        scaling; results characterise fixed-resource behaviour only
+\end{itemize}

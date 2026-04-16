@@ -1,0 +1,14 @@
+% =============================================================================
+% 1.1 Background and Motivation
+% =============================================================================
+
+\section{Background and Motivation}
+\label{sec:background}
+
+Modern data engineering relies on pipeline orchestration frameworks to automate, schedule, and monitor workflows across variable and unpredictable workloads. A common initial deployment strategy is to host such a framework on a single virtual machine (VM) using a shared process executor. While simple to configure, this architecture contains a fundamental flaw: all pipeline jobs execute within the same process on the same host, sharing a single pool of CPU and memory.
+
+As concurrent job execution increases, resource contention arises. Jobs compete for the same resources, performance degrades non-linearly, and under sufficient load the system fails entirely. Research on shared-memory multiprocessor systems demonstrates that this degradation compounds multiplicatively rather than additively as utilisation approaches capacity limits, producing a collapse effect rather than a smooth performance curve \citep{nanda1991}. \citet{arora2023} further establishes that shared resource contention influences task timing in non-deterministic ways, making worst-case execution behaviour extremely difficult to predict.
+
+Dagster is used in this thesis as a representative modern workflow orchestration system. It provides a Kubernetes Run Launcher that dispatches each pipeline run as an isolated pod on a Kubernetes cluster, where each pod receives defined CPU and memory resources. Failures are theoretically contained within individual pods rather than propagating across the system.
+
+While this architectural migration is well-documented at the tool level, there is limited empirical evaluation of its actual effectiveness under controlled workload conditions. Existing research evaluates Kubernetes performance at the infrastructure level---measuring container overhead, pod scheduling latency, and autoscaler response times \citep{casalicchio2019, nguyen2020, choi2021}. Separately, resource contention theory predicts non-linear collapse in shared execution environments \citep{nanda1991, arora2023}. But no study connects these two bodies of evidence at the application-level workflow execution layer to answer the practical question: \emph{at what workload level does migrating from a shared VM to Kubernetes become worth it?}

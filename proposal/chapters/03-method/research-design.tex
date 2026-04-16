@@ -1,0 +1,15 @@
+\section{Research Design}
+
+This study follows a \textbf{controlled experimental design} with a before-and-after
+comparison structure. The baseline condition is \dagster{} deployed on a single \vm{}
+using the DockerRunLauncher (each pipeline job runs as a Docker container on the VM host).
+The comparison condition is \dagster{} deployed on a local Kubernetes cluster using the
+Kubernetes Run Launcher. Identical workloads are applied to both conditions and results are
+compared across all defined metrics.
+
+The goal is not to create perfectly identical environments but to measure the combined
+behavioural effect of the architectural difference under realistic deployment conditions.
+This reflects how \vm{}-to-Kubernetes migration decisions are made in practice.
+
+Both environments are hosted on the same physical machine (MacBook, 4 vCPU, 8 GB RAM
+allocated), eliminating hardware variability as a confounding factor.
