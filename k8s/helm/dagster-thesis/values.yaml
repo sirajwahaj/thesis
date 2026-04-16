@@ -1,0 +1,132 @@
+# =============================================================================
+# Helm values — dagster-thesis
+#
+# Configures Dagster with K8sRunLauncher for the thesis K8s benchmarking
+# experiments. Each Dagster run is launched as an isolated K8s Job/Pod.
+#
+# Image: built locally via 'make build' and loaded into Kind via
+#        'make k8s-deploy-dagster' (tag: localhost:5001/thesis-workload:latest)
+#
+# Resource limits are matched to the VM baseline (4 vCPU / 8 GB RAM shared)
+# to ensure fair cross-environment comparison.
+# =============================================================================
+
+# ── Image ──────────────────────────────────────────────────────────────────
+image:
+  repository: localhost:5001/thesis-workload
+  tag: latest
+  pullPolicy: Never   # Image is pre-loaded into Kind via 'kind load docker-image'
+
+# ── Namespace ──────────────────────────────────────────────────────────────
+namespace: dagster
+
+# -- PostgreSQL (bundled via Bitnami sub-chart) ─────────────────────────────
+postgresql:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: latest
+    pullPolicy: Never   # Pre-loaded into Kind via 'kind load docker-image'
+  auth:
+    username: dagster
+    password: dagster
+    database: dagster
+  primary:
+    persistence:
+      enabled: false       # Ephemeral for experiments (data is in Dagster runs, not pg)
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# ── Dagster instance (dagster.yaml) ────────────────────────────────────────
+dagster:
+  dagsterHome: /opt/dagster/dagster_home
+  computeLogs:
+    enabled: true
+    localDir: /opt/dagster/logs
+
+  # PostgreSQL connection (from bundled sub-chart or external)
+  postgresql:
+    host: "dagster-thesis-postgresql"   # Bitnami service name
+    port: 5432
+    user: dagster
+    password: dagster
+    database: dagster
+
+  # K8s Run Launcher — each job run becomes an isolated K8s Pod
+  runLauncher:
+    type: K8sRunLauncher
+    config:
+      namespace: dagster
+      image:
+        repository: localhost:5001/thesis-workload
+        tag: latest
+        pullPolicy: Never
+      # Environment passed to every run pod
+      envVars:
+        - name: DAGSTER_HOME
+          value: /opt/dagster/dagster_home
+        - name: WORKLOAD_DURATION_SECONDS
+          value: "30"
+        - name: DAGSTER_PG_USERNAME
+          value: dagster
+        - name: DAGSTER_PG_PASSWORD
+          value: dagster
+        - name: DAGSTER_PG_HOSTNAME
+          value: dagster-thesis-postgresql
+        - name: DAGSTER_PG_DB
+          value: dagster
+      # Resource limits per run pod (equal to VM process allocation for fair comparison)
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"           # 1 full vCPU per run
+      # Fail fast if a pod cannot be scheduled
+      failPodOnRunFailure: true
+
+# ── Webserver ──────────────────────────────────────────────────────────────
+webserver:
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30001          # Exposed on host via Kind extraPortMappings
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# ── Daemon ─────────────────────────────────────────────────────────────────
+daemon:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# ── Workload gRPC Server ───────────────────────────────────────────────────
+workload:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  service:
+    port: 4000
