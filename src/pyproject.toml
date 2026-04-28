@@ -1,0 +1,15 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = "Dagster workload for thesis VM vs K8s benchmarking"
+requires-python = ">=3.13"
+dependencies = [
+    "dagster==1.12.22",
+    "dagster-postgres==0.28.22",
+    "dagster-webserver==1.12.22",
+    "dagster-k8s==0.28.22",
+]
+
+[build-system]
+requires = ["setuptools>=71"]
+build-backend = "setuptools.build_meta"
