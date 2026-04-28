@@ -1,0 +1,44 @@
+% =============================================================================
+% 4.1 Experiment 1 Results — VM Degradation Profile (SQ1)
+% =============================================================================
+
+\section{Experiment 1 Results --- VM Degradation Profile (SQ1)}
+\label{sec:results-exp1}
+
+% TODO: Fill in experimental data after running Experiment 1.
+
+\begin{table}[H]
+  \centering
+  \caption{VM deployment results by workload level.}
+  \label{tab:results-vm}
+  \small
+  \begin{tabular}{clccccc}
+    \toprule
+    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Success (\%)} & \textbf{Mean (s)} & \textbf{StdDev (s)} & \textbf{CPU (\%)} & \textbf{Mem (MB)} \\
+    \midrule
+    L1 & 1  & & & & & \\
+    L2 & 2  & & & & & \\
+    L3 & 3  & & & & & \\
+    L4 & 5  & & & & & \\
+    L5 & 7  & & & & & \\
+    L6 & 10 & & & & & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% TODO: Add VM degradation curve figure.
+\begin{figure}[H]
+  \centering
+  % Uncomment when figure is generated:
+  % \includegraphics[width=0.85\textwidth]{figures/vm-vs-k8s-comparison.png}
+  \caption{VM job success rate and mean execution time vs.\ concurrency level.}
+  \label{fig:vm-degradation}
+\end{figure}
+
+% TODO: Describe the observed degradation pattern.
+% Questions to answer here:
+% - At which concurrency level did success rate first drop below 95%?
+% - Was the degradation gradual or a sudden collapse (cliff)?
+% - How did execution time variance change across levels?
+% - What were the failure modes observed (OOM, timeout, process crash)?
+% - How did CPU and memory utilisation correlate with degradation?

@@ -1,0 +1,14 @@
+% =============================================================================
+% 6.4 Future Research
+% =============================================================================
+
+\section{Future Research}
+\label{sec:future-research}
+
+\begin{enumerate}
+  \item Repeat experiments on a cloud-managed Kubernetes service (GKE, EKS, or AKS) with multi-node clusters to validate whether the crossover point shifts in a production-grade environment.
+  \item Test with real production workloads---data ingestion, transformation, and analytics pipelines---instead of synthetic CPU-bound workloads, to capture the effect of I/O-bound and memory-intensive job profiles.
+  \item Compare crossover points across different workflow orchestration frameworks (Airflow, Prefect, Argo Workflows) to determine whether the crossover is framework-specific or architectural.
+  \item Investigate the Horizontal Pod Autoscaler's impact on crossover behaviour in dedicated scaling experiments.
+  \item Extend the concurrency range beyond L6 (10 jobs) to identify behaviour at higher workload scales.
+\end{enumerate}

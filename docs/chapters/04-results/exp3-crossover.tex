@@ -1,0 +1,82 @@
+% =============================================================================
+% 4.3 Experiment 3 Results — Overhead and Crossover Point (SQ3, SQ4)
+% =============================================================================
+
+\section{Experiment 3 Results --- Overhead and Crossover Point (SQ3, SQ4)}
+\label{sec:results-exp3}
+
+% TODO: Fill in experimental data after running Experiment 3.
+
+\subsection{Kubernetes Scheduling Overhead (SQ3)}
+\label{subsec:results-overhead}
+
+\begin{table}[H]
+  \centering
+  \caption{Kubernetes scheduling overhead by concurrency level.}
+  \label{tab:overhead}
+  \small
+  \begin{tabular}{clccc}
+    \toprule
+    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Pod Sched. Latency (s)} & \textbf{Container Startup (s)} & \textbf{Total Overhead (s)} \\
+    \midrule
+    L1 & 1  & & & \\
+    L2 & 2  & & & \\
+    L3 & 3  & & & \\
+    L4 & 5  & & & \\
+    L5 & 7  & & & \\
+    L6 & 10 & & & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{The Crossover Point (SQ4)}
+\label{subsec:results-crossover}
+
+\begin{table}[H]
+  \centering
+  \caption{Net execution time comparison: VM contention cost vs.\ Kubernetes overhead cost.}
+  \label{tab:crossover}
+  \small
+  \begin{tabular}{clcccc}
+    \toprule
+    \textbf{Level} & \textbf{Jobs} & \textbf{VM Mean (s)} & \textbf{K8s Mean (s)} & \textbf{$\Delta$ (s)} & \textbf{Faster?} \\
+    \midrule
+    L1 & 1  & & & & \\
+    L2 & 2  & & & & \\
+    L3 & 3  & & & & \\
+    L4 & 5  & & & & \\
+    L5 & 7  & & & & \\
+    L6 & 10 & & & & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% TODO: Add the crossover chart — the primary visual contribution.
+\begin{figure}[H]
+  \centering
+  % Uncomment when figure is generated:
+  % \includegraphics[width=0.9\textwidth]{figures/crossover-plot.png}
+  \caption{Crossover chart: VM contention cost (rising) vs.\ Kubernetes overhead cost
+           (relatively flat) across concurrency levels.
+           The intersection is the performance crossover point.}
+  \label{fig:crossover}
+\end{figure}
+
+% TODO: State the identified crossover points:
+% - Reliability crossover: at level L__ (VM success rate drops below 95\%)
+% - Performance crossover: at level L__ (K8s total time < VM total time)
+% - Combined crossover: at level L__ (both conditions simultaneously met)
+
+\subsection{Reliability Crossover}
+\label{subsec:reliability-crossover}
+% TODO: Fill in after running Experiment 1 and comparing with K8s results.
+% Identify the concurrency level at which VM success rate drops below 95\%.
+
+\subsection{Performance Crossover}
+\label{subsec:performance-crossover}
+% TODO: Fill in after running Experiments 1 and 2A.
+% Identify the level at which K8s total execution time becomes lower than VM.
+
+\subsection{Combined Crossover Point}
+\label{subsec:combined-crossover}
+% TODO: The level at which both conditions are simultaneously met — the primary thesis answer.
