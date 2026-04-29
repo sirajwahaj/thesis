@@ -54,7 +54,7 @@ This runs `scripts/bootstrap.sh`, which:
 1. Detects macOS and routes to `scripts/setup-macos.sh`
 2. Installs Homebrew (if not present)
 3. Installs: `podman`, `kind`, `kubectl`, `helm`, `ansible`, `python@3.12`, `utm`
-4. Creates a podman machine named `thesis` with 4 vCPU, 8 GB RAM
+4. Creates a podman machine named `thesis` with 4 vCPU, 4 GB RAM
 5. Configures `DOCKER_HOST` in `~/.zshrc` for docker-compose compatibility
 6. Creates `data/` directory structure
 7. Guides you through creating the Ubuntu VM in UTM
@@ -73,7 +73,7 @@ When you run `make bootstrap` for the first time, you'll be prompted to create t
    - OS: Linux
    - Boot ISO Image: the downloaded ISO
    - CPU: 4 cores
-   - Memory: 8192 MB
+   - Memory: **4096 MB** (4 GB — intentionally constrained to trigger OOM at L5+)
    - Storage: 60 GB
    - Network: Shared Network
 3. Start VM → Complete Ubuntu installer:
@@ -103,9 +103,9 @@ Runs `scripts/provision-vm.sh`, which:
 2. Generates `ansible/inventory.ini`
 3. Installs `community.postgresql` Ansible Galaxy collection
 4. Runs `ansible/playbooks/provision-vm.yml`:
-   - Python 3.12 (via deadsnakes PPA)
+   - Python 3.13 (via deadsnakes PPA)
    - PostgreSQL 16 (PGDG)
-   - Dagster 1.12.7 (in virtualenv `/opt/thesis/venv`)
+   - Dagster 1.12.22 (in virtualenv `/opt/thesis/venv`)
    - Workload gRPC server (as systemd service `thesis-workload`)
 
 **Expected output:**
@@ -186,7 +186,7 @@ ssh -i ~/.ssh/thesis_vm ubuntu@$(cat vm-ip.txt)
 nproc                    # Should output: 4
 free -h                  # Should show: ~8.0G total
 lsb_release -a          # Should show: Ubuntu 22.04.x
-python3.12 --version    # Should show: Python 3.12.x
+python3.12 --version    # Should show: Python 3.13.x
 systemctl status thesis-workload  # Should show: active (running)
 ```
 

@@ -19,10 +19,9 @@ The following tools are required to execute this thesis. All are open source or 
     \toprule
     \textbf{Tool} & \textbf{Version} & \textbf{Purpose} \\
     \midrule
-    podman              & Latest stable   & Container runtime on macOS host --- builds images, runs local docker-compose dev stack \\
-    Docker CE           & Latest stable   & Container runtime on Ubuntu VM --- DockerRunLauncher dispatches each Dagster job as a container \\
-    Kind            & v0.20+          & Local Kubernetes cluster for comparison environment (uses OCI images from local podman registry) \\
-    UTM + Ansible   & Latest stable   & Ubuntu 22.04 VM provisioning with automated Docker CE, PostgreSQL, and Dagster installation \\
+    Docker Desktop  & Latest stable   & Container runtime for Kind and Dagster images \\
+    Kind            & v0.20+          & Local Kubernetes cluster for comparison environment \\
+    Multipass       & Latest stable   & Lightweight Ubuntu VM provisioning for baseline environment \\
     Helm            & v3.x            & Package manager for deploying Dagster on Kubernetes \\
     kubectl         & Matching K8s    & Kubernetes CLI for cluster management and pod inspection \\
     \bottomrule
@@ -43,7 +42,7 @@ The following tools are required to execute this thesis. All are open source or 
     \midrule
     Dagster (OSS)           & Workflow orchestration framework---the system under test \\
     Dagster Helm chart      & Official Helm chart for Kubernetes deployment with Run Launcher \\
-    Python 3.12             & Runtime for Dagster pipelines and test harness \\
+    Python 3.13+            & Runtime for Dagster pipelines and test harness \\
     Dagster GraphQL API     & Programmatic triggering of concurrent pipeline runs \\
     \bottomrule
   \end{tabularx}
@@ -61,11 +60,10 @@ The following tools are required to execute this thesis. All are open source or 
     \toprule
     \textbf{Tool} & \textbf{Purpose} \\
     \midrule
-    psutil (Python)             & CPU and memory utilisation sampling on the VM \\
-    kubectl top                 & Pod-level CPU and memory metrics on Kubernetes \\
-    kubectl get events          & Pod scheduling and startup timestamps \\
+    Prometheus                  & Metrics collection from Kubernetes (CPU, memory, pod states) \\
+    cAdvisor                    & Container-level resource usage metrics \\
+    kubectl top / docker stats  & Quick resource utilisation snapshots \\
     Python (pandas, matplotlib) & Data analysis and chart generation \\
-    SciPy                       & Mann-Whitney U test for statistical comparison \\
     Custom Python test harness  & Automated concurrent run submission, metric collection, CSV export \\
     \bottomrule
   \end{tabularx}
@@ -84,8 +82,8 @@ The following tools are required to execute this thesis. All are open source or 
     \textbf{Tool} & \textbf{Purpose} \\
     \midrule
     Git + GitHub              & Version control for all code, configurations, and data \\
-    GitHub Actions            & CI pipeline for linting, validation, and notebook checks \\
-    \LaTeX{} (latexmk)       & Thesis document formatting and PDF generation \\
+    GitHub Actions (optional) & CI pipeline for automated deployment validation \\
+    \LaTeX{} (Overleaf)       & Thesis document formatting \\
     VS Code                   & Primary development environment \\
     \bottomrule
   \end{tabularx}

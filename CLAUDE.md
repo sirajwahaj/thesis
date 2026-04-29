@@ -41,7 +41,7 @@ thesis/
 ├── Makefile                   ← Build PDF, sync labels/issues, run experiments
 ├── README.md                  ← Project overview
 │
-├── docs/                      ← LaTeX thesis source (CANONICAL — supersedes proposal/)
+├── docs/                      ← LaTeX thesis source (CANONICAL)
 │   ├── main.tex               ← Root document
 │   ├── references.bib         ← All references (9 papers)
 │   ├── frontmatter/           ← Title page, abstract
@@ -88,7 +88,6 @@ thesis/
 │   ├── scripts/issues.sh      ← Create/update GitHub issues from markdown
 │   └── issues/                ← THESIS-001 … THESIS-012
 │
-├── proposal/                  ← STALE — original expanded proposal. Thesis docs are canonical.
 ├── LIA1-report/               ← Internship report (Swedish). Context for thesis background.
 ├── litreture-review/          ← Literature synthesis, supervisor feedback, PDFs
 ├── thesis-instruction-yh/     ← Jensen YH exam instructions and grading criteria
@@ -144,11 +143,11 @@ thesis/
 | VM (primary) | UTM (macOS) or VirtualBox (Windows) · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
 | VM (alternative) | Multipass — see `docs/multipass-alternative.md` |
 | K8s | Kind (single-node, local) · same host · matched resource limits |
-| Orchestrator | Dagster 1.12.7 |
+| Orchestrator | Dagster 1.12.22 |
 | VM executor | DockerRunLauncher (Docker CE on VM) |
 | K8s executor | K8sRunLauncher (via Helm) |
 | Database | PostgreSQL 16 |
-| Python | 3.12 |
+| Python | 3.13 |
 | Workload | CPU-bound SHA-256 hashing, ~30 seconds per job |
 
 ## Conventions
@@ -169,7 +168,7 @@ make all              # Bootstrap → VM provision → K8s → experiments → a
 
 # ── Bootstrap / Environment Setup ──
 make bootstrap        # Detect OS, install deps (Homebrew/Chocolatey), create VM
-make vm-provision     # Provision VM via Ansible (Python 3.12, Dagster, PostgreSQL)
+make vm-provision     # Provision VM via Ansible (Python 3.13, Dagster, PostgreSQL)
 make vm-validate      # Verify VM is ready for experiments
 make k8s-create       # Create Kind cluster 'thesis'
 make k8s-metrics      # Deploy Metrics Server (kubectl top support)
@@ -257,7 +256,7 @@ The benchmarking environment is now **fully automated** with cross-platform supp
 
 1. Read `PLAN.md` first for strategy, scope, and timeline.
 2. Read this file for directory structure and conventions.
-3. The thesis docs in `docs/chapters/` are **canonical**. The `proposal/main.tex` is stale.
+3. The thesis docs in `docs/chapters/` are **canonical**.
 4. Experiment protocols are in `docs/chapters/03-method/experiments.tex`.
 5. Analysis logic is in `notebooks/analysis.ipynb`.
 6. **Do not change the research questions.** They are locked.

@@ -111,7 +111,7 @@ SQ1 (VM breaks at level X)
 | Mon | Finalize ch 1 (Introduction): add internship context to background, clean RQs, update delimitations | `docs/chapters/01-introduction/*.tex` |
 | Tue | Finalize ch 2 (Literature Review): verify all 3 pillars use real citations, check positioning | `docs/chapters/02-literature-review/*.tex` |
 | Wed | Finalize ch 3 (Method): fix tools list, verify experiment protocols, update infrastructure specs | `docs/chapters/03-method/*.tex` |
-| Thu | Set up VM (THESIS-001): UTM + Ansible provision, Python 3.12, Dagster 1.12.7, Docker CE, PostgreSQL 16. Verify single job runs as Docker container. | VM ready |
+| Thu | Set up VM (THESIS-001): UTM + Ansible provision, Python 3.13, Dagster 1.12.22, Docker CE, PostgreSQL 16. Verify single job runs as Docker container. | VM ready |
 | Fri | Set up Kind (THESIS-002): Kind cluster, metrics-server, Helm Dagster. Match 4 vCPU / 8 GB. | K8s ready |
 | Sat | Implement workload job (THESIS-003): CPU-bound SHA-256 hashing, 30s target. Build Docker image. | `src/workload/` |
 | Sun | Smoke test both environments. Dry run data collection scripts. Buffer day. | Both envs verified |
@@ -166,7 +166,7 @@ SQ1 (VM breaks at level X)
 | K8s node resources | 4 vCPU, 8 GB RAM (Kind) | Match VM |
 | Host OS | macOS (shared physical host) | Both envs on same hardware |
 | Guest OS | Ubuntu 22.04 | Same on both |
-| Dagster version | 1.12.7 | Pinned |
+| Dagster version | 1.12.22 | Pinned |
 | PostgreSQL version | 16 | Pinned |
 | Python version | 3.12 | Pinned |
 | Workload | CPU-bound SHA-256, ~30 seconds | Deterministic, CPU-only |

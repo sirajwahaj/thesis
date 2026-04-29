@@ -10,8 +10,7 @@
   \item[Reliability]
   Three measurable properties:
   (1)~\emph{job success rate}---percentage of Dagster runs completing without error at each concurrency level;
-  (2)~\emph{failure isolation}---whether one failing job measurably affects other concurrently running jobs;
-  (3)~\emph{MTTR}---time in seconds from failure detection to successful job re-execution.
+  (2)~\emph{failure isolation}---whether one failing job measurably affects other concurrently running jobs.
 
   \item[System Stability]
   Measured primarily through \emph{execution time variance}---the standard deviation of job execution time across repeated runs at each concurrency level. A system with high variance is operationally unstable even if its mean execution time is acceptable.

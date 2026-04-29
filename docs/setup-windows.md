@@ -74,7 +74,7 @@ When prompted, create the VM:
 **Create via VirtualBox Manager (GUI):**
 1. Open VirtualBox → New
 2. Name: `thesis-vm`, Type: Linux, Version: Ubuntu 64-bit
-3. Memory: 8192 MB
+3. Memory: **4096 MB** (4 GB — intentionally constrained to trigger OOM at L5+)
 4. CPU: 4 (Settings → System → Processor)
 5. Disk: 60 GB (VDI, dynamically allocated)
 6. Settings → Storage → Add IDE → attach the ISO
@@ -88,7 +88,7 @@ When prompted, create the VM:
 ```powershell
 $ISO = "C:\Users\$env:USERNAME\Downloads\ubuntu-22.04.5.iso"
 VBoxManage createvm --name thesis-vm --ostype Ubuntu_64 --register
-VBoxManage modifyvm thesis-vm --memory 8192 --cpus 4 --audio=none
+VBoxManage modifyvm thesis-vm --memory 4096 --cpus 4 --audio=none
 VBoxManage modifyvm thesis-vm --nic1 nat --natpf1 "ssh,tcp,,2222,,22"
 # ... (full command shown by bootstrap.ps1)
 ```

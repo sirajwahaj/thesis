@@ -40,7 +40,7 @@ body:
       placeholder: |
         - OS: macOS 14 / Ubuntu 22.04
         - Python: 3.12
-        - Dagster: 1.12.7
+        - Dagster: 1.12.22
         - Kind: 0.22.0
     validations:
       required: false

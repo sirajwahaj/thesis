@@ -5,13 +5,34 @@
 \section{Practical Recommendations}
 \label{sec:recommendations}
 
-Based on the experimental findings, the following recommendations are offered:
+Based on the experimental findings, the following recommendations are offered to DevOps engineers and data engineering teams evaluating Dagster deployment architecture:
 
 \begin{enumerate}
-  \item Use the crossover point data to make evidence-based VM-to-Kubernetes migration decisions.
-  \item Measure execution time \emph{variance}, not just mean performance, when evaluating system stability.
-  \item Account for Kubernetes scheduling overhead when estimating job execution time, particularly for short-duration jobs.
-  \item Test blast radius containment before assuming pod isolation prevents cascading failures.
+  \item \textbf{Profile your expected concurrent job count before migrating.}
+  The reliability migration threshold of \textbf{3 concurrent jobs} (VM success rate $<$95\%) is specific to this hardware configuration (4\,GB RAM VM, 400\,MB per-job allocation).
+  The threshold will be higher on a VM with more RAM and lower for workloads with larger memory footprints.
+  Run the same crossover analysis on your own hardware to determine your exact threshold.
+
+  \item \textbf{Monitor both success rate and execution time variance.}
+  The VM failed silently: at L3, 33\% of runs were OOM-killed, but surviving-job execution time remained stable.
+  Monitoring only execution time latency would miss this failure pattern.
+  Include job success rate in Dagster observability dashboards.
+
+  \item \textbf{Design jobs to run for at minimum several minutes before deploying to Kubernetes.}
+  The 4--15\,s startup overhead (local Kind, pre-pulled images, growing with concurrency) is modest for most pipeline workloads. In production clusters with cold image pulls, overhead may be higher (10--60\,s); pre-warming images is recommended.
+  Short-duration Dagster ops should be batched into longer jobs when targeting a Kubernetes executor.
+
+  \item \textbf{Account for Kubernetes startup overhead in SLA calculations.}
+  Pipeline SLAs should add 4--60\,s for container startup when running on Kubernetes, depending on concurrency level and whether images are pre-pulled (local/pre-warmed) or cold-pulled (production registry).
+  This overhead grows sub-linearly with concurrency due to concurrent initialisation contention.
+
+  \item \textbf{Test blast radius containment under sustained memory pressure, not just nominal load.}
+  Both environments successfully contained blast radius at moderate concurrency.
+  The real containment advantage of Kubernetes emerges at extreme load ($>$L7) where VM-level OOM kills can affect multiple containers simultaneously.
+  Test at your highest expected concurrency before relying on containment assumptions.
+
+  \item \textbf{Consider the operational cost of Kubernetes.}
+  Kubernetes requires significantly more operational expertise than a single-VM Docker deployment.
+  For teams running fewer than 5--7 concurrent Dagster jobs, the VM offers competitive performance with substantially lower operational overhead.
 \end{enumerate}
 
-% TODO: Add or refine recommendations based on actual experimental findings.

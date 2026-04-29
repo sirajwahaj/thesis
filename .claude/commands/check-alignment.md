@@ -45,7 +45,7 @@ Expected values:
 - `WORKLOAD_DURATION_SECONDS`: default `30` (or env var, unchanged)
 - `DEFAULT_LEVELS`: `"1 2 3 5 7 10"` exactly
 - `REPETITIONS`: `3` exactly
-- `dagster` version: `1.12.7` (not higher)
+- `dagster` version: `1.12.22` (not higher)
 
 ## Step 4 — Report
 

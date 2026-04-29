@@ -16,7 +16,6 @@ description: "Use when analyzing experiment results, interpreting CSVs from data
 | 3 | Execution time variance | `start_time`, `end_time` | `(df.end_time - df.start_time).std()` in seconds |
 | 4 | CPU utilisation | `cpu_pct` | `df.cpu_pct.mean()` per level |
 | 5 | Memory utilisation | `mem_pct` | `df.mem_pct.mean()` per level |
-| 6 | MTTR | `status`, `run_id`, `end_time` | mean time from failure detection to next SUCCESS run in same batch |
 
 ### Group 2: From `pod_timing.csv` (K8s only)
 

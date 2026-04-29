@@ -7,15 +7,22 @@
 # Image: built locally via 'make build' and loaded into Kind via
 #        'make k8s-deploy-dagster' (tag: localhost:5001/thesis-workload:latest)
 #
-# Resource limits are matched to the VM baseline (4 vCPU / 8 GB RAM shared)
+# Resource limits are matched to the VM baseline (4 vCPU / 4 GB RAM shared)
 # to ensure fair cross-environment comparison.
+#
+# NOTE: Run pod memory limit is 1Gi. The memory_pressure workload op allocates
+# 400MB per job; with Python/Dagster overhead (~200-250MB), total peak is ~600-
+# 650MB, requiring at least 1Gi headroom. At L10 (10 concurrent pods × 1Gi =
+# 10Gi), node-level memory pressure may occur, which is the intended behaviour
+# for testing K8s isolation (SQ2). Pod-level blast radius containment is tested
+# in Exp2B via deliberate failure injection.
 # =============================================================================
 
 # ── Image ──────────────────────────────────────────────────────────────────
 image:
   repository: localhost:5001/thesis-workload
   tag: latest
-  pullPolicy: Never   # Image is pre-loaded into Kind via 'kind load docker-image'
+  pullPolicy: IfNotPresent   # Image is pre-loaded into Kind via 'kind load docker-image'
 
 # ── Namespace ──────────────────────────────────────────────────────────────
 namespace: dagster
@@ -27,7 +34,7 @@ postgresql:
     registry: docker.io
     repository: bitnami/postgresql
     tag: latest
-    pullPolicy: Never   # Pre-loaded into Kind via 'kind load docker-image'
+    pullPolicy: IfNotPresent
   auth:
     username: dagster
     password: dagster
@@ -73,6 +80,8 @@ dagster:
           value: /opt/dagster/dagster_home
         - name: WORKLOAD_DURATION_SECONDS
           value: "30"
+        - name: WORKLOAD_MEMORY_MB
+          value: "400"
         - name: DAGSTER_PG_USERNAME
           value: dagster
         - name: DAGSTER_PG_PASSWORD
@@ -81,13 +90,16 @@ dagster:
           value: dagster-thesis-postgresql
         - name: DAGSTER_PG_DB
           value: dagster
-      # Resource limits per run pod (equal to VM process allocation for fair comparison)
+      # Resource limits per run pod.
+      # Memory limit is 2Gi: 400MB workload buffer + ~500-600MB Python/Dagster/NumPy
+      # import overhead = ~900MB-1.0GB peak; 2Gi provides safe headroom.
+      # Measured: 1Gi limit causes OOMKill due to Python framework overhead.
       resources:
         requests:
           memory: "256Mi"
           cpu: "250m"
         limits:
-          memory: "1Gi"
+          memory: "2Gi"
           cpu: "1000m"           # 1 full vCPU per run
       # Fail fast if a pod cannot be scheduled
       failPodOnRunFailure: true

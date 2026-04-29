@@ -5,17 +5,27 @@
 \section{Discussion of SQ1 --- The VM Failure Threshold}
 \label{sec:discuss-sq1}
 
-% TODO: Complete after experimental phase.
-%
-% This section discusses the measured failure threshold against resource contention
-% theory from Pillar 1 (Nanda et al., 1991; Arora, 2023; Casalicchio, 2019).
-%
-% Key points to address:
-% - Was the collapse non-linear as predicted by the literature?
-% - At what concurrency level did Docker container execution on the VM fail?
-% - How does the observed degradation pattern compare to the multiplicative
-%   overhead model of Nanda et al. (1991)?
-% - Were the failure modes (OOM kill, Docker daemon timeout) consistent with
-%   the cascading failure prediction from Arora (2023)?
-% - How did execution time variance change leading up to the failure threshold?
-% - Did the Docker daemon itself become a bottleneck (serialised container starts)?
+\textbf{SQ1 asks:} At what concurrency level do Docker containers on a single VM degrade in reliability and performance, and how do success rate, execution time variance, and resource utilisation degrade as concurrent load increases toward that threshold?
+
+\paragraph{The reliability threshold was reached at L3.}
+Contrary to the pre-experiment hypothesis (which predicted reliability collapse at L5--L7), the VM's success rate dropped sharply at three concurrent jobs: from 100\,\% at L1--L2 to 66.7\,\% at L3.
+The failure mechanism is memory exhaustion: with three containers each allocating 400\,MB simultaneously, aggregate memory demand exceeds the available headroom in the 4\,GB VM (which also runs the Docker daemon, PostgreSQL, and Dagster daemon processes consuming $\approx$1.5--2\,GB).
+Individual run records confirm that failing jobs are OOM-killed 37--50\,s into execution --- immediately after the 400\,MB NumPy allocation in the \texttt{memory\_pressure} op.
+
+The Linux OOM killer selects victims based on process memory scores; in a pool of identical containers, the selection is approximately random across the $n$ concurrent runs.
+This explains the observed pattern: at L3, one of three containers is typically killed, yielding a 66.7\,\% success rate; at L10, seven of ten are typically killed, yielding 30\,\%.
+
+\paragraph{The reliability crossover falls between L2 and L3.}
+The formal reliability crossover (success rate falling below 95\,\%) occurs between L2 (100\,\%) and L3 (66.7\,\%), at the point where aggregate memory allocation first exceeds the kernel's reclaimable budget on this 4\,GB VM.
+This is the most practically significant finding of SQ1: the VM degradation is not a \emph{gradual} performance curve but a \emph{discrete transition} from reliable to unreliable operation at three concurrent jobs.
+
+\paragraph{Execution time of surviving jobs stays flat.}
+Successful jobs complete in approximately the same time regardless of concurrency level (65--80\,s across L1--L10, a 22\,\% increase over the full range).
+This is a selection effect: only containers that successfully acquire their memory allocation complete, and these experience near-normal execution time.
+OOM-killed containers are accounted in the failure rate, not in the execution time metric.
+
+\paragraph{Comparison to the hypothesis.}
+The hypothesis expected gradual CPU-driven performance degradation as the primary failure mode, with memory-driven OOM kills as a secondary effect at very high concurrency.
+The experimental data reversed this: OOM-driven failures dominate from L3, while CPU-driven performance inflation for surviving jobs is modest.
+This reflects the workload design: the 400\,MB allocation per job creates a hard per-container memory footprint that the 4\,GB VM cannot sustain at 3 or more concurrent jobs while also running its infrastructure stack.
+This confirms the prediction of \citet{arora2023} that contention under shared execution models produces non-linear failure, though the failure mode is memory-driven rather than CPU-driven.

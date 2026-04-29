@@ -16,7 +16,6 @@
       - gnupg
       - lsb-release
     state: present
-    update_cache: true
 
 - name: Create Docker apt keyring directory
   ansible.builtin.file:
@@ -82,6 +81,14 @@
   changed_when: false
   become_user: ubuntu
 
-- name: Print Docker version
+- name: Verify Docker Compose plugin
+  ansible.builtin.command: docker compose version
+  register: compose_version
+  changed_when: false
+  become_user: ubuntu
+
+- name: Print Docker and Compose versions
   ansible.builtin.debug:
-    msg: "Docker installed: {{ docker_version.stdout }}"
+    msg:
+      - "Docker:  {{ docker_version.stdout }}"
+      - "Compose: {{ compose_version.stdout }}"

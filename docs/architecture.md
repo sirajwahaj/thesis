@@ -32,12 +32,11 @@ Both environments run on the same physical machine (or equivalent hardware) with
    kubectl             kubernetes-cli
    helm                helm
    ansible             kind
-   utm                 python312
+   multipass           python312
    python@3.12         ansible (via pip)
         │               │
         ▼               ▼
-   create-vm-macos.sh  create-vm-windows.ps1
-   (UTM + Ubuntu ARM64 ISO) (VirtualBox + Ubuntu x86-64 ISO)
+   (Multipass + Ubuntu 22.04) (VirtualBox + Ubuntu x86-64 ISO)
         │               │
         └───────┬───────┘
                 ▼
@@ -60,11 +59,11 @@ Both environments run on the same physical machine (or equivalent hardware) with
        ┌────────┴──────────────────────────┐
        │                                   │
   roles/python312              roles/postgresql16
-  - Python 3.12 (deadsnakes)   - PostgreSQL 16 (PGDG)
+  - Python 3.13 (deadsnakes)   - PostgreSQL 16 (PGDG)
   - venv at /opt/thesis/venv   - dagster role + database
        │
   roles/dagster
-  - Dagster 1.12.7 (pip)
+  - Dagster 1.12.22 (pip)
   - dagster.yaml + workspace.yaml
   - DAGSTER_HOME = /opt/thesis/dagster_home
        │
@@ -79,13 +78,13 @@ Both environments run on the same physical machine (or equivalent hardware) with
 Experiment runner (host)
         │  SSH
         ▼
-  thesis-vm (Ubuntu 22.04, 4 vCPU, 8 GB)
+  thesis-vm (Ubuntu 22.04, 4 vCPU, 4 GB)
         │
   Dagster Webserver (localhost:3001)
         │  gRPC
   Dagster Workload Server (0.0.0.0:4000)
         │  docker run (DockerRunLauncher)
-  Docker container → cpu_burn() → SHA-256 for 30s
+  Docker container → cpu_burn() → SHA-256 for 30s → memory_pressure() → 400MB + hashing for 30s
         │  1 vCPU (nano_cpus), 1 GB mem_limit
         │
   PostgreSQL 16 (run history)
@@ -193,9 +192,10 @@ Both environments are deliberately configured with matched resource limits:
 | Resource | VM | K8s |
 |----------|-----|-----|
 | Total vCPUs | 4 | 4 (Kind node) |
-| Total RAM | 8 GB | 8 GB (Kind node) |
+| Total RAM | **4 GB** (constrained) | 8 GB (Kind node) |
 | Per-run CPU | 1 vCPU (nano_cpus=1e9, Docker) | 1 vCPU limit (K8sRunLauncher) |
-| Per-run RAM | 1 Gi limit (mem_limit, Docker) | 1 Gi limit (K8sRunLauncher) |
+| Per-run RAM | unrestricted (OOM test) | **600Mi limit** (blast radius containment) |
+| Memory per job | 400 MB (memory_pressure op) | 400 MB (same, pod limit prevents cascade) |
 | Execution isolation | Docker container (per-job) | K8s Pod (isolated namespaces) |
 | Failure isolation | Container-level via Docker daemon | Pod-level (kill pod, others continue) |
 
@@ -205,12 +205,12 @@ This matching ensures that any performance difference is attributable to the exe
 
 ## Design Decisions
 
-### Why UTM Instead of VirtualBox on macOS?
+### Why Multipass on macOS?
 
-VirtualBox does not support ARM64 hypervisor operations on Apple Silicon (M-series) Macs. UTM uses Apple's native Hypervisor.framework (HVF), which:
-- Supports native ARM64 guest VMs
-- Provides better performance (no binary translation)
-- Offers better CPU isolation (critical for SQ1: VM contention experiments)
+- Multipass provides a simple CLI for Ubuntu VM management on macOS (both Intel and Apple Silicon)
+- `multipass launch` creates a VM with one command; no GUI or ISO management required
+- VM IP is queryable via `multipass info thesis-vm` — no ARP scan or mDNS needed
+- Works with Ansible over SSH using the default `ubuntu` user (cloud-init)
 
 ### Why VirtualBox on Windows?
 
@@ -231,12 +231,6 @@ VirtualBox is the most widely available free hypervisor on Windows x86-64. Docke
 - Kind mounts the Docker/podman socket directly; no extra hypervisor layer
 - Kind clusters are ephemeral and reproducible (`make k8s-destroy && make k8s-create`)
 
-### Why Multipass Is Not the Primary VM?
-
-- Multipass wraps QEMU with resource limits, but contention between QEMU threads and host processes is less predictable than dedicated UTM vCPUs
-- For SQ1 (finding the VM contention threshold), we need the most realistic CPU contention model possible
-- Multipass is documented as a lightweight alternative for development iteration
-
 ### Why Helm for Dagster on K8s?
 
 - The official Dagster Helm chart handles complex multi-component deployment (webserver, daemon, grpc servers, RBAC, ConfigMaps)
@@ -248,28 +242,21 @@ VirtualBox is the most widely available free hypervisor on Windows x86-64. Docke
 
 ## VM IP Auto-Discovery
 
-The script `scripts/create-vm-macos.sh` uses a 4-stage discovery pipeline to find the VM's
-IP without manual input. This is necessary because UTM has no CLI for querying VM network
-addresses.
+With Multipass (macOS), the VM IP is retrieved directly via the Multipass CLI:
 
-```
-Stage 1: vm-ip.txt         — check persisted IP from previous run (instant, zero network I/O)
-Stage 2: mDNS              — thesis-vm.local via avahi-daemon (works after Ansible provision)
-Stage 3: ARP cache scan    — macOS ARP table for 192.168.64.x and 10.0.2.x (instant)
-Stage 4: Ping sweep        — fire parallel pings at first 30 addresses, re-scan ARP (~5s)
-Stage 5: Manual fallback   — interactive prompt, only if all above fail
+```bash
+multipass info thesis-vm | awk '/^IPv4:/ {print $2}'
 ```
 
-**Why UTM DHCP causes IP changes:**
-UTM's Shared Network mode uses QEMU's SLiRP userspace networking (or Apple Hypervisor NAT on
-ARM). The VM gets a DHCP lease in the `192.168.64.0/24` range, but leases are not guaranteed
-to be stable across VM reboots. UTM does not expose a CLI to query the assigned IP.
+This is saved to `vm-ip.txt` automatically by `scripts/setup-macos.sh` and
+`scripts/provision-vm.sh` on every run. On Windows (Vagrant + VirtualBox), the
+VM IP is written to `vm-ip.txt` by `scripts/bootstrap.ps1`.
 
-**Why mDNS is the long-term solution:**
-After `make vm-provision` runs Ansible, `avahi-daemon` is installed and the VM advertises
-itself as `thesis-vm.local`. This hostname resolves across reboots without ever touching the
-IP, making it the most stable method. The ARP/ping sweep serves as the bootstrap method for
-the very first run (before Ansible has provisioned the VM).
+**IP resolution order in `provision-vm.sh`:**
+1. `$VM_IP` environment variable (explicit override)
+2. `multipass info thesis-vm` (auto-detect from Multipass on macOS)
+3. `vm-ip.txt` (fallback from last known good IP)
+4. Error and exit — asking user to run `make bootstrap`
 
 ---
 
@@ -278,17 +265,17 @@ the very first run (before Ansible has provisioned the VM).
 The thesis uses containers in **both** environments. The comparison is about container-orchestration
 architecture, not containers vs. bare processes.
 
-### macOS host — podman
+### macOS host — Multipass + Docker CLI
 
 ```
 macOS host
-  └─ podman machine 'thesis'   ← lightweight Linux VM
-       └─ podman build          ← builds workload image (src/Containerfile)
-       └─ podman push           ← pushes to localhost:5001 (local Kind registry)
+  └─ Multipass VM 'thesis-vm'   ← Ubuntu 22.04 VM (Docker CE inside)
+       └─ docker build           ← builds workload image (src/Containerfile)
+       └─ docker push            ← pushes to localhost:5001 (local Kind registry)
             └─ Kind cluster pulls image for K8s run pods
 ```
 
-Podman on the macOS host builds and pushes the OCI image. Both environments consume this same image.
+The workload image is built inside the Multipass VM (where Docker CE is installed via Ansible). Both environments (VM and K8s) consume this same OCI image.
 
 ### Ubuntu VM — Docker CE + DockerRunLauncher
 
@@ -336,7 +323,7 @@ This comparison is more realistic than process-vs-pod: it reflects real migratio
 
 | Where | Tool | Purpose |
 |-------|------|---------|
-| macOS host | podman machine | Build + push workload image |
+| macOS host | Multipass | Ubuntu 22.04 VM for DockerRunLauncher experiments |
 | macOS host | kind + kubectl | Run K8s cluster for K8s experiments |
 | Ubuntu VM | Docker CE + DockerRunLauncher | Each Dagster job = Docker container |
 | Ubuntu VM | systemd | Manage Dagster gRPC server + webserver + daemon |

@@ -11,7 +11,7 @@ This study does not include:
   \item Comparison between cloud providers (AWS EKS, Azure AKS)
   \item Comparison between orchestration tools---the focus is on execution model behaviour, not tool selection
   \item ML model accuracy evaluation
-  \item Alternative VM executor configurations---only the DockerRunLauncher (single-VM Docker executor) is used; the legacy ProcessExecutor is explicitly excluded
+  \item Alternative VM executors---only the DockerRunLauncher is used on the VM (no CeleryK8sRunLauncher, no in-process execution)
   \item Real or sensitive data---synthetic workloads only
   \item Production-grade multi-node Kubernetes configurations (unless GCP budget permits the optional cloud validation)
 \end{itemize}

@@ -54,7 +54,7 @@ choco install multipass -y
 multipass launch 22.04 \
   --name thesis-vm \
   --cpus 4 \
-  --memory 8G \
+  --memory 4G \
   --disk 60G
 ```
 
@@ -147,8 +147,8 @@ make exp1-vm     # VM degradation with Multipass VM
 ## Acceptance Criteria (Multipass Setup)
 
 - [ ] Multipass VM running Ubuntu 22.04 with exactly 4 vCPU, 8 GB RAM
-- [ ] Python 3.12 installed (`python3.12 --version`)
-- [ ] Dagster 1.12.7 installed (`/opt/thesis/venv/bin/dagster --version | head -1`)
+- [ ] Python 3.13 installed (`python3.12 --version`)
+- [ ] Dagster 1.12.22 installed (`/opt/thesis/venv/bin/dagster --version | head -1`)
 - [ ] PostgreSQL 16 installed and running (`pg_isready -U dagster -d dagster`)
 - [ ] `thesis-workload` systemd service active and listening on port 4000
 - [ ] `nproc` shows 4

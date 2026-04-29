@@ -7,7 +7,7 @@
 [![CI](https://github.com/sirajwahaj/thesis/actions/workflows/ci.yml/badge.svg)](https://github.com/sirajwahaj/thesis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Dagster](https://img.shields.io/badge/Dagster-1.12.7-purple)](https://dagster.io)
+[![Dagster](https://img.shields.io/badge/Dagster-1.12.22-purple)](https://dagster.io)
 [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://python.org)
 
 </div>
@@ -150,7 +150,7 @@ thesis/
 |---|---|
 | VM | Multipass · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
 | Kubernetes | Kind (local) · same host · matched resource limits |
-| Orchestrator | Dagster 1.12.7 |
+| Orchestrator | Dagster 1.12.22 |
 | VM executor | `ProcessExecutor` |
 | K8s executor | `K8sRunLauncher` |
 | Database | PostgreSQL 16 |

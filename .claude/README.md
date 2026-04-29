@@ -26,7 +26,7 @@
 
 **Already exists** at repo root. Key sections it must include:
 - Research questions (locked)
-- Tech stack constraints (Python 3.12, uv, podman, Kind, Dagster 1.12.7)
+- Tech stack constraints (Python 3.13, uv, podman, Kind, Dagster 1.12.22)
 - Data flow: `run_experiment.sh` → `data/raw/` → `analysis.ipynb` → `results/` → LaTeX
 - Common `make` commands
 
@@ -187,13 +187,13 @@ globs: ["src/**/*.py", "scripts/**/*.py"]
 ---
 # Python Conventions
 
-- Python 3.12 only — no f-string walrus, match/case is OK
+- Python 3.13 only — no f-string walrus, match/case is OK
 - Package manager: uv ONLY. Never suggest `pip install`.
   - Add deps: `uv add <package>`
   - Lock file: uv.lock (commit this)
 - Virtual env: src/.venv (activated by Containerfile and Ansible)
 - Type hints: preferred but not required for existing scripts
-- Dagster version: 1.12.7 — do not suggest upgrading mid-experiment
+- Dagster version: 1.12.22 — do not suggest upgrading mid-experiment
 
 ## Import order (ruff enforces):
 1. stdlib
@@ -375,7 +375,7 @@ description: "Use when working with Dagster jobs, runs, assets, sensors, or the 
 # Dagster Operations
 
 ## Thesis Dagster Setup
-- Version: 1.12.7 (pinned — do not upgrade)
+- Version: 1.12.22 (pinned — do not upgrade)
 - VM: DockerRunLauncher (Docker CE), gRPC server on 0.0.0.0:4000 (systemd service: thesis-workload)
 - K8s: K8sRunLauncher via Helm chart k8s/helm/dagster-thesis/
 

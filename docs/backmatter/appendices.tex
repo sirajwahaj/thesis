@@ -102,30 +102,31 @@ def run_experiment(concurrency_level, job_name, run_config):
 
 \begin{table}[H]
   \centering
-  \caption{Raw data collection template for all experimental runs.}
+  \caption{Raw data collection template for experimental runs (VM environment, one repetition shown; repeat for reps 2 and 3 and for K8s environment).
+  Pod scheduling and container startup columns are K8s-only; enter ``---'' for VM rows.}
   \label{tab:data-template}
   \footnotesize
-  \begin{tabular}{cclccccccc}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\textwidth}{c c c r r r r r r r}
     \toprule
-    \textbf{Run} & \textbf{Level} & \textbf{Env} & \textbf{Success\%} & \textbf{Mean(s)} & \textbf{StdDev(s)} & \textbf{CPU\%} & \textbf{Mem(MB)} & \textbf{PodSched(s)} & \textbf{Start(s)} \\
+    \textbf{Rep} & \textbf{Level} & \textbf{Env} & \textbf{SR\,(\%)} & \textbf{Mean\,(s)} & \textbf{Std\,(s)} & \textbf{CPU\,(\%)} & \textbf{Mem\,(MB)} & \textbf{Sched\,(s)} & \textbf{Start\,(s)} \\
     \midrule
-    1 & L1 & VM  & & & & & & --- & --- \\
-    1 & L1 & K8s & & & & & & & \\
-    1 & L2 & VM  & & & & & & --- & --- \\
-    1 & L2 & K8s & & & & & & & \\
-    1 & L3 & VM  & & & & & & --- & --- \\
-    1 & L3 & K8s & & & & & & & \\
-    1 & L4 & VM  & & & & & & --- & --- \\
-    1 & L4 & K8s & & & & & & & \\
-    1 & L5 & VM  & & & & & & --- & --- \\
-    1 & L5 & K8s & & & & & & & \\
-    1 & L6 & VM  & & & & & & --- & --- \\
-    1 & L6 & K8s & & & & & & & \\
+    1 & L1  & VM  & & & & & & --- & --- \\
+    1 & L1  & K8s & & & & & & & \\
+    1 & L2  & VM  & & & & & & --- & --- \\
+    1 & L2  & K8s & & & & & & & \\
+    1 & L3  & VM  & & & & & & --- & --- \\
+    1 & L3  & K8s & & & & & & & \\
+    1 & L5  & VM  & & & & & & --- & --- \\
+    1 & L5  & K8s & & & & & & & \\
+    1 & L7  & VM  & & & & & & --- & --- \\
+    1 & L7  & K8s & & & & & & & \\
+    1 & L10 & VM  & & & & & & --- & --- \\
+    1 & L10 & K8s & & & & & & & \\
     \midrule
-    2 & L1 & VM  & & & & & & --- & --- \\
-    \multicolumn{10}{c}{\emph{... (repeat for runs 2 and 3)}} \\
+    \multicolumn{10}{c}{\emph{Repeat for repetitions 2 and 3.}} \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 % ─────────────────────────────────────────────────────────────────────────────

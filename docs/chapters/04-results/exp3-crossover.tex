@@ -5,78 +5,110 @@
 \section{Experiment 3 Results --- Overhead and Crossover Point (SQ3, SQ4)}
 \label{sec:results-exp3}
 
-% TODO: Fill in experimental data after running Experiment 3.
+Experiment~3 is derived from the Experiment~1 and~2A datasets: no new runs are required.
+Pod scheduling latency and container startup time are extracted from the pod lifecycle timestamps collected during Experiment~2A.
+Net execution time differences between the two environments are computed from the respective dagster run timestamps.
 
 \subsection{Kubernetes Scheduling Overhead (SQ3)}
 \label{subsec:results-overhead}
 
 \begin{table}[H]
   \centering
-  \caption{Kubernetes scheduling overhead by concurrency level.}
-  \label{tab:overhead}
+  \caption{Kubernetes scheduling overhead by concurrency level.
+  Values are means over 3 repetitions $\times$ $k$ concurrent pods per level.
+  Startup overhead = total pod lifetime $-$ Dagster execution time (joined on \texttt{run\_id}).}
+  \label{tab:overhead-summary}
   \small
   \begin{tabular}{clccc}
     \toprule
-    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Pod Sched. Latency (s)} & \textbf{Container Startup (s)} & \textbf{Total Overhead (s)} \\
+    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Pod Sched. Latency (s)} & \textbf{Startup Overhead (s)} & \textbf{K8s Total (s)} \\
     \midrule
-    L1 & 1  & & & \\
-    L2 & 2  & & & \\
-    L3 & 3  & & & \\
-    L4 & 5  & & & \\
-    L5 & 7  & & & \\
-    L6 & 10 & & & \\
+    L1  & 1  & $<$1 & 4.3 & 67.7 \\
+    L2  & 2  & $<$1 & 4.6 & 68.7 \\
+    L3  & 3  & $<$1 & 5.1 & 69.7 \\
+    L5  & 5  & $<$1 & 6.8 & 74.9 \\
+    L7  & 7  & $<$1 & 11.6 & 92.2 \\
+    L10 & 10 & $<$1 & 14.9 & 96.5 \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\paragraph{Pod scheduling latency.}
+In a single-node Kind cluster with pre-pulled images and no resource quotas that could cause pending states, all pods were scheduled within less than 1\,second.
+This is consistent with the theoretical minimum for a lightly loaded local cluster.
+
+\paragraph{Container startup time.}
+The dominant overhead component is \emph{container startup time}: the interval from pod submission until the Dagster job process begins executing.
+This is measured as total pod lifetime (submitted\_ts to completion) minus the Dagster execution duration (\texttt{end\_time} $-$ \texttt{start\_time} from dagster\_runs.csv), joined on \texttt{run\_id}.
+At L1 this yields 4.3\,s, rising steadily to 14.9\,s at L10.
+This growth reflects increased Python initialisation queuing and PostgreSQL handshake contention when many containers start concurrently on the single-node cluster.
+
+Compared to the $\approx$25\,s median scheduling latency reported by \citet{choi2021} for production GKE clusters, the local Kind cluster shows near-zero scheduling latency and significantly lower container startup times, owing to pre-pulled images and in-cluster database proximity.
 
 \subsection{The Crossover Point (SQ4)}
 \label{subsec:results-crossover}
 
 \begin{table}[H]
   \centering
-  \caption{Net execution time comparison: VM contention cost vs.\ Kubernetes overhead cost.}
+  \caption{Net execution time comparison: VM vs.\ Kubernetes.
+  VM mean is for \emph{surviving} jobs only.
+  K8s total = Dagster execution time + startup overhead (pod lifetime $-$ exec time, joined on \texttt{run\_id}).
+  $\Delta = \text{K8s total} - \text{VM mean}$: negative means K8s is faster.
+  At L3+ the VM success rate falls below 95\,\%, making raw speed comparison misleading.}
   \label{tab:crossover}
   \small
-  \begin{tabular}{clcccc}
+  \begin{tabular}{clcccc r}
     \toprule
-    \textbf{Level} & \textbf{Jobs} & \textbf{VM Mean (s)} & \textbf{K8s Mean (s)} & \textbf{$\Delta$ (s)} & \textbf{Faster?} \\
+    \textbf{Level} & \textbf{Jobs} & \textbf{VM SR} & \textbf{VM Mean (s)} & \textbf{K8s SR} & \textbf{K8s Total (s)} & \textbf{$\Delta$ (s)} \\
     \midrule
-    L1 & 1  & & & & \\
-    L2 & 2  & & & & \\
-    L3 & 3  & & & & \\
-    L4 & 5  & & & & \\
-    L5 & 7  & & & & \\
-    L6 & 10 & & & & \\
+    L1  &  1 & 100.0\% & 65.3 & 100.0\% & 67.7 & $+$2.4 \\
+    L2  &  2 & 100.0\% & 76.2 & 100.0\% & 68.7 & $-$7.5 \\
+    L3  &  3 &  66.7\% & 69.9 & 100.0\% & 69.7 & $-$0.2 \\
+    L5  &  5 &  46.7\% & 76.3 & 100.0\% & 74.9 & $-$1.4 \\
+    L7  &  7 &  42.9\% & 77.7 & 100.0\% & 92.2 & $+$14.5 \\
+    L10 & 10 &  30.0\% & 79.9 & 100.0\% & 96.5 & $+$16.6 \\
     \bottomrule
   \end{tabular}
+  \par\smallskip
+  \footnotesize\textit{SR = success rate. Negative $\Delta$ = K8s faster. At L3--L10 the VM is unreliable ($<$95\,\% SR); K8s is the only viable option regardless of the $\Delta$ sign.}
 \end{table}
 
-% TODO: Add the crossover chart — the primary visual contribution.
 \begin{figure}[H]
   \centering
-  % Uncomment when figure is generated:
-  % \includegraphics[width=0.9\textwidth]{figures/crossover-plot.png}
-  \caption{Crossover chart: VM contention cost (rising) vs.\ Kubernetes overhead cost
-           (relatively flat) across concurrency levels.
-           The intersection is the performance crossover point.}
+  \includegraphics[width=0.9\textwidth]{k8s_overhead_analysis.png}
+  \caption{Kubernetes scheduling overhead analysis (SQ3). Left: total startup overhead per concurrency level (mean $\pm$ std across 3 reps). Right: overhead component breakdown (pod scheduling latency, container startup, Dagster job init). Overhead grows from 4.3\,s at L1 to 14.9\,s at L10 due to concurrent initialisation contention on the single-node Kind cluster.}
+  \label{fig:k8s-overhead}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{crossover_framework.png}
+  \caption{Crossover chart: VM job success rate and execution time vs.\ Kubernetes total
+  time (execution + startup overhead) across concurrency levels.
+  The reliability crossover (VM below 95\,\%) occurs at L3; the performance crossover
+  (K8s total time below VM survivor time) occurs at L2--L5.}
   \label{fig:crossover}
 \end{figure}
 
-% TODO: State the identified crossover points:
-% - Reliability crossover: at level L__ (VM success rate drops below 95\%)
-% - Performance crossover: at level L__ (K8s total time < VM total time)
-% - Combined crossover: at level L__ (both conditions simultaneously met)
+\paragraph{Reliability crossover (Metric 11).}
+The VM's job success rate declined sharply from 100\,\% at L1--L2 to 66.7\,\% at L3, 46.7\,\% at L5, 42.9\,\% at L7, and 30.0\,\% at L10.
+The \emph{reliability crossover} threshold --- defined as the concurrency level at which VM success rate drops below 95\% --- was crossed between L2 (100\%) and L3 (66.7\%).
+This places the reliability crossover at \textbf{L3 (3 concurrent jobs)}.
 
-\subsection{Reliability Crossover}
-\label{subsec:reliability-crossover}
-% TODO: Fill in after running Experiment 1 and comparing with K8s results.
-% Identify the concurrency level at which VM success rate drops below 95\%.
+\paragraph{Performance crossover (Metric 12).}
+The performance crossover is more nuanced than a simple monotone comparison.
+K8s execution time itself \emph{increases} with concurrency---from 63.4\,s (L1) to 80.6\,s (L7)---because the single-node Kind cluster experiences node-level resource contention at higher concurrency despite per-pod limits.
+Adding the measured startup overhead (4--15\,s, growing with concurrency), K8s total wall-clock is:
+L1 $\approx$68\,s, L2 $\approx$69\,s, L3 $\approx$70\,s, L5 $\approx$75\,s, L7 $\approx$92\,s, L10 $\approx$97\,s.
 
-\subsection{Performance Crossover}
-\label{subsec:performance-crossover}
-% TODO: Fill in after running Experiments 1 and 2A.
-% Identify the level at which K8s total execution time becomes lower than VM.
+Compared to VM survivor-only execution times, K8s is \emph{competitive or faster} at L2 ($-$7.5\,s), L3 ($-$0.2\,s), L5 ($-$1.4\,s), but \emph{slower} at L7 ($+$14.5\,s), L10 ($+$16.6\,s) and L1 ($+$2.4\,s).
+The raw wall-clock performance crossover (K8s faster than VM) is thus at L2--L5; at L7 K8s survivors take longer in this local Kind environment due to node memory pressure at $7 \times \approx 1\,\text{GB} \approx 7\,\text{GB}$ on an 8\,GB node.
+However, the VM's 42.9\,\% success rate at L7 means that 57\% of jobs are failing outright---a comparison of survivor execution times is misleading when over half the runs fail.
 
-\subsection{Combined Crossover Point}
-\label{subsec:combined-crossover}
-% TODO: The level at which both conditions are simultaneously met — the primary thesis answer.
+\paragraph{Combined crossover point.}
+The combined crossover --- the concurrency level where Kubernetes becomes net beneficial considering both reliability and execution time --- is \textbf{L3 (3 concurrent jobs)}.
+At this level: (1) the VM drops below 95\,\% success rate (66.7\,\%) while Kubernetes maintains 100\,\%, and (2) K8s total wall-clock time ($\approx$69\,s) is effectively equivalent to VM survivor execution time (69.9\,s), with K8s additionally providing reliability that the VM cannot.
+The 4--15\,s pre-execution overhead per run is modest (7--18\,\% of total) compared to the reliability benefit gained at L3+.
+At higher concurrency (L5--L7), K8s continues to deliver 100\,\% reliability despite execution time increasing (up to 80.6\,s at L7); the VM continues to fail at 43--47\,\% rates.
+Both environments experience node-level pressure at L10 on this 8\,GB single-node Kind cluster, though Kubernetes maintained 100\,\% reliability.
+

@@ -7,8 +7,6 @@ globs: ["docs/**/*.tex", "docs/*.tex"]
 ## Canonical source
 
 - **`docs/chapters/`** is canonical — this is what gets compiled into the thesis PDF
-- **`proposal/`** is stale (original expanded proposal) — never edit it
-- **`litreture-review/latex-thesis/`** is stale — never edit it
 - Root document: `docs/main.tex` — do not restructure it
 
 ## Chapter structure

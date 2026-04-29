@@ -6,7 +6,7 @@ globs: ["src/**/*.py", "scripts/**/*.py", "tests/**/*.py"]
 
 ## Version and runtime
 
-- Python **3.12 only** — `requires-python = ">=3.12"` is set in `src/pyproject.toml`
+- Python **3.13+** — `requires-python = ">=3.13"` is set in `src/pyproject.toml`
 - No `match` syntax backports needed; `match/case` is available
 - Virtual environment: `src/.venv/` — activated by `source src/.venv/bin/activate`
 
@@ -22,8 +22,8 @@ globs: ["src/**/*.py", "scripts/**/*.py", "tests/**/*.py"]
 
 | Package | Version | Reason |
 |---------|---------|--------|
-| dagster | 1.12.7 | Experiment comparability |
-| dagster-k8s | 1.12.7 | Must match dagster |
+| dagster | 1.12.22 | Experiment comparability |
+| dagster-k8s | 0.28.22 | Must match dagster |
 | pandas | any | Analysis notebook |
 | matplotlib | any | Plot generation |
 | scipy | any | Statistical tests |
@@ -48,6 +48,6 @@ globs: ["src/**/*.py", "scripts/**/*.py", "tests/**/*.py"]
 
 ## Dagster jobs (`src/workload/`)
 
-- All Dagster code must be compatible with Dagster 1.12.7
+- All Dagster code must be compatible with Dagster 1.12.22
 - Do not use `@asset` or Software-Defined Assets — the thesis uses `@job`/`@op` pattern
 - The gRPC server port is `4000` — do not change it (Ansible and Helm both reference it)

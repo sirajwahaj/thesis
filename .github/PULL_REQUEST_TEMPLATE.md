@@ -38,7 +38,7 @@ Closes # <!-- e.g. #7 (THESIS-007) -->
 
 - [ ] Change serves at least one of SQ1–SQ4 (or is infrastructure/tooling required for experiments).
 - [ ] Research questions, metric definitions, concurrency levels, and workload duration are unchanged.
-- [ ] No new tools or dependencies introduced outside the approved stack (Python 3.12, uv, podman, Kind, Dagster 1.12.7).
+- [ ] No new tools or dependencies introduced outside the approved stack (Python 3.13, uv, podman, Kind, Dagster 1.12.22).
 - [ ] If code changed: notebook (`notebooks/analysis.ipynb`) still runs end-to-end without error.
 - [ ] If analysis changed: corresponding LaTeX chapter (`docs/chapters/04-results/`) updated or TODO added.
 - [ ] No duplicate implementations created (check existing `scripts/` before adding new ones).

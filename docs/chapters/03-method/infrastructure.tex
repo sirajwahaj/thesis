@@ -13,7 +13,7 @@ A critical design decision in this thesis is the \textbf{local-first infrastruct
 All experiments are designed to run entirely on the researcher's local machine using:
 
 \begin{description}[style=nextline]
-  \item[VM Baseline] A Linux virtual machine provisioned via \textbf{UTM} (Ubuntu 22.04) on the host macOS machine, configured with fixed CPU and memory limits (e.g.,\ 4~vCPU, 8~GB RAM). Dagster is deployed with the \textbf{DockerRunLauncher}, where each pipeline job runs as an isolated Docker container on the VM host. Docker CE is installed on the VM via Ansible.
+  \item[VM Baseline] A Linux virtual machine provisioned via \textbf{Multipass} (Ubuntu 22.04), configured with 4~vCPU and 4~GB RAM. Dagster is deployed with the \texttt{DockerRunLauncher}, which launches each pipeline run as an isolated Docker container on the VM.
   \item[Kubernetes Comparison] A \textbf{Kind} (Kubernetes in Docker) cluster running on the same physical host, configured with resource limits matching the VM. Dagster is deployed with the Kubernetes Run Launcher via Helm.
 \end{description}
 
@@ -26,7 +26,7 @@ This approach provides:
   \item \textbf{Reproducibility}---any researcher with a comparable machine can replicate the setup.
 \end{itemize}
 
-The shared physical host is an intentional design choice: it ensures both environments have access to the same underlying hardware, making the comparison about \emph{execution model architecture} (Docker containers on a single-host daemon vs.\ Kubernetes pods with per-pod resource limits) rather than about hardware differences.
+The shared physical host is an intentional design choice: it ensures both environments have access to the same underlying hardware, making the comparison about \emph{execution model architecture} (VM Docker containers vs.\ Kubernetes pods) rather than about hardware differences.
 
 \subsection{Optional Cloud Validation Phase}
 \label{subsec:cloud-validation}
@@ -52,13 +52,13 @@ Cloud results serve as a \textbf{directional validation} of local findings, not 
     \toprule
     \textbf{Component} & \textbf{VM Baseline} & \textbf{Kubernetes (Kind)} \\
     \midrule
-    Provisioning        & UTM (Ubuntu 22.04, Ansible)    & Kind v0.20+ on podman \\
+    Provisioning        & Multipass (Ubuntu 22.04)       & Kind v0.20+ on Docker \\
     CPU                 & 4 vCPU (fixed)                 & 4 vCPU (node resource limit) \\
-    Memory              & 8 GB RAM (fixed)               & 8 GB RAM (node resource limit) \\
-    Dagster executor    & DockerRunLauncher (Docker CE)  & K8sRunLauncher via Helm \\
-    Resource isolation  & Per-container CPU/memory limits (Docker) & Per-pod CPU/memory requests and limits \\
-    Autoscaling         & Not applicable                 & HPA enabled (observed, not primary experiment) \\
-    IaC                 & Ansible (provision-vm.yml) + UTM & Kind config YAML + Helm \\
+    Memory              & 4 GB RAM (fixed)               & 8 GB RAM (node resource limit) \\
+    Dagster executor    & DockerRunLauncher              & K8sRunLauncher via Helm \\
+    Resource isolation  & Per-container (shared host kernel OOM) & Per-pod CPU/memory requests and limits \\
+    Autoscaling         & Not applicable                 & No autoscaling (single-node Kind cluster) \\
+    IaC                 & Shell script / Multipass config & Kind config YAML + Helm \\
     \bottomrule
   \end{tabularx}
 \end{table}
