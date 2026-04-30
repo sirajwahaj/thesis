@@ -1,0 +1,115 @@
+\section{Mina arbetsuppgifter under LIA-perioden}
+\label{sec:arbetsuppgifter}
+
+Under LIA 2 fick jag ansvar för flera infrastrukturförbättringar som alla hade direkt påverkan
+på Insightas produktionsmiljö. Arbetet berörde fem tydliga områden: flytt av
+orkestreringssystemet till Kubernetes, säkerhet och IAM, driftstabilitet vid deployments,
+strukturering av container-arkitekturen och uppdatering av CI/CD-pipelinen.
+
+GitHub-arbetet visar också tydligt hur mycket som faktiskt gjordes under perioden. I detta repo
+skapade jag totalt 21 pull requests. De var inte slumpmässiga ändringar, utan en serie mindre
+steg som tillsammans byggde upp en större lösning. Först lade jag grunden med kluster,
+behörigheter, Artifact Registry och RBAC. Därefter arbetade jag med Helm, Dockerfile,
+loggning och GitHub Actions för deployment. När den grunden fanns på plats gick arbetet vidare
+till stabilitet, till exempel att separera tjänster i Docker Compose, låta jobb fortsätta under
+deployment och minska onödiga omstarter. Den sista delen handlade om underhåll, som att hålla
+CI/CD-flödet uppdaterat när GitHub Actions gick över till Node.js 24.
+
+Det här arbetssättet blev viktigt för mig. I stället för att försöka leverera en stor lösning i en
+enda pull request arbetade jag i små steg. Det gjorde arbetet lättare att granska, lättare att
+testa och lättare att ändra när något behövde förbättras.
+
+\subsection{Flytta datapipelinesystemet till Kubernetes i Google Cloud}
+\label{subsec:k8s}
+
+Insightas system för att schemalägga och köra datapipelines körde tidigare på en virtuell
+maskin med Docker. Det fungerade, men lösningen var svår att skala och deployment krävde
+flera manuella steg. Min uppgift var att flytta systemet till ett Kubernetes-kluster i Google
+Cloud (GKE) och göra deployment mer stabil och mer automatiserad.
+
+Jag byggde \textbf{Helm-mallar} för att paketera och deploya systemet och dess databas på ett
+enhetligt sätt. Konfigurationen delades upp i ett baslager med gemensamma inställningar och
+ett lager för respektive miljö. Det gör det enklare att hantera både staging och produktion
+utan att behöva kopiera samma konfiguration flera gånger.
+
+Jag använde \textbf{Terraform CDKTF} för att skapa och hantera resurser i Google Cloud som
+kod. Det gällde bland annat IAM-roller, service accounts, Artifact Registry för
+container-images och klustrets maskintyper. På så sätt blev infrastrukturen versionshanterad i
+Git och lättare att återskapa.
+
+Jag satte också upp ett \textbf{automatiserat deploymentflöde i GitHub Actions} som deployar
+systemet till klustret vid releaser. Flödet skapar ett eget Kubernetes-namespace för varje
+release-branch och rensar det automatiskt när branchen stängs. Det gör staging-miljön mer
+ordnad och minskar manuellt arbete.
+
+\subsection{Säker identitet -- Workload Identity istället för statiska nycklar}
+\label{subsec:security}
+
+En viktig del av projektet var hur Kubernetes-pods autentiserar sig mot Google Cloud-tjänster.
+Det gamla sättet byggde på att en JSON-nyckel från ett GCP service account sparades i ett
+Kubernetes secret. Det är en säkerhetsrisk eftersom en läckt nyckel kan användas av någon som
+inte ska ha åtkomst.
+
+Jag införde \textbf{Workload Identity}, vilket är ett säkrare sätt att lösa autentisering i GKE.
+Med den lösningen kopplas en Kubernetes Service Account direkt till ett GCP Service Account.
+Podden får då rätt identitet utan att någon nyckel behöver sparas i klustret. För mig var detta
+ett tydligt exempel på hur teorin om minsta möjliga behörighet blev praktisk verklighet.
+
+Samtidigt konfigurerade jag IAM-roller med minsta möjliga behörighet och satte upp RBAC i
+Kubernetes via Terraform. Det gjorde att även säkerhetsinställningarna blev tydliga,
+versionshanterade och lätta att följa upp.
+
+\subsection{Driftstabilitet -- deployment utan avbrott i pågående jobb}
+\label{subsec:stability}
+
+Ett konkret driftsproblem var att varje gång ny kod deployades stoppades pågående
+datapipeline-körningar. Det berodde på att hela Docker Compose-stacken togs ned och
+startades om. För ett system som kör schemalagda jobb är det ett allvarligt problem, eftersom
+ett misslyckat jobb kan försena viktig data för hela organisationen.
+
+Lösningen blev att låta varje jobb köra i sin \textbf{egen container}, fristående från
+kärnservicarna. Då kan man starta om webbgränssnittet och andra permanenta delar utan att
+störa ett jobb som redan körs. Jag testade detta i praktiken genom att starta ett längre jobb,
+stänga ned övriga containers och sedan starta upp dem igen. Jobbet slutfördes utan fel.
+
+\subsection{Strukturering av container-arkitekturen}
+\label{subsec:compose}
+
+En bakomliggande orsak till stabilitetsproblemet var att flera olika delar av systemet delade
+samma container. Det gjorde lösningen svår att underhålla och svår att felsöka.
+
+Jag refaktorerade därför Docker Compose-konfigurationen så att varje komponent körs i sin
+\textbf{egen container}. Det gav tre tydliga fördelar: det blev enklare att skala enskilda delar,
+enklare att läsa loggar och enklare att göra mer kontrollerade deployments.
+
+Jag förbättrade också deploymentskriptet så att det bara återskapar de containers som verkligen
+behöver det. Kärnservicar startas om bara om de är trasiga eller stoppade. Kod-containern
+återskapas alltid vid ny deployment så att ny kod verkligen används. Gamla överblivna
+containers rensas bort automatiskt. Det gjorde deployment snabbare och mer förutsägbar.
+
+\subsection{Uppdatering av CI/CD-pipelinen}
+\label{subsec:cicd}
+
+GitHub Actions, som vi använder för all CI/CD-automatisering, slutade stödja äldre versioner
+av Node.js i sina actions. Därför behövde flera workflows uppdateras så att pipelinen inte
+skulle sluta fungera.
+
+Jag gick igenom workflows, hittade de actions som behövde uppdateras och bytte till versioner
+som fungerar med Node.js 24. Jag tog också bort \texttt{latest}-taggar. Det är en liten men
+viktig förbättring, eftersom en obestämd version kan ändras utan varning och skapa fel i
+pipelinen.
+
+\subsection*{Sammantagen bild}
+
+Alla uppgifter under LIA 2 hänger ihop kring ett gemensamt tema: att göra ett produktionssystem
+\textit{säkrare}, \textit{mer stabilt} och \textit{mer automatiserat}. Arbetet täcker samtliga
+kärnområden i LIA 2-kursmålen -- infrastruktur som kod, CI/CD, containerorkestrering,
+säkerhet och automatisering -- och har haft direkt påverkan på teamets dagliga arbete.
+
+\subsection*{Koppling till utbildningen}
+
+Arbetet under LIA 2 kopplar tydligt till flera delar av utbildningen. Inom molntjänster använde
+jag GCP och GKE i praktiken. Inom IT-säkerhet arbetade jag med IAM, RBAC och säkrare
+autentisering. Inom operativsystem och nätverk märktes kunskaperna i Docker, Linux-miljöer,
+deploymentflöden och felsökning. Det gjorde att sådant vi läst i skolan fick ett tydligt
+praktiskt sammanhang.
