@@ -1,4 +1,4 @@
-# ==========================
+﻿# ==========================
 # Makefile for Thesis Project
 # ==========================
 #
@@ -11,17 +11,17 @@
 #   - Experiment execution (experiments)
 #
 # Usage:
-#   make vm-up                  — Create VM via Multipass + install Docker
-#   make build                  — Build Docker image locally
-#   make push                   — Push image to ghcr.io (set GHCR_TOKEN)
-#   make deploy                 — SCP files to VM + docker compose up
-#   make destroy                — Delete the VM (DESTRUCTIVE)
-#   make truncate               — Delete all experiment data
-#   make compose-up             — Start all services with docker compose
-#   make compose-down           — Stop all services
-#   make validate               — Run validation tests (local build + compose)
-#   make experiments            — Run all experiments
-#   make help                   — Show this help message
+#   make vm-up                  -- Create VM via Multipass + install Docker
+#   make build                  -- Build Docker image locally
+#   make push                   -- Push image to ghcr.io (set GHCR_TOKEN)
+#   make deploy                 -- SCP files to VM + docker compose up
+#   make destroy                -- Delete the VM (DESTRUCTIVE)
+#   make truncate               -- Delete all experiment data
+#   make compose-up             -- Start all services with docker compose
+#   make compose-down           -- Stop all services
+#   make validate               -- Run validation tests (local build + compose)
+#   make experiments            -- Run all experiments
+#   make help                   -- Show this help message
 #
 # Configuration:
 #   - Container registry: ghcr.io/sirajwahaj
@@ -90,7 +90,7 @@ all: bootstrap k8s-setup vm-provision experiments analyze
 # K8s-only workflow (no VM required)
 k8s-only: bootstrap k8s-setup exp2a-k8s exp2b-blast exp2c-spike analyze
 
-# PDF is built on Overleaf — no local build target needed
+# PDF is built on Overleaf -- no local build target needed
 
 # ==========================
 # Help
@@ -99,59 +99,59 @@ k8s-only: bootstrap k8s-setup exp2a-k8s exp2b-blast exp2c-spike analyze
 help:
 	@echo ""
 	@echo "================================================================"
-	@echo "THESIS MAKEFILE — Build, Deploy, Validate, Experiment"
+	@echo "THESIS MAKEFILE -- Build, Deploy, Validate, Experiment"
 	@echo "================================================================"
 	@echo ""
 	@echo "VM Lifecycle (Multipass / Vagrant):"
-	@echo "  make vm-up            — Create thesis-vm via Multipass + install Docker CE"
-	@echo "  make deploy           — SCP compose files to VM + docker compose up"
-	@echo "  make destroy          — Delete thesis-vm (Multipass or Vagrant) — DESTRUCTIVE"
-	@echo "  make truncate         — Delete all experiment data (data/raw, processed, results)"
-	@echo "  make vm-provision     — Re-run Ansible provisioning (Docker CE) on existing VM"
-	@echo "  make vm-validate      — Verify VM is ready for experiments"
-	@echo "  make vm-ssh           — SSH into the VM"
+	@echo "  make vm-up            -- Create thesis-vm via Multipass + install Docker CE"
+	@echo "  make deploy           -- SCP compose files to VM + docker compose up"
+	@echo "  make destroy          -- Delete thesis-vm (Multipass or Vagrant) -- DESTRUCTIVE"
+	@echo "  make truncate         -- Delete all experiment data (data/raw, processed, results)"
+	@echo "  make vm-provision     -- Re-run Ansible provisioning (Docker CE) on existing VM"
+	@echo "  make vm-validate      -- Verify VM is ready for experiments"
+	@echo "  make vm-ssh           -- SSH into the VM"
 	@echo ""
 	@echo "Container Build & Push:"
-	@echo "  make build            — Build Docker image locally"
-	@echo "  make push             — Build and push to ghcr.io (set GHCR_TOKEN)"
+	@echo "  make build            -- Build Docker image locally"
+	@echo "  make push             -- Build and push to ghcr.io (set GHCR_TOKEN)"
 	@echo ""
 	@echo "Local Dev (docker compose):"
-	@echo "  make compose-up       — Start all services (postgres, workload, webserver, daemon)"
-	@echo "  make compose-down     — Stop all services"
-	@echo "  make compose-logs     — Stream service logs"
-	@echo "  make compose-clean    — Stop services and remove volumes"
+	@echo "  make compose-up       -- Start all services (postgres, workload, webserver, daemon)"
+	@echo "  make compose-down     -- Stop all services"
+	@echo "  make compose-logs     -- Stream service logs"
+	@echo "  make compose-clean    -- Stop services and remove volumes"
 	@echo ""
 	@echo "Kubernetes (for experiments SQ2/SQ3):"
-	@echo "  make k8s-create       — Create Kind cluster 'thesis'"
-	@echo "  make k8s-metrics      — Deploy Metrics Server (kubectl top)"
-	@echo "  make k8s-deploy-dagster — Deploy Dagster + workload via Helm"
-	@echo "  make k8s-setup        — Full K8s setup (create + metrics + dagster)"
-	@echo "  make k8s-validate     — Verify K8s setup is ready for experiments"
-	@echo "  make k8s-destroy      — Delete Kind cluster (destructive)"
+	@echo "  make k8s-create       -- Create Kind cluster 'thesis'"
+	@echo "  make k8s-metrics      -- Deploy Metrics Server (kubectl top)"
+	@echo "  make k8s-deploy-dagster -- Deploy Dagster + workload via Helm"
+	@echo "  make k8s-setup        -- Full K8s setup (create + metrics + dagster)"
+	@echo "  make k8s-validate     -- Verify K8s setup is ready for experiments"
+	@echo "  make k8s-destroy      -- Delete Kind cluster (destructive)"
 	@echo ""
 	@echo "Experiments:"
-	@echo "  make exp1-vm          — Experiment 1 (VM degradation, SQ1)"
-	@echo "  make exp2a-k8s        — Experiment 2A (K8s isolation, SQ2)"
-	@echo "  make exp2b-blast      — Experiment 2B (Blast radius, SQ2)"
-	@echo "  make exp2c-spike      — Experiment 2C (Spike observation, SQ3)"
-	@echo "  make experiments      — Run all experiments in sequence"
-	@echo "  make dry-run          — Preview experiments without execution"
-	@echo "  make analyze          — Run analysis notebook"
+	@echo "  make exp1-vm          -- Experiment 1 (VM degradation, SQ1)"
+	@echo "  make exp2a-k8s        -- Experiment 2A (K8s isolation, SQ2)"
+	@echo "  make exp2b-blast      -- Experiment 2B (Blast radius, SQ2)"
+	@echo "  make exp2c-spike      -- Experiment 2C (Spike observation, SQ3)"
+	@echo "  make experiments      -- Run all experiments in sequence"
+	@echo "  make dry-run          -- Preview experiments without execution"
+	@echo "  make analyze          -- Run analysis notebook"
 	@echo ""
 	@echo "Validation:"
-	@echo "  make validate         — Full validation (build + compose test)"
-	@echo "  make validate-build   — Validate local Docker build only"
-	@echo "  make validate-compose — Validate compose setup (requires build)"
-	@echo "  make validate-setup   — Validate all systems (VM + K8s + local)"
+	@echo "  make validate         -- Full validation (build + compose test)"
+	@echo "  make validate-build   -- Validate local Docker build only"
+	@echo "  make validate-compose -- Validate compose setup (requires build)"
+	@echo "  make validate-setup   -- Validate all systems (VM + K8s + local)"
 	@echo ""
 	@echo "LaTeX:"
-	@echo "  make pdf              — Show Overleaf upload instructions"
-	@echo "  make copy-figures     — Copy results/*.png → docs/figures/"
-	@echo "  make clean            — Remove LaTeX aux files"
+	@echo "  make pdf              -- Show Overleaf upload instructions"
+	@echo "  make copy-figures     -- Copy results/*.png -> docs/figures/"
+	@echo "  make clean            -- Remove LaTeX aux files"
 	@echo ""
 	@echo "GitHub:"
-	@echo "  make labels           — Sync GitHub labels"
-	@echo "  make issues           — Sync GitHub issues"
+	@echo "  make labels           -- Sync GitHub labels"
+	@echo "  make issues           -- Sync GitHub issues"
 	@echo ""
 	@echo "Configuration:"
 	@echo "  Registry:  $(REGISTRY)"
@@ -209,7 +209,7 @@ deploy:
 
 destroy:
 	@echo "----------------------------------------------------------------"
-	@echo "WARNING: Deleting thesis-vm — all VM data will be lost."
+	@echo "WARNING: Deleting thesis-vm -- all VM data will be lost."
 	@echo "Press Ctrl+C within 5 seconds to cancel..."
 	@echo "----------------------------------------------------------------"
 	@sleep 5
@@ -234,7 +234,7 @@ vm-provision:
 	@echo "----------------------------------------------------------------"
 	@echo "Provisioning VM via Ansible (Docker CE)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/bash/provision-vm.sh || echo "WARNING: VM provision skipped — check vm-ip.txt and retry: make vm-provision"
+	@bash scripts/bash/provision-vm.sh || echo "WARNING: VM provision skipped -- check vm-ip.txt and retry: make vm-provision"
 
 vm-validate:
 	@echo "Validating VM setup..."
@@ -310,7 +310,7 @@ pdf:
 	@echo ""
 	@echo "  1. Run:  make copy-figures"
 	@echo "  2. Zip the docs/ folder and upload to your Overleaf project"
-	@echo "  3. Compile on Overleaf — no local LaTeX install needed"
+	@echo "  3. Compile on Overleaf -- no local LaTeX install needed"
 	@echo ""
 	@echo "Do NOT install latexmk or MacTeX locally."
 	@echo "----------------------------------------------------------------"
@@ -319,7 +319,7 @@ copy-figures:
 	@echo "Copying figures from $(RESULTS) to $(FIGURES)..."
 	mkdir -p $(FIGURES)
 	cp -u $(RESULTS)/* $(FIGURES)/ 2>/dev/null || true
-	@echo "[OK] Figures ready in $(FIGURES)/ — zip docs/ and upload to Overleaf."
+	@echo "[OK] Figures ready in $(FIGURES)/ -- zip docs/ and upload to Overleaf."
 
 clean:
 	@echo "Cleaning LaTeX auxiliary files..."
@@ -490,7 +490,7 @@ dry-run:
 	@echo "Exp2A (K8s):"
 	bash scripts/bash/run_experiment.sh exp2a k8s --dry-run
 	@echo ""
-	@echo "Exp2B (Blast Radius — both envs):"
+	@echo "Exp2B (Blast Radius -- both envs):"
 	bash scripts/bash/run_experiment.sh exp2b vm --dry-run
 	bash scripts/bash/run_experiment.sh exp2b k8s --dry-run
 	@echo ""
