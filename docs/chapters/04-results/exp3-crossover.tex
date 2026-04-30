@@ -62,16 +62,16 @@ This contrasts with the $\approx$25\,s median scheduling latency reported by \ci
     \toprule
     \textbf{Level} & \textbf{Jobs} & \textbf{VM SR} & \textbf{VM Mean (s)} & \textbf{K8s SR} & \textbf{K8s Total (s)} & \textbf{$\Delta$ (s)} \\
     \midrule
-    L1  &  1 & 100.0\% & 65.3 & 100.0\% & 67.7 & $+$2.4 \\
-    L2  &  2 & 100.0\% & 76.2 & 100.0\% & 68.7 & $-$7.5 \\
-    L3  &  3 &  66.7\% & 69.9 & 100.0\% & 69.7 & $-$0.2 \\
-    L4  &  5 &  46.7\% & 76.3 & 100.0\% & 74.9 & $-$1.4 \\
-    L5  &  7 &  42.9\% & 77.7 & 100.0\% & 92.2 & $+$14.5 \\
-    L6  & 10 &  30.0\% & 79.9 & 100.0\% & 96.5 & $+$16.6 \\
+    L1  &  1 & 100.0\% & 66.7 & 100.0\% & 67.7 & $+$1.0 \\
+    L2  &  2 & 100.0\% & 67.3 & 100.0\% & 68.7 & $+$1.4 \\
+    L3  &  3 &  66.7\% & 92.9 & 100.0\% & 69.7 & $-$23.2 \\
+    L4  &  5 &  40.0\% & 181.6 & 100.0\% & 74.9 & $-$106.7 \\
+    L5  &  7 &  38.1\% & 92.6 & 100.0\% & 92.2 & $-$0.4 \\
+    L6  & 10 &  30.0\% & 111.3 & 100.0\% & 96.5 & $-$14.8 \\
     \bottomrule
   \end{tabular}
   \par\smallskip
-  \footnotesize\textit{SR = success rate. Negative $\Delta$ = K8s faster. At L3--L6 the VM is unreliable ($<$95\,\% SR); K8s is the only viable option regardless of the $\Delta$ sign.}
+  \footnotesize\textit{SR = success rate. Negative $\Delta$ = K8s faster on survivor exec time alone. At L3--L6 the VM is unreliable ($<$95\,\% SR); K8s is the only viable option regardless of the $\Delta$ sign.}
 \end{table}
 
 \begin{figure}[H]
@@ -85,13 +85,13 @@ This contrasts with the $\approx$25\,s median scheduling latency reported by \ci
   \centering
   \includegraphics[width=0.9\textwidth]{sq4_crossover_point.png}
   \caption{Crossover analysis (SQ4): cost per successful job delivery and reliability divergence across concurrency levels.
-  The reliability crossover (VM below 95\,\%) occurs at L3; the performance crossover
-  (K8s total time below VM effective time accounting for reruns) occurs at L4 (5 concurrent jobs).}
+  Both the reliability crossover (VM below 95\,\%) and the performance crossover
+  (K8s total time below VM effective time accounting for reruns) occur at L3 (3 concurrent jobs).}
   \label{fig:crossover}
 \end{figure}
 
 \paragraph{Reliability crossover (Metric 11).}
-The VM's job success rate declined sharply from 100\,\% at L1--L2 to 66.7\,\% at L3, 46.7\,\% at L4, 42.9\,\% at L5, and 30.0\,\% at L6.
+The VM's job success rate declined sharply from 100\,\% at L1--L2 to 66.7\,\% at L3, 40.0\,\% at L4, 38.1\,\% at L5, and 30.0\,\% at L6.
 The \emph{reliability crossover} threshold --- defined as the concurrency level at which VM success rate drops below 95\% --- was crossed between L2 (100\%) and L3 (66.7\%).
 This places the reliability crossover at \textbf{L3 (3 concurrent jobs)}.
 This result directly answers SQ1: the VM begins to degrade significantly at 3 concurrent jobs.
@@ -102,14 +102,14 @@ K8s execution time itself \emph{increases} with concurrency---from 63.4\,s (L1) 
 Adding the measured startup overhead (4--15\,s, growing with concurrency), K8s total wall-clock is:
 L1 $\approx$68\,s, L2 $\approx$69\,s, L3 $\approx$70\,s, L4 $\approx$75\,s, L5 $\approx$92\,s, L6 $\approx$97\,s.
 
-Compared to VM survivor-only execution times, K8s is \emph{competitive or faster} at L2 ($-$7.5\,s), L3 ($-$0.2\,s), L4 ($-$1.4\,s), but \emph{slower} at L5 ($+$14.5\,s), L6 ($+$16.6\,s) and L1 ($+$2.4\,s).
-The raw wall-clock performance crossover (K8s faster than VM) is thus at L2--L4; at L5 K8s survivors take longer in this local Kind environment due to node memory pressure at $7 \times \approx 1\,\text{GB} \approx 7\,\text{GB}$ on an 8\,GB node.
-However, the VM's 42.9\,\% success rate at L5 means that 57\% of jobs are failing outright---a comparison of survivor execution times is misleading when over half the runs fail.
+Compared to VM survivor-only execution times (66.7\,s at L1, 67.3\,s at L2, 92.9\,s at L3, 181.6\,s at L4, 92.6\,s at L5, 111.3\,s at L6), K8s is \emph{slightly slower} on raw survivor time at L1--L2 ($+$1.0\,s, $+$1.4\,s) but \emph{faster} from L3 onward ($-$23.2\,s at L3, $-$106.7\,s at L4, $-$0.4\,s at L5, $-$14.8\,s at L6).
+The raw wall-clock performance crossover (K8s faster than VM survivors) occurs at \textbf{L3}.
+However, the VM's 38.1\,\% success rate at L5 means 62\% of jobs fail outright---a comparison of survivor execution times understates the true cost of VM operation.
 
 \paragraph{Combined crossover point.}
 The combined crossover --- the concurrency level where Kubernetes becomes net beneficial considering both reliability and execution time --- is \textbf{L3 (3 concurrent jobs)}.
-At this level: (1) the VM drops below 95\,\% success rate (66.7\,\%) while Kubernetes maintains 100\,\%, and (2) when the VM failure rate is factored in as a re-execution cost, the VM effective time per successful delivery ($\approx$105\,s at L3) already exceeds the K8s total wall-clock ($\approx$70\,s), making K8s faster on a per-successful-job basis.
+At this level: (1) the VM drops below 95\,\% success rate (66.7\,\%) while Kubernetes maintains 100\,\%, and (2) when the VM failure rate is factored in as a re-execution cost, the VM effective time per successful delivery ($\approx$139\,s at L3) already exceeds the K8s total wall-clock ($\approx$70\,s), making K8s 70\,s faster per successfully delivered job.
 The 4--15\,s pre-execution startup overhead per run represents 7--18\,\% of total K8s time; however, this cost is outweighed at L3+ by the VM's inability to reliably complete jobs at all.
-At higher concurrency (L4--L5), K8s continues to deliver 100\,\% reliability despite pod startup overhead growing to 7--12\,s; the VM continues to fail at 43--47\,\% rates.
+At higher concurrency (L4--L5), K8s continues to deliver 100\,\% reliability despite pod startup overhead growing to 7--12\,s; the VM continues to fail at 38--40\,\% rates.
 Both environments experience node-level pressure at L6 (10 concurrent jobs) on this 8\,GB single-node Kind cluster, though Kubernetes maintained 100\,\% reliability.
 

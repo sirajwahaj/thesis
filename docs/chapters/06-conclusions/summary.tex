@@ -8,9 +8,9 @@
 This thesis conducted three experiments to empirically determine the concurrency level at which migrating Dagster workflow orchestration from a single VM to Kubernetes becomes net beneficial.
 
 \paragraph{Experiment 1 --- VM degradation profile (SQ1).}
-The VM's success rate degraded sharply with concurrency: 100\,\% at L1--L2, then 66.7\,\% at L3, 46.7\,\% at L4, 42.9\,\% at L5, and 30.0\,\% at L6.
+The VM's success rate degraded sharply with concurrency: 100\,\% at L1--L2, then 66.7\,\% at L3, 40.0\,\% at L4, 38.1\,\% at L5, and 30.0\,\% at L6.
 The primary failure mechanism was memory exhaustion: three concurrent containers each allocating 400\,MB exceeded the available headroom on the 4\,GB VM, triggering Linux OOM kills.
-Execution time of \emph{surviving} jobs remained relatively flat (65--80\,s across all levels), revealing that the OOM killer acts as a filter rather than a performance bottleneck.
+Execution time of \emph{surviving} jobs varied considerably across levels (66.7\,s at L1--L2, 92.9\,s at L3, peaking at 181.6\,s at L4 due to contention with dying containers), revealing that surviving jobs compete for the same resources as the failing ones.
 The formal reliability threshold (success rate $<$95\%) was crossed between L2 and L3, placing the VM reliability crossover at \textbf{3 concurrent jobs}.
 
 \paragraph{Experiment 2 --- Kubernetes isolation (SQ2).}
@@ -24,5 +24,6 @@ Blast radius containment tests (Exp 2B, L4: 5 concurrent jobs) demonstrated that
 Kubernetes pod scheduling latency was $<$1\,s in the local Kind cluster.
 Container startup overhead ranged from 4.3\,s per job at L1 to 14.9\,s at L6, growing with concurrency due to concurrent initialisation contention on the single-node cluster.
 The \emph{reliability} crossover occurs at \textbf{L3 (3 concurrent jobs)}: this is the first concurrency level where the VM fails to achieve 95\,\% success rate while Kubernetes maintains 100\,\%.
-The \emph{performance} crossover---where total K8s wall-clock time falls below VM execution time---occurs at higher concurrency once VM contention raises the surviving-job execution times enough to offset the K8s startup overhead.
+The \emph{performance} crossover---where K8s total wall-clock time per successful delivery falls below the VM's effective delivery cost (accounting for reruns)---also occurs at \textbf{L3}: VM effective time = 139.3\,s (92.9\,s / 0.667) vs.\  K8s total = 69.7\,s, a 70\,s advantage per successful job.
+Both crossovers aligning at L3 provides an unambiguous answer to SQ4.
 

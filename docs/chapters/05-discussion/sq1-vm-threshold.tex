@@ -20,7 +20,7 @@ The formal reliability crossover (success rate falling below 95\,\%) occurs betw
 This is the most practically significant finding of SQ1: the VM degradation is not a \emph{gradual} performance curve but a \emph{discrete transition} from reliable to unreliable operation at three concurrent jobs.
 
 \paragraph{Execution time of surviving jobs stays flat.}
-Successful jobs complete in approximately the same time regardless of concurrency level (65--80\,s across L1--L6, a 22\,\% increase over the full range).
+Successful jobs complete at broadly consistent times at low concurrency (66.7\,s at L1, 67.3\,s at L2), but surviving job times rise significantly as concurrency increases (92.9\,s at L3, 181.6\,s at L4, 92.6\,s at L5, 111.3\,s at L6) as survivors compete for CPU, I/O, and memory with the dying containers.
 This is a selection effect: only containers that successfully acquire their memory allocation complete, and these experience near-normal execution time.
 OOM-killed containers are accounted in the failure rate, not in the execution time metric.
 
