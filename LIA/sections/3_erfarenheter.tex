@@ -1,0 +1,75 @@
+\section{Mina erfarenheter från LIA-perioden}
+\label{sec:erfarenheter}
+
+\subsection*{Från att lära sig verktyg till att ta ansvar}
+
+Under LIA 1 lärde jag mig främst verktygen. Under LIA 2 fick jag i stället ansvar för att
+lösningarna skulle fungera i en riktig miljö. Det gjorde stor skillnad. I skolan kan man ofta
+testa sig fram utan större risk. I produktion påverkar ett fel både teamet och användarna.
+
+Det gjorde att jag började tänka annorlunda. Jag fokuserade inte bara på att få något att fungera
+just nu, utan också på att lösningen skulle vara säker, tydlig och hållbar över tid.
+
+\subsection*{Vad som var svårast och varför}
+
+Det svåraste under perioden var inte att skriva kod eller skapa nya resurser. Det svåraste var
+att förstå \textit{varför} något inte fungerade när fel uppstod. Flera problem såg först enkla ut,
+men bakom dem fanns ofta flera möjliga orsaker. Ett fel i IAM kunde till exempel se ut som ett
+problem i Kubernetes, fast orsaken egentligen låg i Google Cloud.
+
+Här lärde jag mig att felsökning måste vara metodisk. Jag behövde läsa loggar, kontrollera
+behörigheter, testa en ändring i taget och sedan följa resultatet. Den arbetsmetoden gjorde mig
+lugnar i pressade situationer.
+
+\subsection*{Ett val mellan snabb lösning och rätt lösning}
+
+I flera lägen hade jag kunnat välja en snabbare väg. Ett exempel var att ge bredare behörigheter
+till service accounts för att slippa vissa fel. Det hade kanske sparat tid just då, men det hade
+också gjort lösningen mindre säker och svårare att underhålla senare.
+
+Jag valde därför att hålla fast vid en säkrare lösning med tydligare behörigheter. Det tog längre
+tid, men i efterhand tycker jag att det var rätt beslut. Den erfarenheten lärde mig att en snabb
+genväg ofta blir dyrare senare om den skapar teknisk skuld.
+
+\subsection*{Konsekvenserna av driftstopp}
+
+En annan viktig erfarenhet var att jag började se tekniska problem i ett större sammanhang.
+När deployment avbröt pågående jobb var det lätt att först se det som ett rent teknikproblem.
+Men ju mer jag arbetade med det, desto tydligare blev det att problemet också påverkade hur
+pålitligt systemet upplevs av andra.
+
+Om ett schemalagt jobb misslyckas kan data bli försenad eller ofullständig. Då påverkas inte
+bara utvecklarna, utan även de personer som väntar på rapporter och analyser. Det gjorde att
+jag såg driftstabilitet som mer än en teknisk detalj. Det handlar också om kvalitet och
+förtroende.
+
+\subsection*{Vad jag hade gjort annorlunda}
+
+Om jag skulle göra om samma arbete hade jag tidigare byggt ett enklare end-to-end-flöde och
+testat hela kedjan innan jag fördjupade mig i varje del. I början lade jag för mycket tid på att
+göra vissa delar väldigt korrekta innan jag visste att helheten fungerade.
+
+I efterhand ser jag att det hade varit bättre att först få en enkel version att fungera och sedan
+förbättra den steg för steg. Det hade gjort att jag snabbare hade hittat var de största problemen
+fanns.
+
+En viktig del av denna lärdom syns också i mina pull requests. Alla gick inte hela vägen direkt.
+Några stängdes och ersattes av bättre varianter. Tidigare hade jag kanske sett det som ett
+misslyckande, men under LIA 2 började jag se det på ett annat sätt. En stängd pull request kan
+vara ett tecken på att review-processen fungerar. Man provar en väg, får feedback, upptäcker
+brister och bygger sedan en bättre lösning. Det blev särskilt tydligt i arbetet med Helm,
+Workload Identity och deployment-flöden, där de första versionerna hjälpte mig att förstå vad
+som verkligen behövde förbättras.
+
+Det gjorde också att jag fick en mer realistisk bild av professionellt utvecklingsarbete. Målet
+är inte att varje första försök ska vara perfekt. Målet är att ta sig fram till en lösning som är
+stabil, begriplig och bra nog att användas på riktigt.
+
+\subsection*{Kommunikation som en del av arbetet}
+
+Jag lärde mig också att bra kommunikation är en viktig del av tekniskt arbete. Tydliga pull
+requests gjorde det lättare för teamet att förstå vad jag hade ändrat, varför jag gjort det och
+hur lösningen kunde testas. Det sparade tid och gjorde samarbetet bättre.
+
+Den här erfarenheten tog jag med mig vidare under hela perioden. Jag märkte att ju tydligare
+jag skrev, desto enklare blev det för andra att ge feedback och hjälpa mig framåt.

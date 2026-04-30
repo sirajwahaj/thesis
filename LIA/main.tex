@@ -1,0 +1,128 @@
+\documentclass[a4paper,12pt]{scrartcl}
+
+% --- Språk, encoding, typografi ---
+\usepackage[swedish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{array}
+
+% --- Layout ---
+\usepackage[margin=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Hyperlinks (för innehållsförteckning och referenser) ---
+\usepackage[colorlinks=true, linkcolor=InsightBlue, urlcolor=InsightBlue, bookmarksnumbered=true]{hyperref}
+
+% --- Rubriker ---
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+\titlespacing\section{0pt}{18pt}{12pt}
+\titlespacing\subsection{0pt}{14pt}{10pt}
+\titlespacing\subsubsection{0pt}{10pt}{6pt}
+
+% --- Innehållsförteckning ---
+\usepackage{tocloft}
+\setlength{\cftbeforesecskip}{6pt}
+\renewcommand{\cftsecfont}{\normalsize}
+\renewcommand{\cftsecpagefont}{\normalsize}
+\setcounter{tocdepth}{3}
+
+% --- Grafik ---
+\usepackage{graphicx}
+
+% --- Färger ---
+\definecolor{InsightBlue}{HTML}{1F4E79}
+\definecolor{InsightDark}{HTML}{18354F}
+\definecolor{InsightLight}{HTML}{F4F7FA}
+\definecolor{InsightGray}{HTML}{5E6B78}
+\definecolor{TitleSeparator}{HTML}{2D5A96}
+
+% --- Sidhuvud och sidfot ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Dokument ---
+\begin{document}
+
+% ============================
+% TITELSIDA
+% ============================
+\begin{titlepage}
+    \thispagestyle{empty}
+    \pagecolor{white}
+    \color{black}
+
+    % Logo
+    \begin{flushleft}
+        \includegraphics[width=0.22\textwidth]{logo.png}
+    \end{flushleft}
+
+    \vspace*{0.5cm}
+
+    % Huvudtitel
+    {\color{InsightDark}\Huge\bfseries LIA 2-rapport\par}
+    \vspace{0.15cm}
+    {\color{TitleSeparator}\rule{3.5cm}{2.5pt}\par}
+    
+    \vspace{0.5cm}
+
+    % Roll och företag
+    {\Large\bfseries DevOps Engineer\par}
+    {\large\color{InsightGray}Insighta, Inc\par}
+    \vspace{0.8cm}
+
+    % Studentinformation — elegant layout utan box
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \noindent\begin{tabular}{@{}l@{\hspace{0.5cm}}l}
+        \textbf{\color{InsightDark}Student} & Sirajulhaq Wahaj \\
+        \textbf{\color{InsightDark}Utbildning} & DevOps Engineer, JENSEN yrkeshögskola \\
+        \textbf{\color{InsightDark}Period} & Januari -- Maj 2026 \\
+        \textbf{\color{InsightDark}Handledare} & Amir Jaber \\
+    \end{tabular}
+
+    \vfill
+
+    % Tagline och datum
+    {\large\itshape\color{InsightDark} Praktisk erfarenhet av drift, automatisering och molninfrastruktur\par}
+    
+    \vspace{1.2cm}
+
+    {\color{InsightGray}\normalsize Maj 2026\par}
+\end{titlepage}
+
+\thispagestyle{empty}
+\newpage
+
+% ============================
+% INNEHÅLLSFÖRTECKNING
+% ============================
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+\setcounter{page}{1}
+
+% ============================
+% Import av sektioner
+% ============================
+\input{sections/1_inledning}
+\input{sections/2_arbetsuppgifter}
+\input{sections/3_erfarenheter}
+\input{sections/4_framtida_planer}
+\input{sections/5_reflektion}
+\input{sections/6_improvment_knowledge_experience}
+\input{sections/7_slutsatser}
+
+\end{document}
