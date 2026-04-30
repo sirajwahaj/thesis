@@ -1,0 +1,30 @@
+% ============================================================
+%  sections/risks.tex
+% ============================================================
+
+\section{Risks \& Mitigations}
+
+\begin{center}
+\small
+\begin{tabularx}{0.96\textwidth}{l X X}
+  \toprule
+  \textbf{Risk} & \textbf{Description} & \textbf{Mitigation} \\
+  \midrule
+  Prediction miscalibration
+    & A wrong breach date destroys trust. One bad prediction can lose a customer permanently.
+    & Ship confidence intervals, not point estimates. Log every prediction.
+      Surface accuracy retrospectives to users. \\[4pt]
+  Small initial TAM
+    & Dagster is growing but still smaller than Airflow.
+    & Airflow support in v1.1 expands TAM \texttimes{}3 with minimal code change.
+      Architecture is framework-agnostic. \\[4pt]
+  Larger tool adds feature
+    & Monte Carlo or Datadog could add latency trend prediction.
+    & They target enterprise (\$1k+/mo). Runway's moat is price, Dagster-nativeness,
+      and the crossover methodology — hard to replicate without the underlying research. \\[4pt]
+  Over-engineering
+    & Academic instinct to build the full vision before validating.
+    & Strict MVP discipline: no dashboard, no LLM, no billing until 5 paying pilots confirm demand. \\
+  \bottomrule
+\end{tabularx}
+\end{center}

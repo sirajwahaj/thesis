@@ -1,0 +1,42 @@
+% ============================================================
+%  sections/traction.tex
+% ============================================================
+
+\section{Traction \& Validation}
+
+\subsection{Research foundation}
+
+Runway is not a speculative idea. The core methodology is grounded in published
+experimental research:
+
+\begin{callout}
+\textbf{Wahaj, S. (2026).} \textit{When Does Kubernetes Become Worth It? Measuring
+Reliability, Stability, and Execution Overhead in Workflow Orchestration Systems
+Moving from Shared VM to Isolated Kubernetes Execution.}
+JENSEN Yrkeshögskola, DevOps24M programme.
+\end{callout}
+
+Key validated findings from 18 controlled experiments (108 individual pipeline runs):
+
+\begin{itemize}
+  \item VM reliability collapses non-linearly at 3 concurrent jobs (100\% → 66.7\% success rate)
+  \item Kubernetes pod isolation maintains 100\% reliability across all tested concurrency levels
+  \item Container startup overhead is predictable: 4.3s at L1 to 14.9s at L10, growing with concurrency
+  \item The crossover point (VM → K8s migration threshold) is measurable and specific to hardware configuration
+\end{itemize}
+
+\textbf{This experimental dataset is Runway's training ground.} The recommendation rules in
+v0.1 are calibrated against real failure data, not estimates.
+
+\subsection{What validation is needed next}
+
+\begin{enumerate}
+  \item \textbf{5 pilot users} from the Dagster community Slack — confirm the latency trend
+        signal is detectable and useful in real production pipelines.
+  \item \textbf{3 documented predictions} — measure whether the breach date prediction is
+        accurate within the stated confidence interval.
+  \item \textbf{1 case study} — one team that acted on a Runway recommendation and avoided
+        a production failure.
+\end{enumerate}
+
+These three items are achievable within 8 weeks of launch and constitute a fundable traction story.

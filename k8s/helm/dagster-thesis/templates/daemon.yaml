@@ -1,0 +1,108 @@
+---
+# Dagster Daemon — Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster-thesis-daemon
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: dagster-thesis
+    component: daemon
+spec:
+  replicas: {{ .Values.daemon.replicaCount }}
+  selector:
+    matchLabels:
+      app: dagster-thesis
+      component: daemon
+  template:
+    metadata:
+      labels:
+        app: dagster-thesis
+        component: daemon
+    spec:
+      serviceAccountName: dagster-thesis
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Values.dagster.postgresql.host }} {{ .Values.dagster.postgresql.port }}; do
+                echo "Waiting for PostgreSQL..."; sleep 3;
+              done
+      containers:
+        - name: daemon
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dagster-daemon
+            - run
+            - -w
+            - {{ .Values.dagster.dagsterHome }}/workspace.yaml
+          env:
+            - name: DAGSTER_HOME
+              value: {{ .Values.dagster.dagsterHome }}
+          volumeMounts:
+            - name: dagster-home-rw
+              mountPath: {{ .Values.dagster.dagsterHome }}
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/dagster.yaml
+              subPath: dagster.yaml
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/workspace.yaml
+              subPath: workspace.yaml
+          resources:
+            requests:
+              memory: {{ .Values.daemon.resources.requests.memory }}
+              cpu: {{ .Values.daemon.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.daemon.resources.limits.memory }}
+              cpu: {{ .Values.daemon.resources.limits.cpu }}
+      volumes:
+        - name: dagster-home-rw
+          emptyDir: {}
+        - name: dagster-instance
+          configMap:
+            name: dagster-instance
+---
+# RBAC: ServiceAccount for Dagster Daemon
+# (K8sRunLauncher needs permission to create/list/delete Jobs + Pods)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dagster-thesis
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dagster-thesis
+  namespace: {{ .Values.namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dagster-thesis
+  namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dagster-thesis
+subjects:
+  - kind: ServiceAccount
+    name: dagster-thesis
+    namespace: {{ .Values.namespace }}

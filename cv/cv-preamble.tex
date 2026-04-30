@@ -1,0 +1,65 @@
+% ============================================================
+%  PREAMBLE — shared across the entire CV
+%  Edit colours, fonts, and spacing here only.
+%  Every section file inherits these definitions automatically.
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[left=1.6cm,right=1.6cm,top=1.4cm,bottom=1.4cm]{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{fontawesome5}
+\usepackage{parskip}
+
+% ── Colours (change once, affects everything) ────────────────
+\definecolor{accent}{HTML}{1A5276}
+\definecolor{mid}{HTML}{2E86C1}
+\definecolor{soft}{HTML}{555555}
+\definecolor{pill}{HTML}{EAF4FB}
+\definecolor{pillborder}{HTML}{AED6F1}
+
+% ── Font ─────────────────────────────────────────────────────
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Hyperlinks ───────────────────────────────────────────────
+\hypersetup{colorlinks, urlcolor=mid, linkcolor=mid}
+
+% ── Section style ────────────────────────────────────────────
+\newcommand{\sectionrule}{%
+  \vspace{-4pt}\textcolor{accent}{\rule{\linewidth}{0.6pt}}\vspace{2pt}%
+}
+\titleformat{\section}
+  {\normalsize\bfseries\color{accent}}
+  {}{0em}{\MakeUppercase}
+  [\sectionrule]
+\titlespacing{\section}{0pt}{7pt}{4pt}
+
+% ── List style ───────────────────────────────────────────────
+\setlist[itemize]{
+  leftmargin=1.1em, itemsep=1.5pt, parsep=0pt, topsep=2pt,
+  label={\small\textcolor{mid}{\textbullet}}
+}
+
+% ── Reusable commands ────────────────────────────────────────
+
+% \role{Job Title}{Company · Location}{Date Range}
+\newcommand{\role}[3]{%
+  \noindent\textbf{\color{accent}#1}\hfill\textit{\small\color{soft}#3}\\[-2pt]
+  {\small\color{soft}#2}\vspace{2pt}%
+}
+
+% \pill{Label} — coloured tag used in skills table
+\newcommand{\pill}[1]{%
+  \fcolorbox{pillborder}{pill}{\footnotesize\color{accent}\strut\,#1\,}%
+}
+
+% \project{Title}{Tech Stack}{Description}
+\newcommand{\project}[3]{%
+  \noindent\textbf{\color{accent}#1}\hfill{\small\textit{#2}}\\[2pt]
+  {\small\color{soft}#3}%
+}
