@@ -57,7 +57,7 @@ NEW_FUNC = (
     "    if 'concurrency_level' in df.columns:\n"
     "        df['concurrency_level'] = pd.to_numeric(df['concurrency_level'], errors='coerce')\n"
     "    else:\n"
-    "        df['concurrency_level'] = float('nan')\n"
+    "        df['concurrency_level'] = np.nan\n"
     "    # Best-effort status join; rows without a match are treated as SUCCESS\n"
     "    if not runs_df.empty and 'run_id' in runs_df.columns:\n"
     "        status_map = runs_df[['run_id', 'status']].drop_duplicates('run_id')\n"
