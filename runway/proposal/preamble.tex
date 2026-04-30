@@ -1,0 +1,119 @@
+% ============================================================
+%  Runway — Business Proposal Preamble
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[left=2.2cm,right=2.2cm,top=2.0cm,bottom=2.0cm]{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{mdframed}
+\usepackage{multicol}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% ── Brand colours ────────────────────────────────────────────
+\definecolor{primary}{HTML}{0F3460}      % deep navy
+\definecolor{accent}{HTML}{E94560}       % alert red  
+\definecolor{highlight}{HTML}{16213E}    % dark
+\definecolor{soft}{HTML}{6C757D}         % grey text
+\definecolor{lightbg}{HTML}{F8F9FA}      % light background
+\definecolor{success}{HTML}{198754}      % green
+\definecolor{warning}{HTML}{FFC107}      % amber
+\definecolor{border}{HTML}{DEE2E6}       % light border
+\definecolor{tagbg}{HTML}{EFF6FF}        % tag background
+\definecolor{tagfg}{HTML}{1E40AF}        % tag text
+
+% ── Font ─────────────────────────────────────────────────────
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Hyperlinks ───────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  urlcolor=accent,
+  linkcolor=primary,
+  pdftitle={Runway — Product Proposal},
+  pdfauthor={Sirajulhaq Wahaj}
+}
+
+% ── Page style ───────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{soft}{Runway — Product Proposal}}
+\fancyhead[R]{\small\textcolor{soft}{Confidential · April 2026}}
+\fancyfoot[C]{\small\textcolor{soft}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{border}\leaders\hrule height \headrulewidth\hfill}}
+
+% ── Section style ────────────────────────────────────────────
+\titleformat{\section}
+  {\large\bfseries\color{primary}}
+  {}{0em}{}
+  [\vspace{-4pt}\textcolor{accent}{\rule{\linewidth}{1.5pt}}\vspace{4pt}]
+\titlespacing{\section}{0pt}{14pt}{6pt}
+
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{highlight}}
+  {}{0em}{}
+\titlespacing{\subsection}{0pt}{8pt}{3pt}
+
+% ── List style ───────────────────────────────────────────────
+\setlist[itemize]{
+  leftmargin=1.2em, itemsep=2pt, parsep=0pt, topsep=2pt,
+  label={\small\textcolor{accent}{$\bullet$}}
+}
+\setlist[enumerate]{
+  leftmargin=1.4em, itemsep=2pt, parsep=0pt, topsep=2pt
+}
+
+% ── Callout box ──────────────────────────────────────────────
+\newtcolorbox{callout}[1][]{
+  colback=lightbg, colframe=primary,
+  boxrule=0.5pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fontupper=\small,
+  #1
+}
+
+% ── Insight box (red accent) ─────────────────────────────────
+\newtcolorbox{insight}[1][]{
+  colback=white, colframe=accent,
+  boxrule=1.5pt, arc=4pt,
+  leftrule=4pt, rightrule=0pt, toprule=0pt, bottomrule=0pt,
+  left=10pt, right=6pt, top=4pt, bottom=4pt,
+  #1
+}
+
+% ── Metric card ──────────────────────────────────────────────
+\newcommand{\metriccard}[3]{%
+  \begin{tcolorbox}[
+    colback=tagbg, colframe=border,
+    boxrule=0.4pt, arc=6pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    width=\linewidth
+  ]
+  {\large\bfseries\color{primary}#1}\\[2pt]
+  {\small\bfseries\color{highlight}#2}\\[1pt]
+  {\footnotesize\color{soft}#3}
+  \end{tcolorbox}%
+}
+
+% ── Tag ──────────────────────────────────────────────────────
+\newcommand{\tag}[1]{%
+  \fcolorbox{border}{tagbg}{\footnotesize\color{tagfg}\strut\,#1\,}%
+}
+
+% ── Competitor row ───────────────────────────────────────────
+\newcommand{\comprow}[3]{#1 & #2 & #3 \\}

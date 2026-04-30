@@ -74,7 +74,7 @@ SQ1 (VM breaks at level X)
 | # | Deliverable | Effort | Week |
 |---|-------------|--------|------|
 | 1 | Proposal (ch 1–3 draft) finalized and sent to supervisor | Medium | W1 |
-| 2 | VM environment set up (UTM, Ansible, Dagster, Docker CE, PostgreSQL) | Small | W1 |
+| 2 | VM environment set up (Multipass, Ansible, Docker CE, PostgreSQL) | Small | W1 |
 | 3 | Kind cluster set up (matched resources) | Small | W1 |
 | 4 | Workload job implemented + smoke-tested on both envs | Small | W1 |
 | 5 | Experiment 1 executed — VM degradation (6 levels × 3 reps) | Medium | W2 |
@@ -111,8 +111,8 @@ SQ1 (VM breaks at level X)
 | Mon | Finalize ch 1 (Introduction): add internship context to background, clean RQs, update delimitations | `docs/chapters/01-introduction/*.tex` |
 | Tue | Finalize ch 2 (Literature Review): verify all 3 pillars use real citations, check positioning | `docs/chapters/02-literature-review/*.tex` |
 | Wed | Finalize ch 3 (Method): fix tools list, verify experiment protocols, update infrastructure specs | `docs/chapters/03-method/*.tex` |
-| Thu | Set up VM (THESIS-001): UTM + Ansible provision, Python 3.13, Dagster 1.12.22, Docker CE, PostgreSQL 16. Verify single job runs as Docker container. | VM ready |
-| Fri | Set up Kind (THESIS-002): Kind cluster, metrics-server, Helm Dagster. Match 4 vCPU / 8 GB. | K8s ready |
+| Thu | Set up VM (THESIS-001): Multipass + Ansible provision, Docker CE, PostgreSQL 16. Verify single job runs as Docker container. | VM ready |
+| Fri | Set up Kind (THESIS-002): Kind cluster, metrics-server, Helm Dagster. 4 vCPU / 8 GB node. | K8s ready |
 | Sat | Implement workload job (THESIS-003): CPU-bound SHA-256 hashing, 30s target. Build Docker image. | `src/workload/` |
 | Sun | Smoke test both environments. Dry run data collection scripts. Buffer day. | Both envs verified |
 
@@ -162,13 +162,13 @@ SQ1 (VM breaks at level X)
 
 | Variable | Value | Why |
 |----------|-------|-----|
-| VM resources | 4 vCPU, 8 GB RAM (UTM) | Match K8s node |
-| K8s node resources | 4 vCPU, 8 GB RAM (Kind) | Match VM |
+| VM resources | 4 vCPU, 4 GB RAM (Multipass) | Constrained host — triggers OOM at L3+ |
+| K8s node resources | 4 vCPU, 8 GB RAM (Kind) | Per-pod 2 GiB limits prevent cross-job interference |
 | Host OS | macOS (shared physical host) | Both envs on same hardware |
 | Guest OS | Ubuntu 22.04 | Same on both |
 | Dagster version | 1.12.22 | Pinned |
 | PostgreSQL version | 16 | Pinned |
-| Python version | 3.12 | Pinned |
+| Python version | 3.13 | Pinned |
 | Workload | CPU-bound SHA-256, ~30 seconds | Deterministic, CPU-only |
 | Repetitions | 3 per level | Statistical minimum |
 | Cool-down | 60 seconds between runs | Let system stabilize |
@@ -328,8 +328,8 @@ convince the supervisor that the study is feasible and well-designed.
 | Section | File | Key Content |
 |---------|------|-------------|
 | 3.1 Research Design | `research-design.tex` | Quantitative, experimental, controlled comparison. |
-| 3.2 Infrastructure | `infrastructure.tex` | VM (UTM + DockerRunLauncher) + K8s (Kind) specs. Why matched resources. Why local-first. |
-| 3.3 Tools | `tools.tex` | Dagster, UTM/Ansible, Kind, podman (macOS) / Docker CE (VM), Helm, kubectl, psutil, pandas, matplotlib, scipy. |
+| 3.2 Infrastructure | `infrastructure.tex` | VM (Multipass + DockerRunLauncher) + K8s (Kind) specs. Why matched resources. Why local-first. |
+| 3.3 Tools | `tools.tex` | Dagster, Multipass/Ansible, Kind, Docker CE (VM), Helm, kubectl, psutil, pandas, matplotlib, scipy. |
 | 3.4 Definitions | `definitions.tex` | Formal definitions: concurrency level, reliability, stability, overhead, crossover point. |
 | 3.5 Workloads | `workloads.tex` | SHA-256 CPU-bound job. 6 levels (1,2,3,5,7,10). Why deterministic. |
 | 3.6 Test Harness | `test-harness.tex` | Python + Dagster GraphQL API. Concurrent submission. Automated CSV export. |

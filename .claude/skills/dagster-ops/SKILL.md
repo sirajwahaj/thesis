@@ -122,7 +122,7 @@ dagster:
 resources:
   limits:
     cpu: "1000m"    # 1 vCPU per run — do not change (calibrated for comparison)
-    memory: "1Gi"   # 1 GiB per run — do not change
+    memory: "2Gi"   # 2 GiB per run — do not change (400 MB workload + ~500–600 MB Python/Dagster overhead)
 ```
 
 These resource limits are set to match the VM's per-process allocation and must not be changed.

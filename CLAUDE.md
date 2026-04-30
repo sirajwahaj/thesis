@@ -140,15 +140,14 @@ thesis/
 
 | Component | Spec |
 |-----------|------|
-| VM (primary) | UTM (macOS) or VirtualBox (Windows) · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
-| VM (alternative) | Multipass — see `docs/multipass-alternative.md` |
-| K8s | Kind (single-node, local) · same host · matched resource limits |
+| VM | Multipass · Ubuntu 22.04 · 4 vCPU · **4 GB RAM** |
+| K8s | Kind (single-node, local) · same host · **8 GB node RAM** |
 | Orchestrator | Dagster 1.12.22 |
-| VM executor | DockerRunLauncher (Docker CE on VM) |
-| K8s executor | K8sRunLauncher (via Helm) |
+| VM executor | DockerRunLauncher (Docker CE on VM) · 2 GB per-container limit |
+| K8s executor | K8sRunLauncher (via Helm) · 2 GiB per-pod memory limit |
 | Database | PostgreSQL 16 |
 | Python | 3.13 |
-| Workload | CPU-bound SHA-256 hashing, ~30 seconds per job |
+| Workload | Two-phase CPU-bound SHA-256 + 400 MB memory, ~60 s per job |
 
 ## Conventions
 
@@ -206,7 +205,7 @@ make issues           # Create/update GitHub issues from markdown
 
 The benchmarking environment is now **fully automated** with cross-platform support:
 
-- **Primary VM path:** UTM (macOS) / VirtualBox (Windows) — provisioned by Ansible
+- **Primary VM path:** Multipass — provisioned by Ansible
 - **K8s path:** Kind cluster with Metrics Server + Dagster Helm chart
 - **Multipass:** Documented as lightweight alternative in `docs/multipass-alternative.md`
 
@@ -216,9 +215,9 @@ The benchmarking environment is now **fully automated** with cross-platform supp
 |------|---------|
 | `scripts/bootstrap.sh` | macOS entry point — detects OS, installs deps |
 | `scripts/bootstrap.ps1` | Windows entry point |
-| `scripts/setup-macos.sh` | Homebrew + podman machine + UTM |
+| `scripts/setup-macos.sh` | Homebrew + podman machine + Multipass |
 | `scripts/setup-windows.ps1` | Chocolatey + VirtualBox |
-| `scripts/create-vm-macos.sh` | UTM VM creation guide + SSH setup |
+| `scripts/create-vm-macos.sh` | Multipass VM creation + SSH setup |
 | `scripts/create-vm-windows.ps1` | VirtualBox VM creation |
 | `scripts/provision-vm.sh` | Generates inventory + runs Ansible playbook |
 | `scripts/kind-config.yaml` | Kind cluster configuration |
@@ -226,12 +225,12 @@ The benchmarking environment is now **fully automated** with cross-platform supp
 | `scripts/deploy-metrics-server.sh` | Helm-based Metrics Server |
 | `scripts/deploy-dagster-k8s.sh` | Build image + Helm deploy Dagster on K8s |
 | `scripts/validate-experiment-setup.sh` | Pre-flight checks for all 3 systems |
-| `ansible/playbooks/provision-vm.yml` | VM provisioning (Python, PG, Dagster) |
-| `ansible/roles/*/tasks/main.yml` | Ansible roles: python312, postgresql16, dagster, workload |
+| `ansible/playbooks/provision-vm.yml` | VM provisioning (Docker CE) |
+| `ansible/roles/*/tasks/main.yml` | Ansible roles: docker |
 | `k8s/helm/dagster-thesis/` | Helm chart: Chart.yaml, values.yaml, templates/ |
 | `docs/setup.md` | macOS setup guide |
 | `docs/setup-windows.md` | Windows setup guide |
-| `docs/multipass-alternative.md` | Multipass lightweight alternative |
+| `docs/multipass-alternative.md` | Multipass VM setup guide |
 | `docs/architecture.md` | System architecture + design decisions |
 
 ## Tickets

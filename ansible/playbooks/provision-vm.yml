@@ -2,7 +2,7 @@
 # =============================================================================
 # Thesis VM Provisioning Playbook
 #
-# Provisions a fresh Ubuntu 26.04 VM with Docker CE and Docker Compose plugin.
+# Provisions a fresh Ubuntu 22.04 VM with Docker CE and Docker Compose plugin.
 # All thesis applications (Dagster, PostgreSQL, workload) run as Docker
 # containers — nothing is installed on the VM host beyond Docker.
 #
@@ -18,12 +18,12 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Verify Ubuntu 26.04
+    - name: Verify Ubuntu 22.04
       ansible.builtin.assert:
         that:
           - ansible_distribution == "Ubuntu"
-          - ansible_distribution_major_version | int >= 26
-        fail_msg: "This playbook requires Ubuntu 26.0 or later"
+          - ansible_distribution_major_version | int >= 22
+        fail_msg: "This playbook requires Ubuntu 22.04 or later"
 
     - name: Allow apt to tolerate clock skew (Multipass VMs start with drift)
       ansible.builtin.copy:

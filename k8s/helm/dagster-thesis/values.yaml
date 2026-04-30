@@ -7,15 +7,11 @@
 # Image: built locally via 'make build' and loaded into Kind via
 #        'make k8s-deploy-dagster' (tag: localhost:5001/thesis-workload:latest)
 #
-# Resource limits are matched to the VM baseline (4 vCPU / 4 GB RAM shared)
-# to ensure fair cross-environment comparison.
-#
-# NOTE: Run pod memory limit is 1Gi. The memory_pressure workload op allocates
-# 400MB per job; with Python/Dagster overhead (~200-250MB), total peak is ~600-
-# 650MB, requiring at least 1Gi headroom. At L10 (10 concurrent pods × 1Gi =
-# 10Gi), node-level memory pressure may occur, which is the intended behaviour
-# for testing K8s isolation (SQ2). Pod-level blast radius containment is tested
-# in Exp2B via deliberate failure injection.
+# Resource limits: VM baseline = 4 vCPU / 4 GB RAM (Multipass).
+# K8s node = 4 vCPU / 8 GB RAM (Kind). Run pod memory limit is 2Gi:
+# 400MB workload buffer + ~500–600 MB Python/Dagster overhead = ~1 GB peak;
+# 2Gi provides safe headroom. At L10 (10 concurrent pods × ~1 GB each = ~10 GB),
+# node-level pressure may increase execution time — intended K8s isolation test (SQ2).
 # =============================================================================
 
 # ── Image ──────────────────────────────────────────────────────────────────

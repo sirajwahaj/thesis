@@ -7,8 +7,8 @@
 #          then runs the Docker-only Ansible playbook.
 #
 #          RAM is intentionally set to 4 GB to create realistic memory pressure:
-#          the memory_pressure workload op allocates 400 MB per job, so 7+
-#          concurrent jobs (L5/L6) will exhaust available memory and trigger
+#          the memory_pressure workload op allocates 400 MB per job, so 3+
+#          concurrent jobs (L3+) will exhaust available memory and trigger
 #          OOM kills — the primary failure mode being tested.
 #
 # Windows → prints Vagrant instructions (run vagrant up from infrastructure/).
@@ -19,7 +19,7 @@
 # Environment:
 #   VM_NAME   (default: thesis-vm)
 #   VM_CPUS   (default: 4)
-#   VM_MEM    (default: 4G)   ← 4 GB to trigger OOM at L5/L6
+#   VM_MEM    (default: 4G)   ← 4 GB to trigger OOM at L3+ (3+ concurrent × 400 MB each)
 #   VM_DISK   (default: 20G)
 # =============================================================================
 set -euo pipefail
@@ -115,13 +115,13 @@ if multipass info "$VM_NAME" &>/dev/null 2>&1; then
         echo "[OK] VM started"
     fi
 else
-    echo "-> Creating VM '$VM_NAME' (${VM_CPUS} vCPU / ${VM_MEM} RAM / ${VM_DISK} disk, Ubuntu 26.04) [4GB RAM = OOM trigger at L5/L6]..."
+    echo "-> Creating VM '$VM_NAME' (${VM_CPUS} vCPU / ${VM_MEM} RAM / ${VM_DISK} disk, Ubuntu 22.04) [4GB RAM = OOM trigger at L3+]..."
     multipass launch \
         --name "$VM_NAME" \
         --cpus "$VM_CPUS" \
         --memory "$VM_MEM" \
         --disk "$VM_DISK" \
-        26.04
+        22.04
     echo "[OK] VM created"
 fi
 

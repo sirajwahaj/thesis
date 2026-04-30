@@ -394,7 +394,7 @@ validate: validate-build validate-compose
 	@echo "  [OK] PostgreSQL backend ready"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Provision VM: make vm-provision (requires UTM VM running)"
+	@echo "  1. Provision VM: make vm-provision (requires Multipass VM running)"
 	@echo "  2. Set up K8s: make k8s-setup"
 	@echo "  3. Run experiments: make experiments"
 	@echo ""

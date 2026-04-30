@@ -2,7 +2,8 @@
 # Kind Cluster Configuration — thesis-benchmarking
 #
 # Single-node Kind cluster for thesis Kubernetes experiments.
-# Matches the VM resource profile: 4 vCPU, 8 GB RAM.
+# VM baseline: 4 vCPU, 4 GB RAM (Multipass).
+# Kind node: 4 vCPU, 8 GB RAM (matches thesis Table 3.1).
 #
 # Notable settings:
 #   - containerdConfigPatches: allows pushing images from local podman registry

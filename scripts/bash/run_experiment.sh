@@ -22,7 +22,7 @@ CUSTOM_LEVELS=""
 REPETITIONS=3
 COOLDOWN=60        # seconds between batches
   WORKLOAD_SECS=60   # total job duration: 30s cpu_burn + 30s memory_pressure
-DEFAULT_LEVELS="1 2 3 5 7 10"  # L1=1, L2=2, L3=3, L4=5, L5=7, L6=10 (locked)
+DEFAULT_LEVELS="1 2 3 5 7 10"  # L1=1, L2=2, L3=3, L5=5, L7=7, L10=10 (locked — non-contiguous to focus on inflection points)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SCRIPTS_DIR="$REPO_ROOT/scripts"

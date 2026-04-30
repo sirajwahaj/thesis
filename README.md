@@ -148,7 +148,7 @@ thesis/
 
 | Component | Spec |
 |---|---|
-| VM | Multipass · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
+| VM | Multipass · Ubuntu 22.04 · 4 vCPU · 4 GB RAM |
 | Kubernetes | Kind (local) · same host · matched resource limits |
 | Orchestrator | Dagster 1.12.22 |
 | VM executor | `ProcessExecutor` |

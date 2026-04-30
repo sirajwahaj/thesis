@@ -73,7 +73,7 @@ SQ1 (VM degrades at level X) + SQ2 (K8s isolates failures) + SQ3 (K8s overhead Y
 | Python | 3.13+ | `requires-python = ">=3.13"` |
 | Package manager | `uv` only | No pip install directly — use `uv add` or pyproject.toml |
 | Orchestration | Dagster 1.12.22 | Do not upgrade mid-experiment |
-| VM hypervisor | UTM (macOS) / VirtualBox (Windows) | See docs/setup.md |
+| VM hypervisor | Multipass | See docs/setup.md |
 | VM provisioner | Ansible | `ansible/playbooks/provision-vm.yml` |
 | Container runtime | podman (macOS local) / Docker Desktop (Windows) | Compose via podman-compose |
 | Kubernetes | Kind single-node cluster named `thesis` | No autoscaling, no multi-node |
@@ -111,15 +111,14 @@ Changes to any stage must propagate to all stages downstream.
 
 | Component | Spec |
 |-----------|------|
-| VM (primary) | UTM (macOS) or VirtualBox (Windows) · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
-| VM (alternative) | Multipass — see docs/multipass-alternative.md |
-| K8s | Kind single-node · same host · matched resource limits |
+| VM | Multipass · Ubuntu 22.04 · 4 vCPU · **4 GB RAM** |
+| K8s | Kind single-node · same host · **8 GB node RAM** |
 | Orchestrator | Dagster 1.12.22 |
-| VM executor | DockerRunLauncher (Docker CE on VM) |
-| K8s executor | K8sRunLauncher (via Helm) |
+| VM executor | DockerRunLauncher (Docker CE on VM) · 2 GB per-container limit |
+| K8s executor | K8sRunLauncher (via Helm) · 2 GiB per-pod memory limit |
 | Database | PostgreSQL 16 |
 | Python | 3.13+ |
-| Workload | CPU-bound SHA-256 hashing, ~30 seconds per job |
+| Workload | Two-phase CPU-bound SHA-256 + 400 MB memory, ~60 s per job |
 
 ---
 

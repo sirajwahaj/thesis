@@ -15,7 +15,7 @@ Violating them invalidates comparability between VM and K8s results.
 | Workload algorithm | SHA-256 `hashlib.sha256(b"dagster-thesis-workload").hexdigest()` | `cpu_burn()` loop |
 | Dagster version | 1.12.22 | `src/pyproject.toml` |
 | Python version | >=3.13 | `src/pyproject.toml`, `src/Containerfile` |
-| Concurrency levels | L1=1, L2=2, L3=3, L4=5, L5=7, L6=10 | `scripts/run_experiment.sh` `DEFAULT_LEVELS` |
+| Concurrency levels | L1=1, L2=2, L3=3, L5=5, L7=7, L10=10 | `scripts/run_experiment.sh` `DEFAULT_LEVELS` |
 | Repetitions per level | 3 | `scripts/run_experiment.sh` `REPETITIONS` |
 | Cooldown between reps | ≥ 60 seconds | `scripts/run_experiment.sh` `COOLDOWN` |
 | Research questions | RQ, SQ1, SQ2, SQ3, SQ4 | `docs/chapters/01-introduction/` |

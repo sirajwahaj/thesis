@@ -5,7 +5,7 @@
 # Requires: kubectl, metrics-server deployed in the cluster.
 #
 # Also captures OOMKill events from pod status: when a pod is OOMKilled
-# (container exceeds 600Mi memory limit), it appears as a Terminated/OOMKilled
+# (container exceeds 2 GiB per-pod memory limit), it appears as a Terminated/OOMKilled
 # reason in 'kubectl get pods'. This is written to a separate oom_events.csv.
 #
 # Contribution to RQ: Provides SQ2 and SQ3 data.

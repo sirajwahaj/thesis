@@ -14,7 +14,7 @@ Your job is to ensure the VM and K8s environments are running and ready for expe
 | Component | Spec | Access |
 |-----------|------|--------|
 | macOS host | M-series (ARM64) | local |
-| UTM VM | Ubuntu 22.04, 4 vCPU, 8 GB RAM | `ssh -i ~/.ssh/thesis_vm ubuntu@$(cat vm-ip.txt)` |
+| Multipass VM | Ubuntu 22.04, 4 vCPU, 4 GB RAM | `ssh -i ~/.ssh/thesis_vm ubuntu@$(cat vm-ip.txt)` |
 | Kind cluster | single-node, named `thesis` | `kubectl` (context: `kind-thesis`) |
 | Container runtime | podman (macOS, not Docker) | `podman` or via `DOCKER_HOST` |
 | Local registry | localhost:5001 | `podman push localhost:5001/...` |
@@ -35,7 +35,7 @@ Your job is to ensure the VM and K8s environments are running and ready for expe
 
 - **Never bypass Ansible** for VM configuration — all VM config goes through `make vm-provision`
 - **Never apply raw `kubectl` manifests** — all K8s config goes through Helm chart `k8s/helm/dagster-thesis/`
-- **Never change resource limits** (4 vCPU/8 GB VM, 1 vCPU/1Gi per K8s run) — calibrated for experiment comparability
+- **Never change resource limits** (4 vCPU/4 GB VM, 1 vCPU/2Gi per K8s run) — calibrated for experiment comparability
 - **Never create a second Kind cluster** or add nodes — single-node `thesis` cluster only
 - **Never run `make k8s-destroy`** without explicit user confirmation
 
@@ -92,7 +92,7 @@ helm status dagster-thesis -n dagster
 
 | Problem | Fix |
 |---------|-----|
-| VM IP changed (UTM reboot) | `cat vm-ip.txt` — if wrong, update it; re-run `make vm-provision` is NOT needed unless provisioning broke |
+| VM IP changed (Multipass reboot) | `cat vm-ip.txt` — if wrong, update it; re-run `make vm-provision` is NOT needed unless provisioning broke |
 | K8s Dagster pods CrashLoop | `kubectl logs <pod> -n dagster` first; usually PostgreSQL not ready → wait 60s and check again |
 | Image not found (ImagePullBackOff) | `make k8s-deploy-dagster` to rebuild and push |
 | Metrics Server not working | `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml` then patch with `--kubelet-insecure-tls` |
@@ -106,7 +106,7 @@ These are calibrated so VM and K8s results are comparable:
 | Resource | VM (DockerRunLauncher — per container) | K8s (per pod) |
 |----------|---------------------------------------|---------------|
 | CPU | 4 vCPU total VM; 1 vCPU per Docker container (nano_cpus) | 1 vCPU limit per run pod |
-| Memory | 8 GB total VM; 1 GiB per Docker container (mem_limit) | 1 GiB limit per run pod |
+| Memory | 4 GB total VM; 2 GiB per Docker container (mem_limit) | 2 GiB limit per run pod |
 | Concurrency cap | Docker daemon schedules containers | Multiple pods, each capped at 1 vCPU |
 
 The resource asymmetry is intentional — it reflects the real-world difference between a shared VM and isolated K8s pods.

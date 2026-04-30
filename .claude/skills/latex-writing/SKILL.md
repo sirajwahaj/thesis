@@ -63,12 +63,12 @@ Values come from `data/processed/*.csv`. Do not hardcode — use a placeholder u
     \toprule
     Level & Jobs & Success (\%) & Mean Time (s) & Std Dev (s) & CPU (\%) & Mem (\%) \\
     \midrule
-    L1 & 1  & 100.0 & -- & -- & -- & -- \\
-    L2 & 2  & 100.0 & -- & -- & -- & -- \\
-    L3 & 3  & --    & -- & -- & -- & -- \\
-    L4 & 5  & --    & -- & -- & -- & -- \\
-    L5 & 7  & --    & -- & -- & -- & -- \\
-    L6 & 10 & --    & -- & -- & -- & -- \\
+    L1  & 1  & 100.0 & -- & -- & -- & -- \\
+    L2  & 2  & 100.0 & -- & -- & -- & -- \\
+    L3  & 3  & --    & -- & -- & -- & -- \\
+    L5  & 5  & --    & -- & -- & -- & -- \\
+    L7  & 7  & --    & -- & -- & -- & -- \\
+    L10 & 10 & --    & -- & -- & -- & -- \\
     \bottomrule
   \end{tabular}
 \end{table}

@@ -43,7 +43,7 @@
 # Local Overrides
 
 ## My VM
-- IP: 192.168.64.5   (your actual UTM VM IP)
+- IP: 192.168.64.5   (your actual Multipass VM IP)
 - SSH key: ~/.ssh/thesis_vm
 
 ## Paths
@@ -556,7 +556,7 @@ You are an infrastructure specialist for the thesis benchmarking environment.
 
 ## Your environment
 - macOS M2 host
-- UTM VM: Ubuntu 22.04, 4 vCPU, 8 GB RAM, IP in vm-ip.txt
+- Multipass VM: Ubuntu 22.04, 4 vCPU, 4 GB RAM, IP in vm-ip.txt
 - Kind K8s cluster: named 'thesis', single-node
 - Container runtime: podman (not Docker)
 - Package manager for VM config: Ansible only (never manual apt install)
@@ -571,7 +571,7 @@ You are an infrastructure specialist for the thesis benchmarking environment.
 ## Your constraints
 - Never bypass Ansible for VM configuration (no manual `sudo apt install` on VM)
 - Never apply raw `kubectl` manifests — use Helm chart `k8s/helm/dagster-thesis/`
-- Never change resource limits (4 vCPU, 8 GB) — they are calibrated for experiment comparability
+- Never change resource limits (4 vCPU, 4 GB VM / 8 GB Kind node) — they are calibrated for experiment comparability
 - Never create a second Kind cluster or add nodes — single-node thesis cluster only
 
 ## Debugging priority

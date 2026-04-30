@@ -33,7 +33,7 @@ Both environments run on the same physical machine (or equivalent hardware) with
    helm                helm
    ansible             kind
    multipass           python312
-   python@3.12         ansible (via pip)
+   python@3.13         ansible (via pip)
         │               │
         ▼               ▼
    (Multipass + Ubuntu 22.04) (VirtualBox + Ubuntu x86-64 ISO)
@@ -57,20 +57,15 @@ Both environments run on the same physical machine (or equivalent hardware) with
    ansible-playbook provision-vm.yml
                 │
        ┌────────┴──────────────────────────┐
-       │                                   │
-  roles/python312              roles/postgresql16
-  - Python 3.13 (deadsnakes)   - PostgreSQL 16 (PGDG)
-  - venv at /opt/thesis/venv   - dagster role + database
        │
-  roles/dagster
-  - Dagster 1.12.22 (pip)
-  - dagster.yaml + workspace.yaml
-  - DAGSTER_HOME = /opt/thesis/dagster_home
+  roles/docker
+  - Docker CE (Ubuntu package)
+  - Docker Compose plugin
+  - ubuntu user added to docker group
        │
-  roles/workload
-  - Copy workload source to /opt/thesis/workload/
-  - systemd service: thesis-workload.service
-  - dagster api grpc -h 0.0.0.0 -p 4000 -m workload
+  All Dagster services run as Docker containers (docker-compose)
+  - webserver, daemon, PostgreSQL, gRPC workload server
+  - DockerRunLauncher spawns each job as isolated Docker container
 ```
 
 **Experiment flow on VM:**

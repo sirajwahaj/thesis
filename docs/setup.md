@@ -53,31 +53,22 @@ This runs `scripts/bootstrap.sh`, which:
 
 1. Detects macOS and routes to `scripts/setup-macos.sh`
 2. Installs Homebrew (if not present)
-3. Installs: `podman`, `kind`, `kubectl`, `helm`, `ansible`, `python@3.12`, `utm`
+3. Installs: `podman`, `kind`, `kubectl`, `helm`, `ansible`, `python@3.13`, `multipass`
 4. Creates a podman machine named `thesis` with 4 vCPU, 4 GB RAM
 5. Configures `DOCKER_HOST` in `~/.zshrc` for docker-compose compatibility
 6. Creates `data/` directory structure
-7. Guides you through creating the Ubuntu VM in UTM
+7. Provisions the Ubuntu VM via Multipass
 
-#### First-Time UTM VM Setup
+#### First-Time Multipass VM Setup
 
-When you run `make bootstrap` for the first time, you'll be prompted to create the VM manually (one-time only).
+When you run `make vm-up`, it creates the VM automatically:
 
-**Download the ISO:**
-- **Apple Silicon (M1/M2/M3):** [Ubuntu 22.04 ARM64 Server ISO](https://cdimage.ubuntu.com/releases/22.04/release/ubuntu-22.04.5-live-server-arm64.iso) (~1.2 GB)
-- **Intel Mac:** [Ubuntu 22.04 AMD64 Server ISO](https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd64.iso) (~1.5 GB)
+```bash
+make vm-up   # Creates thesis-vm via Multipass (Ubuntu 22.04, 4 vCPU, 4 GB RAM)
+```
 
-**Create VM in UTM:**
-1. Open UTM → `+` → `Virtualise`
-2. Settings:
-   - OS: Linux
-   - Boot ISO Image: the downloaded ISO
-   - CPU: 4 cores
-   - Memory: **4096 MB** (4 GB — intentionally constrained to trigger OOM at L5+)
-   - Storage: 60 GB
-   - Network: Shared Network
-3. Start VM → Complete Ubuntu installer:
-   - Username: `ubuntu` / Password: `ubuntu`
+- **4 vCPU / 4 GB RAM** — intentionally constrained to trigger OOM at L3+
+  (3+ concurrent jobs × 400 MB each = ≥ 1.2 GB + infrastructure overhead ≈ 3–4 GB total)
    - Hostname: `thesis-vm`
    - Enable OpenSSH server: **YES**
 4. After first boot, add your SSH key:
@@ -199,10 +190,10 @@ systemctl status thesis-workload  # Should show: active (running)
 **Symptom:** `make bootstrap` fails with "Cannot reach VM" after entering IP.
 
 **Fixes:**
-1. Ensure UTM VM is running (green circle in UTM)
-2. Check OpenSSH is installed: In UTM console, run `systemctl status ssh`
+1. Ensure Multipass VM is running: `multipass info thesis-vm`
+2. Check OpenSSH is installed: In VM console, run `systemctl status ssh`
 3. Verify SSH key was added to `~/.ssh/authorized_keys` on the VM
-4. Check IP is correct: `ip addr show` inside VM
+4. Check IP is correct: `multipass info thesis-vm | grep IPv4`
 
 ### podman machine Not Starting
 

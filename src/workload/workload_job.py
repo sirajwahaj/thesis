@@ -46,8 +46,9 @@ def memory_pressure(context, cpu_result: dict) -> dict:
     """Allocate WORKLOAD_MEMORY_MB of RAM and hash it for WORKLOAD_DURATION_SECONDS.
 
     Holds the full allocation throughout the phase — triggers OOM at high concurrency
-    on a 4 GB VM (L5=7 × 400 MB = 2.8 GB, L6=10 × 400 MB = 4.0 GB).
-    On K8s, the 600Mi pod memory limit causes OOMKill before it can affect neighbours.
+    on a 4 GB VM (L3=3 × 400 MB + infrastructure ~1.5–2 GB exceeds 4 GB RAM).
+    On K8s, the 2 GiB per-pod cgroup limit prevents cross-pod memory interference,
+    demonstrating blast radius containment (SQ2).
     """
     duration = int(os.environ.get("WORKLOAD_DURATION_SECONDS", "30"))
     memory_mb = int(os.environ.get("WORKLOAD_MEMORY_MB", "400"))
@@ -58,8 +59,10 @@ def memory_pressure(context, cpu_result: dict) -> dict:
     )
 
     # Allocate the full buffer — triggers OOM at high concurrency on a 4 GB VM.
-    # On K8s, the pod memory limit (600Mi) causes the pod to be OOMKilled
-    # before it can affect other pods, demonstrating blast radius containment.
+    # 3 concurrent containers × 400 MB each exceeds the 4 GB VM's available headroom
+    # (which also runs Docker daemon, PostgreSQL, and Dagster daemon ~1.5–2 GB).
+    # On K8s, the 2 GiB per-pod limit enforces hard memory isolation so no single
+    # pod's allocation affects others, demonstrating blast radius containment.
     buffer = np.random.bytes(memory_mb * 1024 * 1024)
 
     start = time.monotonic()
@@ -103,8 +106,9 @@ def memory_pressure(context, cpu_result: dict) -> dict:
 def thesis_workload():
     """Two-phase workload: cpu_burn (30s SHA-256) → memory_pressure (30s + 400 MB).
 
-    Total ~60s/run. At L5/L6 on a 4 GB VM, Phase 2 triggers OOM kills.
-    On K8s, per-pod memory limits (600Mi) contain the blast radius (tests SQ2).
+    Total ~60s/run under no contention. At L3+ on a 4 GB VM, Phase 2 triggers OOM
+    kills via Linux OOM killer (aggregate demand exceeds 4 GB). On K8s, per-pod
+    2 GiB memory limits contain each job's footprint, maintaining 100% success rate.
     """
     cpu_result = cpu_burn()
     memory_pressure(cpu_result)
