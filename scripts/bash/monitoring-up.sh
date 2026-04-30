@@ -96,6 +96,10 @@ case "$ACTION" in
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/dashboards/"
 
     scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/grafana.ini" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/"
+
+    scp $SSH_OPTS \
         "$MONITORING_DIR/grafana/dashboards/experiment-overview.json" \
         "$MONITORING_DIR/grafana/dashboards/dagster-containers.json" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/dashboards/"

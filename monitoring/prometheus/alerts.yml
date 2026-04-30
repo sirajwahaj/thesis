@@ -1,53 +1,214 @@
-# Prometheus alerting rules for thesis experiments
-# These fire during experiment runs to flag anomalies in real-time
+# Prometheus Alerting Rules — Production-Grade Thesis Experiment Monitoring
+# Covers: Infrastructure health, Experiment anomalies, PostgreSQL, Container health
+# Severity levels: info (visibility), warning (investigate), critical (action required)
+
 groups:
-  - name: thesis_experiment_alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Infrastructure Health Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: infrastructure_health
     rules:
-      # High CPU — indicates resource contention (relevant to SQ1)
       - alert: HighCpuUsage
-        expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[2m])) > 0.90
-        for: 1m
+        expr: thesis:node_cpu_utilization:ratio > 0.85
+        for: 2m
         labels:
           severity: warning
+          component: vm
         annotations:
-          summary: "CPU usage above 90% for 1+ minute"
-          description: "Host CPU is at {{ $value | humanizePercentage }}. Experiment may be experiencing resource contention."
+          summary: "VM CPU above 85% for 2+ minutes"
+          description: "CPU at {{ $value | humanizePercentage }}. Resource contention likely affecting experiment results (SQ1)."
+          runbook: "Check `docker stats` on VM for CPU-hungry containers."
 
-      # Memory pressure — OOM risk
-      - alert: HighMemoryUsage
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.90
+      - alert: CriticalCpuUsage
+        expr: thesis:node_cpu_utilization:ratio > 0.95
         for: 1m
         labels:
           severity: critical
+          component: vm
         annotations:
-          summary: "Memory usage above 90%"
-          description: "Available memory is critically low ({{ $value | humanizePercentage }} used). OOM kills likely."
+          summary: "VM CPU critically saturated (>95%)"
+          description: "CPU at {{ $value | humanizePercentage }}. Experiments will show degraded performance. Consider reducing concurrency level."
 
-      # Container OOMKilled — signals workload exceeding limits
+      - alert: HighMemoryUsage
+        expr: thesis:node_memory_utilization:ratio > 0.85
+        for: 2m
+        labels:
+          severity: warning
+          component: vm
+        annotations:
+          summary: "VM memory above 85%"
+          description: "Memory at {{ $value | humanizePercentage }}. OOM kills may occur at higher concurrency."
+
+      - alert: CriticalMemoryUsage
+        expr: thesis:node_memory_utilization:ratio > 0.95
+        for: 30s
+        labels:
+          severity: critical
+          component: vm
+        annotations:
+          summary: "VM memory critically low (<5% free)"
+          description: "Available memory near zero. OOM killer will trigger. Experiment data may be corrupted."
+
+      - alert: HighLoadAverage
+        expr: node_load1 / count(node_cpu_seconds_total{mode="idle"}) > 1.5
+        for: 3m
+        labels:
+          severity: warning
+          component: vm
+        annotations:
+          summary: "CPU saturation: load/core ratio > 1.5"
+          description: "Load average {{ $value }} exceeds available cores. Tasks are queuing."
+
+      - alert: DiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: vm
+        annotations:
+          summary: "Disk usage above 85%"
+          description: "Root filesystem at {{ $value | humanizePercentage }}. Docker images and logs may fill disk."
+
+      - alert: DiskSpaceCritical
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          component: vm
+        annotations:
+          summary: "Disk almost full (>95%)"
+          description: "Docker daemon may stop. Run `docker system prune` on VM."
+
+      - alert: NetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "Network interface errors detected"
+          description: "Network errors on interface {{ $labels.device }}. May affect container networking."
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Container & Experiment Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: experiment_containers
+    rules:
       - alert: ContainerOOMKilled
         expr: increase(container_oom_events_total[5m]) > 0
         labels:
           severity: critical
+          component: container
         annotations:
           summary: "Container OOM killed: {{ $labels.name }}"
-          description: "Container {{ $labels.name }} was OOM-killed. Check memory limits."
+          description: "Container {{ $labels.name }} exceeded memory limit and was killed. Experiment run failed — blast radius event (SQ2)."
 
-      # Too many containers (VM experiment) — over-subscription detection
       - alert: HighContainerCount
-        expr: count(container_memory_usage_bytes{name=~".+"}) > 15
+        expr: thesis:dagster_workload_containers:count > 10
         for: 30s
         labels:
           severity: info
+          component: experiment
         annotations:
-          summary: "High container count: {{ $value }}"
-          description: "Many containers running simultaneously — expected during high-concurrency experiments."
+          summary: "{{ $value }} workload containers running"
+          description: "High concurrency experiment in progress (L6=10 expected max). Monitor for degradation."
 
-      # PostgreSQL connection saturation
-      - alert: PostgresConnectionsHigh
-        expr: sum(pg_stat_activity_count) > 50
+      - alert: ContainerCpuThrottled
+        expr: rate(container_cpu_usage_seconds_total{name!~"thesis-.*"}[2m]) > 0.95
         for: 1m
         labels:
           severity: warning
+          component: container
         annotations:
-          summary: "PostgreSQL connections above 50"
-          description: "Dagster may be saturating the PostgreSQL connection pool during high-concurrency runs."
+          summary: "Container {{ $labels.name }} CPU near limit"
+          description: "Container using {{ $value | humanizePercentage }} CPU — may be throttled."
+
+      - alert: ContainerMemoryHigh
+        expr: container_memory_usage_bytes{name!~"thesis-.*"} > 1932735283
+        for: 1m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} memory >1.8 GiB (limit: 2 GiB)"
+          description: "Memory at {{ $value | humanize1024 }}. Approaching 2 GiB limit — OOM risk."
+
+      - alert: ExperimentStalled
+        expr: thesis:dagster_workload_containers:count > 0 and changes(thesis:dagster_workload_containers:count[10m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: experiment
+        annotations:
+          summary: "Experiment appears stalled"
+          description: "Container count unchanged for 15 minutes with {{ $value }} containers running. Jobs may be hanging."
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PostgreSQL Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: postgresql_health
+    rules:
+      - alert: PostgresConnectionsHigh
+        expr: thesis:postgres_connections:ratio > 0.7
+        for: 2m
+        labels:
+          severity: warning
+          component: postgres
+        annotations:
+          summary: "PostgreSQL connections at {{ $value | humanizePercentage }} of max"
+          description: "Connection pool saturating. Dagster may queue requests at high concurrency."
+
+      - alert: PostgresConnectionsCritical
+        expr: thesis:postgres_connections:ratio > 0.9
+        for: 1m
+        labels:
+          severity: critical
+          component: postgres
+        annotations:
+          summary: "PostgreSQL connections near limit (>90%)"
+          description: "New connections may fail. Dagster runs will error."
+
+      - alert: PostgresHighRollbacks
+        expr: rate(pg_stat_database_xact_rollback{datname="dagster"}[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+          component: postgres
+        annotations:
+          summary: "High PostgreSQL rollback rate"
+          description: "{{ $value }} rollbacks/s on dagster DB. Possible deadlocks or connection issues."
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: postgres
+        annotations:
+          summary: "PostgreSQL is unreachable"
+          description: "Postgres exporter cannot connect to database. All Dagster operations will fail."
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Monitoring Stack Self-Health
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: monitoring_health
+    rules:
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Scrape target {{ $labels.job }} is down"
+          description: "Prometheus cannot reach {{ $labels.instance }}. Metrics gap in data."
+
+      - alert: PrometheusHighMemory
+        expr: process_resident_memory_bytes{job="prometheus"} > 1073741824
+        for: 5m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Prometheus using >1 GiB RAM"
+          description: "Prometheus memory at {{ $value | humanize1024 }}. May need to increase retention or reduce cardinality."
