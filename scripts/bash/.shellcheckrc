@@ -1,0 +1,5 @@
+# shellcheck configuration for scripts/bash/
+# SC2261: Multiple redirections compete for stdout.
+# Disabled because '->' arrows in echo strings and '>>' inside quoted
+# user-facing command examples are falsely flagged as shell redirections.
+disable=SC2261
