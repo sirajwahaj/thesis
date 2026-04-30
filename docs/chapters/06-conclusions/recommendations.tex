@@ -28,7 +28,7 @@ Based on the experimental findings, the following recommendations are offered to
 
   \item \textbf{Test blast radius containment under sustained memory pressure, not just nominal load.}
   Both environments successfully contained blast radius at moderate concurrency.
-  The real containment advantage of Kubernetes emerges at extreme load ($>$L7) where VM-level OOM kills can affect multiple containers simultaneously.
+  The real containment advantage of Kubernetes emerges at extreme load ($>$L5) where VM-level OOM kills can affect multiple containers simultaneously.
   Test at your highest expected concurrency before relying on containment assumptions.
 
   \item \textbf{Consider the operational cost of Kubernetes.}

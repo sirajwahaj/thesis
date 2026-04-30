@@ -51,7 +51,7 @@ In a production K8s cluster (GKE, EKS) with cold image pulls, startup overhead w
 \paragraph{Consistency with the hypothesis.}
 The pre-experiment hypothesis (Section~\ref{sec:hypothesis}) predicted that at low concurrency the VM outperforms Kubernetes due to startup overhead, and at high concurrency Kubernetes outperforms the VM.
 The data partly confirms this: at L1, the VM has a small execution time advantage.
-However, the hypothesis underestimated how early VM reliability would collapse (L3, not L5--L7) and the significance of K8s startup overhead (24--57\,s, not a few seconds).
+However, the hypothesis underestimated how early VM reliability would collapse (L3, not L4--L5) and the significance of K8s startup overhead (24--57\,s, not a few seconds).
 The main finding is that despite substantial startup overhead, K8s becomes net beneficial at L3 because VM reliability collapses so sharply.
 
 \paragraph{What the crossover means in practice.}

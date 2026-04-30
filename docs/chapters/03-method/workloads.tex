@@ -43,9 +43,9 @@ Six concurrency levels are tested, each running $n$ instances of \texttt{thesis\
     L1  & 1  & 1 vCPU & 400\,MB & 0.4\,GB (10\% of VM) \\
     L2  & 2  & 1 vCPU & 400\,MB & 0.8\,GB \\
     L3  & 3  & 1 vCPU & 400\,MB & 1.2\,GB \\
-    L5  & 5  & 1 vCPU & 400\,MB & 2.0\,GB (50\% of VM) \\
-    L7  & 7  & 1 vCPU & 400\,MB & 2.8\,GB (70\% of VM) \\
-    L10 & 10 & 1 vCPU & 400\,MB & 4.0\,GB (100\% of VM) \\
+    L4  & 5  & 1 vCPU & 400\,MB & 2.0\,GB (50\% of VM) \\
+    L5  & 7  & 1 vCPU & 400\,MB & 2.8\,GB (70\% of VM) \\
+    L6  & 10 & 1 vCPU & 400\,MB & 4.0\,GB (100\% of VM) \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -59,7 +59,7 @@ VM container memory limit is set to 2\,GB to prevent a single runaway job from e
 \begin{itemize}
   \item \textbf{L1--L2} establish the no-contention baseline where CPU contention is absent (1--2 active jobs on a 4-vCPU machine).
   \item \textbf{L3} begins the CPU saturation zone (3 jobs = 75\% of 4\,vCPUs).
-  \item \textbf{L5--L7} represent the over-subscription zone: more CPUs demanded than available, triggering CFS scheduling contention.
-  \item \textbf{L10} is the stress level: aggregate memory demand equals total VM RAM, and CPU demand is 2.5$\times$ the available cores.
-  \item The level numbering (L1, L2, L3, L5, L7, L10) is non-contiguous to concentrate measurements at key inflection points rather than distributing uniformly.
+  \item \textbf{L4--L5} represent the over-subscription zone: more CPUs demanded than available, triggering CFS scheduling contention.
+  \item \textbf{L6} is the stress level: aggregate memory demand equals total VM RAM, and CPU demand is 2.5$\times$ the available cores.
+  \item Level labels are sequential (L1--L6) mapped to concurrency counts (1, 2, 3, 5, 7, 10) to concentrate measurements at key inflection points rather than distributing uniformly.
 \end{itemize}

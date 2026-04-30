@@ -11,10 +11,10 @@
 
 \paragraph{Direct answer.}
 
-\textbf{Reliability} changes dramatically: the VM's success rate collapses from 100\,\% at L1--L2 to 66.7\,\% at L3, 46.7\,\% at L5, and 30.0\,\% at L10, driven by memory exhaustion (Linux OOM kills) on the shared 4\,GB host.
+\textbf{Reliability} changes dramatically: the VM's success rate collapses from 100\,\% at L1--L2 to 66.7\,\% at L3, 46.7\,\% at L4, and 30.0\,\% at L6, driven by memory exhaustion (Linux OOM kills) on the shared 4\,GB host.
 Kubernetes, by contrast, maintained 100\,\% success rate across all tested concurrency levels through hard per-pod memory limits (2\,GiB per run pod, accommodating the 400\,MB workload buffer and $\approx$500--600\,MB Python/Dagster overhead) that prevent cross-job memory interference.
 
-\textbf{System stability}, measured as execution time variance, improves on Kubernetes: consistent per-pod isolation produces near-constant execution time even at L10, whereas VM variance grows as memory contention and OOM events introduce randomness into survivor timing.
+\textbf{System stability}, measured as execution time variance, improves on Kubernetes: consistent per-pod isolation produces near-constant execution time even at L6, whereas VM variance grows as memory contention and OOM events introduce randomness into survivor timing.
 
 \textbf{Execution performance} at L1--L2 is \emph{comparable between environments}: K8s adds 4--5\,s per-run startup overhead (pod creation + Python initialisation + PostgreSQL connection), equivalent to $\approx$7\% of the 63-second job execution time.
 At higher concurrency, this overhead grows to 11--15\,s due to concurrent initialisation contention, but the VM's reliability collapse from L3 onward makes it definitively inferior.
