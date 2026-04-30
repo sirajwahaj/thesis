@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Deploy Monitoring Stack (Prometheus + Grafana)
+# Deploy Monitoring Stack (Prometheus + Grafana) on the VM
 #
-# Starts Prometheus, Grafana, node-exporter, cAdvisor, and postgres-exporter
-# alongside the running Dagster infrastructure.
+# Copies monitoring configs to the VM and runs Prometheus + Grafana + exporters
+# alongside the running Dagster infrastructure (on the same VM Docker daemon).
 #
 # Prerequisites:
-#   - Docker/podman running
-#   - Dagster compose stack running (infrastructure/docker-compose.yml)
+#   - VM is running (make vm-up)
+#   - Dagster compose is running on VM (make deploy / deploy-vm.sh)
+#   - vm-ip.txt contains the VM IP
 #
 # Usage:
-#   bash scripts/bash/monitoring-up.sh       # start monitoring
-#   bash scripts/bash/monitoring-up.sh down   # stop monitoring
+#   bash scripts/bash/monitoring-up.sh          # start monitoring on VM
+#   bash scripts/bash/monitoring-up.sh down     # stop monitoring on VM
+#   bash scripts/bash/monitoring-up.sh status   # show container status
 # =============================================================================
 set -euo pipefail
 
@@ -19,39 +21,84 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MONITORING_DIR="$REPO_ROOT/monitoring"
 
-# Detect compose command (docker compose v2 preferred, fall back to docker-compose)
-if docker compose version &>/dev/null 2>&1; then
-  COMPOSE="docker compose"
-elif command -v docker-compose &>/dev/null; then
-  COMPOSE="docker-compose"
-else
-  echo "[FAIL] Neither 'docker compose' nor 'docker-compose' found."
-  exit 1
+VM_IP_FILE="$REPO_ROOT/vm-ip.txt"
+SSH_KEY="$HOME/.ssh/thesis_vm"
+VM_MONITORING_DIR="/opt/thesis/monitoring"
+
+# ---- Read VM IP ----
+if [[ ! -f "$VM_IP_FILE" ]]; then
+    echo "[FAIL] vm-ip.txt not found. Run: make vm-up"
+    exit 1
+fi
+
+VM_IP="$(cat "$VM_IP_FILE" | tr -d '[:space:]')"
+if [[ -z "$VM_IP" ]]; then
+    echo "[FAIL] vm-ip.txt is empty. Run: make vm-up"
+    exit 1
+fi
+
+SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o ConnectTimeout=10"
+
+# Verify SSH
+if ! ssh $SSH_OPTS ubuntu@"$VM_IP" "echo ok" &>/dev/null; then
+    echo "[FAIL] Cannot reach VM at $VM_IP"
+    exit 1
 fi
 
 ACTION="${1:-up}"
 
 case "$ACTION" in
   up|start)
-    echo "==> Starting monitoring stack (Prometheus + Grafana)..."
+    echo "==> Deploying monitoring stack to VM ($VM_IP)..."
     echo ""
 
-    # Ensure the Dagster network exists (created by infrastructure/docker-compose.yml)
-    if ! docker network inspect thesis_dagster_network &>/dev/null 2>&1; then
-      echo "[WARN] Dagster network 'thesis_dagster_network' not found."
-      echo "       Creating it now. Start Dagster compose first for full observability."
-      docker network create thesis_dagster_network
-    fi
+    # Create monitoring directory structure on VM
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "sudo mkdir -p $VM_MONITORING_DIR/prometheus \
+                       $VM_MONITORING_DIR/grafana/provisioning/datasources \
+                       $VM_MONITORING_DIR/grafana/provisioning/dashboards \
+                       $VM_MONITORING_DIR/grafana/dashboards && \
+         sudo chown -R ubuntu:ubuntu $VM_MONITORING_DIR"
 
-    $COMPOSE -f "$MONITORING_DIR/docker-compose.monitoring.yml" up -d
+    # Copy monitoring configs to VM
+    echo "-> Copying monitoring configs to VM..."
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/docker-compose.monitoring.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/docker-compose.yml"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/prometheus/prometheus.yml" \
+        "$MONITORING_DIR/prometheus/alerts.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/prometheus/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/provisioning/datasources/prometheus.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/datasources/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/provisioning/dashboards/dashboards.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/dashboards/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/dashboards/experiment-overview.json" \
+        "$MONITORING_DIR/grafana/dashboards/dagster-containers.json" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/dashboards/"
+
+    echo "[OK] Configs copied"
+
+    # Pull images and start monitoring
+    echo ""
+    echo "-> Starting monitoring containers on VM..."
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "cd $VM_MONITORING_DIR && docker compose pull && docker compose up -d"
 
     echo ""
     echo "================================================================"
-    echo "  Monitoring stack is running!"
+    echo "  Monitoring stack running on VM ($VM_IP)!"
     echo ""
-    echo "  Grafana:    http://localhost:3000  (admin / admin)"
-    echo "  Prometheus: http://localhost:9090"
-    echo "  cAdvisor:   http://localhost:8080"
+    echo "  Grafana:    http://$VM_IP:3000  (admin / admin)"
+    echo "  Prometheus: http://$VM_IP:9090"
+    echo "  cAdvisor:   http://$VM_IP:8080"
     echo ""
     echo "  Dashboards are auto-provisioned:"
     echo "    - Thesis Experiment Overview"
@@ -60,24 +107,31 @@ case "$ACTION" in
     ;;
 
   down|stop)
-    echo "==> Stopping monitoring stack..."
-    $COMPOSE -f "$MONITORING_DIR/docker-compose.monitoring.yml" down
+    echo "==> Stopping monitoring stack on VM ($VM_IP)..."
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "cd $VM_MONITORING_DIR && docker compose down 2>/dev/null || true"
     echo "[OK] Monitoring stack stopped."
     ;;
 
   restart)
-    echo "==> Restarting monitoring stack..."
-    $COMPOSE -f "$MONITORING_DIR/docker-compose.monitoring.yml" down
-    $COMPOSE -f "$MONITORING_DIR/docker-compose.monitoring.yml" up -d
+    echo "==> Restarting monitoring stack on VM..."
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "cd $VM_MONITORING_DIR && docker compose down && docker compose up -d"
     echo "[OK] Monitoring stack restarted."
     ;;
 
   status)
-    $COMPOSE -f "$MONITORING_DIR/docker-compose.monitoring.yml" ps
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "cd $VM_MONITORING_DIR && docker compose ps 2>/dev/null || echo 'Monitoring not running'"
+    ;;
+
+  logs)
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "cd $VM_MONITORING_DIR && docker compose logs --tail=50"
     ;;
 
   *)
-    echo "Usage: $0 {up|down|restart|status}"
+    echo "Usage: $0 {up|down|restart|status|logs}"
     exit 1
     ;;
 esac

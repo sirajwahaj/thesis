@@ -1,22 +1,24 @@
 # =============================================================================
 # Monitoring Stack — Prometheus + Grafana + Exporters
 #
+# Deployed ON THE VM alongside the Dagster Docker containers.
 # Provides real-time observability into the thesis experiment infrastructure:
 #   - Prometheus: metrics collection and storage
 #   - Grafana: dashboards (auto-provisioned with thesis-specific panels)
-#   - node-exporter: host CPU, memory, disk, network metrics
+#   - node-exporter: VM host CPU, memory, disk, network metrics
 #   - cAdvisor: per-container resource usage (critical for VM Docker experiments)
 #   - postgres-exporter: PostgreSQL connection pool and query metrics
 #
-# Usage:
-#   docker compose -f monitoring/docker-compose.monitoring.yml up -d
+# Deployment:
+#   bash scripts/bash/monitoring-up.sh      (deploys to VM via SSH)
+#   make monitoring-up                       (same, via Makefile)
 #
-# Access:
-#   - Grafana:    http://localhost:3000  (admin/admin)
-#   - Prometheus: http://localhost:9090
+# Access (from host, where $VM_IP = contents of vm-ip.txt):
+#   - Grafana:    http://$VM_IP:3000  (admin/admin)
+#   - Prometheus: http://$VM_IP:9090
 #
-# This stack runs alongside the main infrastructure/docker-compose.yml
-# and connects to the same Docker network to scrape Dagster containers.
+# This runs on the same Docker daemon as infrastructure/docker-compose.yml
+# and shares the thesis_dagster_network to scrape Dagster containers.
 # =============================================================================
 
 name: thesis-monitoring
@@ -33,6 +35,7 @@ services:
       - "--web.enable-lifecycle"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"
