@@ -1,0 +1,34 @@
+% ============================================================
+%  Sirajulhaq Wahaj — CV  (main entry point)
+%
+%  HOW TO CUSTOMISE
+%  ────────────────
+%  • Change colours / fonts / spacing  →  edit cv-preamble.tex
+%  • Update contact details            →  edit sections/header.tex
+%  • Update summary paragraph          →  edit sections/summary.tex
+%  • Add/remove skills                 →  edit sections/skills.tex
+%  • Update job bullets                →  edit sections/experience.tex
+%  • Add/remove projects               →  edit sections/projects.tex
+%  • Update education or certs         →  edit sections/education.tex
+%  • Change language levels            →  edit sections/languages.tex
+%
+%  To add a new section:
+%  1. Create sections/mysection.tex
+%  2. Add \input{sections/mysection} below in the desired position
+% ============================================================
+\documentclass[a4paper,10pt]{article}
+
+\input{cv-preamble}   % All packages, colours, fonts, and commands
+
+\begin{document}
+\pagestyle{empty}
+
+\input{sections/header}
+\input{sections/summary}
+\input{sections/skills}
+\input{sections/experience}
+\input{sections/projects}
+\input{sections/education}
+\input{sections/languages}
+
+\end{document}

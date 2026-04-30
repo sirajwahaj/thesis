@@ -8,7 +8,7 @@
 \subsection*{Main Research Question}
 
 \begin{quote}
-  How do reliability, system stability, and execution performance change when a workflow orchestration system is migrated from a single-VM Docker executor to a Kubernetes Run Launcher under increasing concurrent workload, and at what specific workload level does this migration become net beneficial?
+  How do reliability, system stability, and execution performance change when a workflow orchestration system is migrated from a single-VM DockerRunLauncher to a Kubernetes Run Launcher under increasing concurrent workload, and at what specific workload level does this migration become net beneficial?
 \end{quote}
 
 \subsection*{Supporting Questions}
@@ -16,13 +16,13 @@
 \begin{description}[style=nextline]
 
   \item[SQ1 --- VM Failure Threshold and Degradation Profile]
-  At what concurrency level do Docker containers running on a single VM degrade in reliability and performance, and how do job success rate, execution time variance, and resource utilisation degrade as concurrent load increases toward that threshold?
+  At what concurrency level does a single-VM workflow deployment fail, and how do job success rate, execution time variance, and resource utilisation degrade as concurrent load increases toward that threshold?
 
   \item[SQ2 --- Pod Isolation Effectiveness and Blast Radius Containment]
   To what degree does Kubernetes pod isolation contain failures and reduce execution time variance compared to the single-VM deployment under equivalent concurrent workload levels?
 
   \item[SQ3 --- Kubernetes Scheduling Overhead]
-  What measurable scheduling latency and execution overhead does Kubernetes introduce compared to the VM Docker executor at each concurrency level?
+  What measurable scheduling latency and execution overhead does Kubernetes introduce compared to the VM DockerRunLauncher at each concurrency level?
 
   \item[SQ4 --- The Crossover Point]
   At what concurrency level does the Kubernetes overhead become smaller than the VM's contention-induced degradation---the formally defined crossover point?

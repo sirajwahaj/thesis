@@ -5,9 +5,24 @@
 \section{Summary of Findings}
 \label{sec:summary}
 
-% TODO: Complete after experimental phase.
-%
-% Summarise the key findings from each experiment:
-% - Experiment 1: VM failure threshold and degradation shape
-% - Experiment 2: Kubernetes isolation effectiveness and blast radius results
-% - Experiment 3: Overhead measurements and the crossover point
+This thesis conducted three experiments to empirically determine the concurrency level at which migrating Dagster workflow orchestration from a single VM to Kubernetes becomes net beneficial.
+
+\paragraph{Experiment 1 --- VM degradation profile (SQ1).}
+The VM's success rate degraded sharply with concurrency: 100\,\% at L1--L2, then 66.7\,\% at L3, 46.7\,\% at L5, 42.9\,\% at L7, and 30.0\,\% at L10.
+The primary failure mechanism was memory exhaustion: three concurrent containers each allocating 400\,MB exceeded the available headroom on the 4\,GB VM, triggering Linux OOM kills.
+Execution time of \emph{surviving} jobs remained relatively flat (65--80\,s across all levels), revealing that the OOM killer acts as a filter rather than a performance bottleneck.
+The formal reliability threshold (success rate $<$95\%) was crossed between L2 and L3, placing the VM reliability crossover at \textbf{3 concurrent jobs}.
+
+\paragraph{Experiment 2 --- Kubernetes isolation (SQ2).}
+Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1--L10), in stark contrast to the VM's collapse from L3 onward.
+Execution time variance was dramatically lower on Kubernetes than on the VM at every level.
+Container startup overhead (pod creation $\rightarrow$ run completion minus Dagster-measured execution time) ranged from 4.3\,s at L1 to 14.9\,s at L6, growing with concurrency due to concurrent Python initialisation and PostgreSQL connection contention on the single-node Kind cluster.
+At L1, this represents only $\approx$7\% of job execution time; at L6, $\approx$18\%.
+Blast radius containment tests demonstrated that pod-level cgroup isolation prevents cross-job interference even when pods run concurrently on the same Kind node.
+
+\paragraph{Experiment 3 --- Overhead and crossover (SQ3, SQ4).}
+Kubernetes pod scheduling latency was $<$1\,s in the local Kind cluster.
+Container startup overhead ranged from 4.3\,s per job at L1 to 14.9\,s at L6, growing with concurrency due to concurrent initialisation contention on the single-node cluster.
+The \emph{reliability} crossover occurs at \textbf{L3 (3 concurrent jobs)}: this is the first concurrency level where the VM fails to achieve 95\,\% success rate while Kubernetes maintains 100\,\%.
+The \emph{performance} crossover---where total K8s wall-clock time falls below VM execution time---occurs at higher concurrency once VM contention raises the surviving-job execution times enough to offset the K8s startup overhead.
+

@@ -1,33 +1,28 @@
-# Multipass Alternative — Lightweight VM Setup
+# Multipass VM Setup
 
-> ⚠️ **This is an optional, lightweight alternative to the primary benchmarking environment.**
-> It is documented for reference, quick iteration, and comparison but is **NOT the primary setup** used in thesis experiments.
+> **Multipass is the primary benchmarking environment** used in all thesis experiments.
+> The VM is provisioned automatically via Ansible.
 >
-> **For production experiments, use the primary setup:**
 > ```bash
-> make bootstrap && make vm-provision && make k8s-setup
+> make vm-up && make vm-provision
 > ```
 
 ---
 
-## Why Multipass as an Alternative?
+## Setup Overview
 
-Multipass is simpler and faster to set up than UTM, but has limitations that make it unsuitable as the primary benchmarking environment:
+Multipass provides a lightweight Ubuntu VM via QEMU on macOS, provisioned automatically:
 
-| Aspect | Multipass | UTM (Primary) |
-|--------|-----------|---------------|
-| VM creation | Automatic (one command) | Semi-manual (one-time ISO setup) |
-| Resource isolation | Shared with host via QEMU | HVF/UTM hypervisor, better isolation |
-| CPU contention experiment fidelity | Lower (shared QEMU threads) | Higher (dedicated vCPUs) |
-| ARM64 support (M-series Mac) | Yes (automatic) | Yes (native) |
-| Required for Exp1 fidelity | No (results may differ) | Yes |
+| Aspect | Spec |
+|--------|------|
+| VM creation | Automatic (`multipass launch`) |
+| OS | Ubuntu 22.04 LTS |
+| vCPU | 4 |
+| RAM | 4 GB |
+| Hypervisor | QEMU / HVF (ARM64 M-series) |
+| ARM64 support | Yes (native) |
 
-**For thesis experiments (SQ1: "where does the VM break?"), better CPU isolation is critical.** UTM provides more realistic results.
-
-Multipass is suitable for:
-- Quick local testing of scripts
-- Iterating on the workload code
-- Testing Ansible playbooks before running on the real VM
+**This matches the thesis Table 3.1 specification:** 4 vCPU / 4 GB RAM Multipass VM running the DockerRunLauncher.
 - Running experiments on a development machine where exact CPU isolation is not critical
 
 ---
@@ -54,7 +49,7 @@ choco install multipass -y
 multipass launch 22.04 \
   --name thesis-vm \
   --cpus 4 \
-  --memory 8G \
+  --memory 4G \
   --disk 60G
 ```
 
@@ -138,22 +133,13 @@ With the Multipass VM provisioned, experiments run identically:
 ```bash
 make exp1-vm     # VM degradation with Multipass VM
 ```
-
-> ⚠️ Results from Multipass may differ from UTM due to lower hypervisor isolation.
-> Label any data from Multipass clearly if comparing to UTM data.
-
----
-
 ## Acceptance Criteria (Multipass Setup)
 
-- [ ] Multipass VM running Ubuntu 22.04 with exactly 4 vCPU, 8 GB RAM
-- [ ] Python 3.12 installed (`python3.12 --version`)
-- [ ] Dagster 1.12.7 installed (`/opt/thesis/venv/bin/dagster --version | head -1`)
-- [ ] PostgreSQL 16 installed and running (`pg_isready -U dagster -d dagster`)
-- [ ] `thesis-workload` systemd service active and listening on port 4000
+- [ ] Multipass VM running Ubuntu 22.04 with exactly 4 vCPU, 4 GB RAM
+- [ ] Docker CE installed and running (`docker info`)
 - [ ] `nproc` shows 4
-- [ ] `free -h` shows ~8 GB RAM
-- [ ] Can trigger a single `thesis_workload` job via Dagster CLI from within the VM
+- [ ] `free -h` shows ~4 GB RAM
+- [ ] Can trigger a single `thesis_workload` job via Dagster from within the VM
 
 ---
 
@@ -191,4 +177,4 @@ These should be included in the thesis appendix next to any Multipass-derived da
 
 ---
 
-*See [setup.md](setup.md) for the primary (UTM-based) setup guide.*
+*See [setup.md](setup.md) for the full setup guide.*

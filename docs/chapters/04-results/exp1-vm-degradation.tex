@@ -5,40 +5,83 @@
 \section{Experiment 1 Results --- VM Degradation Profile (SQ1)}
 \label{sec:results-exp1}
 
-% TODO: Fill in experimental data after running Experiment 1.
+Experiment~1 ran the two-phase \texttt{thesis\_workload} job (30\,s CPU burn + 30\,s memory pressure with 400\,MB allocation, $\approx$60\,s total under no contention) on the Multipass VM (4\,vCPU, 4\,GB RAM) under the DockerRunLauncher across all six concurrency levels, three repetitions each.
+Table~\ref{tab:results-vm} summarises the measured outcomes.
 
 \begin{table}[H]
   \centering
-  \caption{VM deployment results by workload level.}
+  \caption{VM deployment results by workload level (3 repetitions, 4\,vCPU / 4\,GB RAM). Mean time and std are for \emph{successful} runs only. CPU and memory are system-wide averages during the run window.}
   \label{tab:results-vm}
   \small
   \begin{tabular}{clccccc}
     \toprule
-    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Success (\%)} & \textbf{Mean (s)} & \textbf{StdDev (s)} & \textbf{CPU (\%)} & \textbf{Mem (MB)} \\
+    \textbf{Level} & \textbf{Jobs} & \textbf{SR\,(\%)} & \textbf{Mean\,(s)} & \textbf{Std\,(s)} & \textbf{CPU\,(\%)} & \textbf{Mem\,(\%)} \\
     \midrule
-    L1 & 1  & & & & & \\
-    L2 & 2  & & & & & \\
-    L3 & 3  & & & & & \\
-    L4 & 5  & & & & & \\
-    L5 & 7  & & & & & \\
-    L6 & 10 & & & & & \\
+    L1  &  1 & 100.0 &  65.3 &  1.0 & 48.8 & 75.0 \\
+    L2  &  2 & 100.0 &  76.2 & 13.4 & 60.8 & 81.6 \\
+    L3  &  3 &  66.7 &  69.9 &  1.6 & 50.8 & 81.5 \\
+    L5  &  5 &  46.7 &  76.3 &  3.2 & 46.7 & 81.4 \\
+    L7  &  7 &  42.9 &  77.7 &  8.3 & 42.7 & 79.0 \\
+    L10 & 10 &  30.0 &  79.9 &  1.4 & 38.0 & 77.3 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-% TODO: Add VM degradation curve figure.
+\noindent\textit{SR = success rate across all launched runs (launched = $n \times 3$ per level). Mean time and Std are computed from successful runs only. CPU and Mem are system-wide averages from \texttt{vm\_metrics.csv} sampled every 1\,s during execution.}
+
 \begin{figure}[H]
   \centering
-  % Uncomment when figure is generated:
-  % \includegraphics[width=0.85\textwidth]{figures/vm-vs-k8s-comparison.png}
-  \caption{VM job success rate and mean execution time vs.\ concurrency level.}
+  \includegraphics[width=0.85\textwidth]{vm_degradation.png}
+  \caption{VM success rate and mean execution time vs.\ concurrency level.
+  Success rate collapses from 100\,\% at L1--L2 to 30\,\% at L10, driven by OOM kills during the memory pressure phase.
+  Execution time of \emph{successful} jobs remains comparatively stable (65--80\,s).}
   \label{fig:vm-degradation}
 \end{figure}
 
-% TODO: Describe the observed degradation pattern.
-% Questions to answer here:
-% - At which concurrency level did success rate first drop below 95%?
-% - Was the degradation gradual or a sudden collapse (cliff)?
-% - How did execution time variance change across levels?
-% - What were the failure modes observed (OOM, timeout, process crash)?
-% - How did CPU and memory utilisation correlate with degradation?
+\subsection{Observed Degradation Pattern}
+\label{subsec:exp1-degradation}
+
+Two distinct phases are visible in the results:
+
+\paragraph{Phase 1 --- Reliable operation (L1--L2).}
+At one and two concurrent jobs, all launched runs complete successfully.
+Mean execution time is 65.3\,s (L1) and 76.2\,s (L2) --- a 17\,\% increase already attributable to initial CPU contention on the 4\,vCPU VM.
+L2 exhibits notably high standard deviation (13.4\,s), indicating that even two concurrent jobs begin to produce variance in execution order and resource allocation timing.
+
+\paragraph{Phase 2 --- OOM-driven failure (L3--L10).}
+Beginning at three concurrent jobs, a fraction of jobs fail with short durations (37--50\,s) --- midway through the \texttt{memory\_pressure} op.
+Inspection of individual run records reveals that failing jobs terminate at 37--50\,s, consistent with an OOM kill occurring within 7--20\,s of the memory allocation call in \texttt{memory\_pressure}.
+The failure mechanism is \textbf{memory exhaustion}: with $n$ containers each allocating 400\,MB simultaneously, the aggregate demand quickly approaches or exceeds the 4\,GB VM RAM, triggering the Linux OOM killer which terminates one or more containers.
+
+The success rate drops sharply from 100\,\% to 66.7\,\% between L2 and L3, and continues declining:
+\begin{itemize}
+  \item L3 (3 jobs): 6/9 = 66.7\,\%
+  \item L5 (5 jobs): 7/15 = 46.7\,\%
+  \item L7 (7 jobs): 9/21 = 42.9\,\%
+  \item L10 (10 jobs): 9/30 = 30.0\,\%
+\end{itemize}
+
+\paragraph{Execution time of surviving jobs.}
+The mean execution time of \emph{successful} runs stays comparatively flat across levels (65--80\,s).
+This is a selection effect: only jobs that receive sufficient memory and CPU complete; these are typically the first-scheduled containers that acquire memory before the OOM killer is triggered.
+The standard deviation among successful jobs ranges from 1.0\,s (L1) to 13.4\,s (L2), with moderate variance at L7 (8.3\,s).
+
+\paragraph{CPU and memory trends.}
+System CPU utilisation peaks at L2 (60.8\,\%) and then \emph{decreases} at higher levels (38\,\% at L10).
+This counter-intuitive pattern reflects that at high concurrency the majority of jobs are OOM-killed within 40--50\,s, before the CPU-intensive workload contributes to sustained utilisation.
+System memory remains elevated throughout (75--82\,\%) due to the combined footprint of the Docker daemon, PostgreSQL, Dagster daemon, and the run containers.
+
+\paragraph{Reliability crossover reached.}
+The reliability crossover (VM success rate falling below 95\,\%) occurs between \textbf{L2 and L3}: success rate drops from 100\,\% to 66.7\,\% as the aggregate memory demand first exceeds the VM's available RAM.
+This is notably earlier than predicted by the hypothesis, which expected the crossover in the L5--L7 range.
+
+
+\subsection{Resource Utilisation}
+\label{subsec:exp1-resources}
+
+System CPU utilisation peaks at L2 (60.8\,\%) and then decreases at higher levels (38.0\,\% at L10), because at high concurrency the majority of jobs are OOM-killed before completing the CPU-intensive workload.
+Memory utilisation follows a similar pattern: each job allocates 400\,MB during its memory-pressure phase, so peak aggregate memory scales as $N \times 400\,\text{MB}$ per level.
+At L10, aggregate memory allocation equals the VM's total 4\,GB RAM, explaining the sharp increase in failure rate at that level.
+
+The key SQ1 finding is that the VM exhibited a \textbf{sharp reliability collapse at L3}: success rate dropped from 100\,\% to 66.7\% as aggregate memory demand first exceeded available RAM, and continued declining to 30\,\% at L10. This OOM-driven failure is the primary motivation for evaluating Kubernetes pod isolation.
+

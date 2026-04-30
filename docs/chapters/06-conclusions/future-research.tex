@@ -5,10 +5,35 @@
 \section{Future Research}
 \label{sec:future-research}
 
+Several directions emerge from the findings and limitations of this study:
+
 \begin{enumerate}
-  \item Repeat experiments on a cloud-managed Kubernetes service (GKE, EKS, or AKS) with multi-node clusters to validate whether the crossover point shifts in a production-grade environment.
-  \item Test with real production workloads---data ingestion, transformation, and analytics pipelines---instead of synthetic CPU-bound workloads, to capture the effect of I/O-bound and memory-intensive job profiles.
-  \item Compare crossover points across different workflow orchestration frameworks (Airflow, Prefect, Argo Workflows) to determine whether the crossover is framework-specific or architectural.
-  \item Investigate the Horizontal Pod Autoscaler's impact on crossover behaviour in dedicated scaling experiments.
-  \item Extend the concurrency range beyond L6 (10 jobs) to identify behaviour at higher workload scales.
+  \item \textbf{Multi-node Kubernetes cluster.}
+  This study used a single-node Kind cluster.
+  A multi-node cluster would introduce real network scheduling decisions, pod placement policies, and inter-node resource contention.
+  Future work should replicate these experiments on a 3-node or 5-node cluster to separate single-host scheduling effects from true distributed orchestration overhead.
+
+  \item \textbf{Heterogeneous workload types.}
+  The workload in this study was deliberately homogeneous (CPU-bound SHA-256 + fixed memory allocation).
+  Real Dagster pipelines include I/O-heavy ops (database queries, S3 reads), memory-intensive transformations (large DataFrame joins), and network-bound steps.
+  Future work should characterise the crossover point across a taxonomy of workload types.
+
+  \item \textbf{Job duration sensitivity analysis.}
+  Container startup overhead ($\approx$4--15\,s in the local Kind environment, growing with concurrency) is the main cost for short-duration jobs.
+  A systematic sensitivity analysis varying job duration from 30\,s to 30\,min would produce a two-dimensional crossover surface (concurrency $\times$ job duration) that gives a more complete decision framework.
+
+  \item \textbf{Production Kubernetes scheduler comparison.}
+  This experiment used the default Kubernetes scheduler.
+  Production clusters often use custom scheduling policies (bin packing, spread scheduling, priority classes).
+  Future work should quantify how scheduler policy affects the crossover point.
+
+  \item \textbf{Higher VM memory configuration.}
+  The reliability crossover in this study occurred early (L3) because the 4\,GB VM ran out of memory with three concurrent 400\,MB containers plus the infrastructure stack.
+  Repeating the experiments on an 8\,GB or 16\,GB VM would raise the OOM threshold and expose a performance-only crossover regime where reliability is not the binding constraint, giving a cleaner separation of overhead and contention effects.
+
+  \item \textbf{Managed cloud Kubernetes.}
+  Repeat experiments on GKE, EKS, or AKS to validate whether the crossover point shifts in a managed multi-node environment with production scheduling policies and auto-scaling.
+
+  \item \textbf{Cross-framework comparison.}
+  Compare crossover points across different workflow orchestration frameworks (Airflow, Prefect, Argo Workflows) to determine whether the Dagster-specific startup overhead is representative or an outlier.
 \end{enumerate}

@@ -1,0 +1,69 @@
+% ============================================================
+%  sections/business-model.tex
+% ============================================================
+
+\section{Business Model}
+
+\subsection{Pricing tiers}
+
+\begin{center}
+\small
+\begin{tabularx}{0.96\textwidth}{l X X X}
+  \toprule
+  & \textbf{Free} & \textbf{Pro — \texteuro{}49/mo} & \textbf{Team — \texteuro{}149/mo} \\
+  \midrule
+  Pipelines monitored      & 1 & Unlimited & Unlimited \\
+  Run history              & 7 days & 90 days & 12 months \\
+  Slack alerts             & Weekly digest only & Immediate + digest & Immediate + digest \\
+  Failure prediction       & \checkmark & \checkmark & \checkmark \\
+  Infra recommendation     & — & \checkmark & \checkmark \\
+  Prediction accuracy log  & — & \checkmark & \checkmark \\
+  Users                    & 1 & 3 & 10 \\
+  Airflow support          & — & — & \checkmark \\
+  Priority support         & — & — & \checkmark \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Unit economics (target at 100 customers)}
+
+\begin{multicols}{3}
+\metriccard{\texteuro{}82/mo}{Average revenue per customer}{Mix of Pro + Team at 70/30 split}
+\columnbreak
+\metriccard{\texteuro{}9,800/mo}{MRR at 120 customers}{\texteuro{}118k ARR — sustainable solo founder}
+\columnbreak
+\metriccard{$<$6 months}{Target payback period}{Based on \texteuro{}0 CAC via open-source funnel}
+\end{multicols}
+
+\vspace{6pt}
+
+\subsection{Go-to-market strategy}
+
+\textbf{Phase 1 — Community (Months 1--4):}
+Publish the Dagster sensor as open source on GitHub. Write one technical post on the
+predictive methodology. Target the Dagster community Slack (8,000+ members) and the
+Data Engineering Weekly newsletter (25,000 subscribers).
+Goal: 200 installs, 5 paying pilots.
+
+\vspace{4pt}
+
+\textbf{Phase 2 — Referral (Months 5--8):}
+Each prediction that proves accurate is a case study. Data engineers share their war stories.
+Build a public prediction accuracy leaderboard to create social proof.
+Goal: 30 paying customers, first \texteuro{}2k MRR.
+
+\vspace{4pt}
+
+\textbf{Phase 3 — Partnerships (Months 9--18):}
+Pursue listing on Dagster's official integrations page and AWS Marketplace.
+Target data engineering consultancies as channel partners (they recommend tools to every client).
+Goal: 120 customers, \texteuro{}10k MRR.
+
+\subsection{Why this pricing works}
+
+\begin{insight}
+\textbf{One prevented production failure pays for 12 months of Pro.}
+A single pipeline outage costs a B2B SaaS company an estimated \texteuro{}3,000--15,000
+in engineering time, customer impact, and SLA penalties. Runway's value is not
+``nice monitoring'' — it is insurance against a concrete, recurring cost.
+\end{insight}
