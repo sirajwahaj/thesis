@@ -480,9 +480,9 @@ dry-run:
 # Analysis Targets
 # ==========================
 
-analyze:
+analyze: install
 	@echo "Running analysis notebook..."
-	python3 scripts/analyze_results.py
+	$(PYTHON) scripts/analyze_results.py
 	@echo "[OK] Analysis complete"
 	@echo ""
 

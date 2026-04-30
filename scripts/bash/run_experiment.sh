@@ -26,6 +26,24 @@ DEFAULT_LEVELS="1 2 3 5 7 10"  # L1=1, L2=2, L3=3, L5=5, L7=7, L10=10 (locked â€
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SCRIPTS_DIR="$REPO_ROOT/scripts"
+
+# Windows (Git Bash): use podman provider for kind
+if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
+  export KIND_EXPERIMENTAL_PROVIDER="podman"
+fi
+
+# ---- Python: prefer the project venv created by 'uv sync' in src/ ----
+if [[ -x "$REPO_ROOT/src/.venv/Scripts/python" ]]; then
+  PYTHON="$REPO_ROOT/src/.venv/Scripts/python"   # Windows Git Bash
+elif [[ -x "$REPO_ROOT/src/.venv/Scripts/python.exe" ]]; then
+  PYTHON="$REPO_ROOT/src/.venv/Scripts/python.exe"
+elif [[ -x "$REPO_ROOT/src/.venv/bin/python" ]]; then
+  PYTHON="$REPO_ROOT/src/.venv/bin/python"        # Linux / macOS
+else
+  PYTHON="python3"
+  echo "[WARN] src/.venv not found â€” run: cd src && uv sync"
+fi
+
 BASE_DIR="data/raw"
 DAGSTER_PORT="${DAGSTER_PORT:-3001}"
 HOSTNAME_VALUE="$(hostname -s 2>/dev/null || hostname)"
@@ -178,21 +196,22 @@ for level in "${LEVELS[@]}"; do
     sleep 1
     if [[ "$ENVIRONMENT" == "vm" ]]; then
       # SSH tunnel: local 15432 -> postgres:5432 inside VM Docker network
+      # Use -N (no -f) so $! captures the real background PID for reliable cleanup
       _VM_IP="$(cat "$REPO_ROOT/vm-ip.txt" | tr -d '[:space:]')"
       ssh -i "$HOME/.ssh/thesis_vm" \
         -o StrictHostKeyChecking=no \
         -o ExitOnForwardFailure=yes \
-        -fNL 15432:localhost:5432 \
-        "ubuntu@${_VM_IP}" &>/tmp/pg_ssh_tunnel.log
+        -NL 15432:localhost:5432 \
+        "ubuntu@${_VM_IP}" &>/tmp/pg_ssh_tunnel.log &
       PG_FWD_PID=$!
-      sleep 2
+      sleep 3
     elif [[ "$ENVIRONMENT" == "k8s" ]]; then
       kubectl port-forward -n dagster svc/dagster-thesis-postgresql 15432:5432 &>/tmp/pg_pf.log &
       PG_FWD_PID=$!
-      sleep 2
+      sleep 5
     fi
 
-    python3 "$SCRIPTS_DIR/export_dagster_runs.py" \
+    "$PYTHON" "$SCRIPTS_DIR/export_dagster_runs.py" \
       --output "${RUN_DIR}/dagster_runs.csv" \
       --host "$PG_HOST" \
       --port "$PG_PORT"
@@ -206,7 +225,7 @@ for level in "${LEVELS[@]}"; do
 
     # Collect pod timing for K8s experiments
     if [[ "$ENVIRONMENT" == "k8s" ]]; then
-      python3 "$SCRIPTS_DIR/collect_pod_timing.py" \
+      "$PYTHON" "$SCRIPTS_DIR/collect_pod_timing.py" \
         --output "${RUN_DIR}/pod_timing.csv"
     fi
 

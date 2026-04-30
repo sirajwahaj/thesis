@@ -24,6 +24,11 @@ import subprocess
 import sys
 import os
 
+# Fix Windows asyncio/zmq ProactorEventLoop warning emitted by nbconvert/tornado
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 def run_notebook(notebook_path: str, timeout: int = 600) -> int:
     """
