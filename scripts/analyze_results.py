@@ -24,10 +24,12 @@ import subprocess
 import sys
 import os
 
-# Fix Windows asyncio/zmq ProactorEventLoop warning emitted by nbconvert/tornado
+# Fix Windows asyncio/zmq ProactorEventLoop warning emitted by nbconvert/tornado.
+# Must be set before any tornado/zmq import, including inside subprocesses.
 if sys.platform == "win32":
     import asyncio
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    os.environ.setdefault("PYTHONASYNCGENERATORTRACE", "0")
 
 
 def run_notebook(notebook_path: str, timeout: int = 600) -> int:
@@ -57,10 +59,15 @@ def run_notebook(notebook_path: str, timeout: int = 600) -> int:
         notebook_path,
     ]
 
+    # Propagate asyncio policy into the nbconvert subprocess on Windows
+    env = os.environ.copy()
+    if sys.platform == "win32":
+        env["PYTHONASYNCIODEBUG"] = "0"
+
     print(f"Executing notebook: {notebook_path}")
     print(f"Timeout: {timeout}s\n")
 
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, env=env)
     return result.returncode
 
 
@@ -100,10 +107,6 @@ def main() -> None:
         print(f"\nNotebook execution failed (exit code {rc}).")
         print("Open notebooks/analysis.ipynb in VS Code to debug interactively.")
         sys.exit(rc)
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":
