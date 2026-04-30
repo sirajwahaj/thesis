@@ -1,0 +1,8 @@
+% =============================================================================
+% 3.1 Research Design
+% =============================================================================
+
+\section{Research Design}
+\label{sec:research-design}
+
+This study follows a controlled experimental design with a parallel comparison structure. The baseline condition is Dagster deployed on a single VM using the DockerRunLauncher, where each pipeline run is launched as a separate Docker container on the VM host. The comparison condition is Dagster deployed on Kubernetes using the K8sRunLauncher, where each pipeline run is launched as an isolated pod. Identical workloads are applied to both conditions and results are compared across all defined metrics.

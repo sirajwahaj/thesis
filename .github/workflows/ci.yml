@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-python:
+    name: Lint Python scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linting tools
+        run: pip install ruff
+
+      - name: Lint scripts/
+        run: ruff check scripts/ --ignore E501
+
+      - name: Lint src/
+        run: ruff check src/ --ignore E501
+
+  validate-json:
+    name: Validate JSON config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate labels.json
+        run: python -m json.tool project/config/labels.json > /dev/null
+
+      - name: Validate all metadata.json files (if any)
+        run: |
+          find data/ -name "metadata.json" | while read f; do
+            python -m json.tool "$f" > /dev/null && echo "OK: $f"
+          done
+
+  validate-shell:
+    name: Lint shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Check scripts/
+        run: shellcheck scripts/*.sh project/scripts/*.sh
+
+  check-notebooks:
+    name: Validate notebooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install nbformat
+        run: pip install nbformat
+
+      - name: Validate notebook structure
+        run: |
+          python - <<'EOF'
+          import nbformat, glob, sys
+          errors = []
+          for path in glob.glob("notebooks/*.ipynb"):
+              try:
+                  with open(path) as f:
+                      nb = nbformat.read(f, as_version=4)
+                  nbformat.validate(nb)
+                  print(f"OK: {path}")
+              except Exception as e:
+                  errors.append(f"FAIL: {path} — {e}")
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          EOF

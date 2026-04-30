@@ -1,0 +1,42 @@
+% =============================================================================
+% 1.7 Research Questions  &  1.8 How the Questions Form One Argument
+% =============================================================================
+
+\section{Research Questions}
+\label{sec:research-questions}
+
+\subsection*{Main Research Question}
+
+\begin{quote}
+  How do reliability, system stability, and execution performance change when a workflow orchestration system is migrated from a single-VM DockerRunLauncher to a Kubernetes Run Launcher under increasing concurrent workload, and at what specific workload level does this migration become net beneficial?
+\end{quote}
+
+\subsection*{Supporting Questions}
+
+\begin{description}[style=nextline]
+
+  \item[SQ1 --- VM Failure Threshold and Degradation Profile]
+  At what concurrency level does a single-VM workflow deployment fail, and how do job success rate, execution time variance, and resource utilisation degrade as concurrent load increases toward that threshold?
+
+  \item[SQ2 --- Pod Isolation Effectiveness and Blast Radius Containment]
+  To what degree does Kubernetes pod isolation contain failures and reduce execution time variance compared to the single-VM deployment under equivalent concurrent workload levels?
+
+  \item[SQ3 --- Kubernetes Scheduling Overhead]
+  What measurable scheduling latency and execution overhead does Kubernetes introduce compared to the VM DockerRunLauncher at each concurrency level?
+
+  \item[SQ4 --- The Crossover Point]
+  At what concurrency level does the Kubernetes overhead become smaller than the VM's contention-induced degradation---the formally defined crossover point?
+
+\end{description}
+
+\section{How the Questions Form One Argument}
+\label{sec:question-chain}
+
+The four supporting questions form a single connected logical chain:
+
+\begin{itemize}
+  \item \textbf{SQ1} establishes the exact failure profile of the VM architecture---the baseline evidence.
+  \item \textbf{SQ2} tests whether Kubernetes actually fixes what SQ1 measured as broken.
+  \item \textbf{SQ3} quantifies the cost of the Kubernetes execution model---the overhead that must be justified.
+  \item \textbf{SQ4} synthesises SQ1 through SQ3 into the crossover point---the primary contribution.
+\end{itemize}
