@@ -1,0 +1,42 @@
+% =============================================================================
+% 5.6 Limitations
+% =============================================================================
+
+\section{Limitations}
+\label{sec:limitations}
+
+\paragraph{Infrastructure representativeness.}
+The Kubernetes cluster was a single-node Kind deployment running on the same macOS host as the VM.
+This means the Kind cluster and the VM were competing for the same physical CPU and RAM.
+A production Kubernetes cluster would have dedicated nodes with separate resource pools, potentially shifting the crossover point.
+Similarly, Kind's use of a single node eliminates true multi-node scheduling decisions, pod affinity/anti-affinity logic, and inter-node network overhead.
+
+\paragraph{Memory asymmetry between environments.}
+The VM was configured with 4\,GB RAM while the Kind node had 8\,GB.
+This 2$\times$ memory advantage directly benefits Kubernetes: the VM's OOM kills at L3+ are driven by aggregate memory demand exceeding the 4\,GB host capacity, while the Kind node's 8\,GB provides sufficient headroom for all concurrency levels.
+This asymmetry means the observed crossover point (L3) partially reflects the hardware difference rather than being solely attributable to architectural isolation.
+A fairer comparison would match both environments at the same total memory; however, the architectural lesson---that per-pod resource limits prevent cross-job interference regardless of total capacity---remains valid.
+
+\paragraph{Synthetic workload.}
+The benchmark workload (SHA-256 hashing + NumPy memory allocation) was designed to generate controlled, reproducible load.
+Real Dagster pipelines include external dependencies (database queries, API calls, file system reads) whose latency characteristics are fundamentally different from CPU-bound workloads.
+The crossover point may differ for I/O-bound, memory-bound, or network-bound workloads.
+
+\paragraph{Statistical power.}
+With three repetitions per concurrency level, the study has limited statistical power to detect small effects.
+Results should be interpreted as directional rather than definitive.
+The reliability failure rates (66.7\% at L3 through 30.0\% at L6) are large effects with clear statistical significance. The startup overhead range (4--15\,s) grows with concurrency and would require additional investigation under colder image conditions or in production clusters to assess variance.
+
+\paragraph{Reliability threshold exceeded early.}
+The formal reliability threshold (success rate $<$95\%) was crossed at L3, earlier than hypothesised.
+This is the primary finding, but it also means the crossover analysis is dominated by the reliability dimension rather than the performance dimension.
+Future work with a VM having more RAM (8--16\,GB) would permit exploration of the performance-only crossover regime.
+
+\paragraph{Dagster-specific startup overhead.}
+Container startup time (4--15\,s in this local Kind environment, growing with concurrency) is specific to the combination of pre-pulled images, in-cluster networking, and the Dagster framework's initialisation sequence. In a production cluster with cold image pulls, startup overhead would be higher.
+Other workflow frameworks with lighter runtime footprints may have substantially lower startup overhead, which would shift the performance crossover point to lower concurrency levels.
+
+\paragraph{Infrastructure configuration changes during experiments.}
+Two fixes were applied between initial deployment and the final experiments: the \texttt{dagster-docker} package was added to the VM daemon environment, and container memory limits were increased.
+The final experimental data was collected after both fixes were in place, but the existence of these issues during development means other undetected inconsistencies may remain.
+

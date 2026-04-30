@@ -1,0 +1,34 @@
+% ── SELECTED PROJECTS ────────────────────────────────────────
+% Use \project{Title}{Tech stack}{Description paragraph}
+% Add a \vspace{5pt} between entries.
+\section*{Selected Projects}
+
+\project%
+  {Dagster Deployment Architecture — Research to Production}%
+  {Dagster · Docker · GKE · Helm · GitHub Actions · GCP}%
+  {Eight months of linked tickets improving how Dagster is deployed.
+   Ran two research spikes: \texttt{K8sRunLauncher} for zero-downtime deploys, and hosting Dagster itself on GKE.
+   Implemented the Docker run launcher to isolate pipeline jobs from the Dagster process.
+   A GKE and Helm approach was explored and abandoned; the findings directly shaped the current
+   Docker Compose refactor into five production services.}
+
+\vspace{5pt}
+\project%
+  {GCP IAM \& Permissions Hardening}%
+  {GCP · Artifact Registry · GCS · Terraform CDKTF · GitHub Actions}%
+  {Fixed permission gaps blocking CI/CD and GKE deployments across multiple PRs:
+   Artifact Registry access across projects, GCS write access for compute logs,
+   and GitHub Actions rights to manage cluster resources.
+   Contributed to Python CDKTF modules that provision IAM roles per client project.}
+
+\vspace{5pt}
+\project%
+  {When Does Kubernetes Become Worth It? \textnormal{\textit{(Graduation Thesis, in progress)}}}%
+  {Dagster · Kubernetes · Kind · GKE · Helm · UTM · Python · Docker}%
+  {Empirical comparison of VM Docker executor (DockerRunLauncher) versus Kubernetes Run Launcher for Dagster,
+   measuring how reliability and performance change under increasing concurrent workload.
+   Core contribution: identifying the \emph{crossover point} where Kubernetes becomes net
+   beneficial despite scheduling overhead.
+   Three experiments, six concurrency levels, local infrastructure (Multipass VM vs.\ Kind cluster).
+   Built on the K8sRunLauncher spike from the internship.
+   Jensen Yrkesh\"{o}gskola, May~2026.}

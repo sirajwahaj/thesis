@@ -1,0 +1,27 @@
+% =============================================================================
+% 1.2 The Research Problem
+% =============================================================================
+
+\section{The Research Problem}
+\label{sec:research-problem}
+
+\subsection{The Surface Problem}
+\label{subsec:surface-problem}
+
+A VM-hosted workflow orchestration system becomes unreliable under concurrent workload because all jobs share the same compute resources. This is an observable and known failure mode.
+
+\subsection{The Deeper Problem --- The Research Gap}
+\label{subsec:research-gap}
+
+The surface problem is not the research gap. The gap exists at the intersection of two bodies of literature that have not yet been connected.
+
+Existing research evaluates Kubernetes performance and autoscaling behaviour at the infrastructure level---measuring container overhead, pod scheduling latency, and cluster autoscaler response under generic workloads \citep{casalicchio2019, nguyen2020, tran2022}. Separately, research on resource contention analyses performance degradation in shared execution environments \citep{nanda1991, arora2023}. What is missing is empirical measurement of how infrastructure-level Kubernetes mechanisms---pod isolation, resource limits, and horizontal autoscaling---actually affect application-level workflow execution behaviour under controlled concurrent workload conditions.
+
+\citet{casalicchio2019} demonstrates that under concurrent workloads with CPU utilisation above 75\%, response times under the default Kubernetes Horizontal Pod Autoscaler are 2 to 3 orders of magnitude higher than under a contention-aware algorithm, highlighting that resource contention remains severe even in containerised environments. \citet{choi2021} report that the median container startup latency in production orchestration systems is 25 seconds, representing a substantial fixed overhead for every pipeline job. But the specific workload threshold at which migrating from VM-based to Kubernetes-based workflow execution changes the balance between contention cost and scheduling overhead has not been empirically identified.
+
+This thesis bridges that gap by measuring system behaviour at the pipeline execution level rather than at the infrastructure level alone.
+
+\subsection{The Literature Gap Statement}
+\label{subsec:gap-statement}
+
+Existing studies focus on Kubernetes performance and autoscaling at the infrastructure level, but there is no empirical evidence on how these mechanisms affect application-level workflow orchestration systems under controlled concurrent workload conditions. No study identifies the specific concurrency threshold at which a Kubernetes migration becomes net beneficial for pipeline orchestration. This thesis addresses that specific gap.

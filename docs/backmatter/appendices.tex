@@ -1,0 +1,138 @@
+% =============================================================================
+% backmatter/appendices.tex — All appendices
+% =============================================================================
+
+\begin{appendices}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Kind Cluster Configuration}
+\label{app:kind-config}
+
+\begin{lstlisting}[style=yaml, caption={Kind cluster configuration (kind-config.yaml).}, label={lst:kind-config}]
+# kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            system-reserved: "cpu=500m,memory=512Mi"
+            kube-reserved: "cpu=500m,memory=512Mi"
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Dagster Helm Values (Kubernetes Run Launcher)}
+\label{app:helm-values}
+
+\begin{lstlisting}[style=yaml, caption={Dagster Helm values for Kubernetes Run Launcher (values.yaml).}, label={lst:helm-values}]
+# values.yaml
+dagster:
+  runLauncher:
+    type: K8sRunLauncher
+    config:
+      k8sRunLauncher:
+        jobNamespace: dagster
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Test Harness Pseudocode}
+\label{app:test-harness}
+
+\begin{lstlisting}[style=python, caption={Test harness pseudocode for concurrent Dagster run submission.}, label={lst:test-harness}]
+import concurrent.futures
+import time
+import requests  # for Dagster GraphQL API
+
+DAGSTER_GRAPHQL_URL = "http://localhost:3000/graphql"
+
+def submit_run(job_name, run_config):
+    """Submit a single Dagster run via GraphQL API."""
+    mutation = """
+    mutation LaunchRun($input: LaunchRunInput!) {
+        launchRun(input: $input) {
+            run { runId status }
+        }
+    }
+    """
+    # ... submit and return run_id, submission_timestamp
+    pass
+
+def poll_run_status(run_id):
+    """Poll until run completes or fails.
+    Return final status + timestamps."""
+    # ... poll GraphQL API for run events
+    pass
+
+def run_experiment(concurrency_level, job_name, run_config):
+    """Submit N runs concurrently and collect all metrics."""
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=concurrency_level
+    ) as pool:
+        futures = [
+            pool.submit(submit_run, job_name, run_config)
+            for _ in range(concurrency_level)
+        ]
+        run_ids = [f.result() for f in futures]
+
+    # Poll all runs to completion
+    for run_id in run_ids:
+        result = poll_run_status(run_id)
+        results.append(result)
+
+    # Export to CSV
+    export_to_csv(results, f"exp_{concurrency_level}.csv")
+    return results
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\chapter{Experiment Data Collection Template}
+\label{app:data-template}
+
+\begin{table}[H]
+  \centering
+  \caption{Raw data collection template for experimental runs (VM environment, one repetition shown; repeat for reps 2 and 3 and for K8s environment).
+  Pod scheduling and container startup columns are K8s-only; enter ``---'' for VM rows.}
+  \label{tab:data-template}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\textwidth}{c c c r r r r r r r}
+    \toprule
+    \textbf{Rep} & \textbf{Level} & \textbf{Env} & \textbf{SR\,(\%)} & \textbf{Mean\,(s)} & \textbf{Std\,(s)} & \textbf{CPU\,(\%)} & \textbf{Mem\,(MB)} & \textbf{Sched\,(s)} & \textbf{Start\,(s)} \\
+    \midrule
+    1 & L1  & VM  & & & & & & --- & --- \\
+    1 & L1  & K8s & & & & & & & \\
+    1 & L2  & VM  & & & & & & --- & --- \\
+    1 & L2  & K8s & & & & & & & \\
+    1 & L3  & VM  & & & & & & --- & --- \\
+    1 & L3  & K8s & & & & & & & \\
+    1 & L4  & VM  & & & & & & --- & --- \\
+    1 & L4  & K8s & & & & & & & \\
+    1 & L5  & VM  & & & & & & --- & --- \\
+    1 & L5  & K8s & & & & & & & \\
+    1 & L6  & VM  & & & & & & --- & --- \\
+    1 & L6  & K8s & & & & & & & \\
+    \midrule
+    \multicolumn{10}{c}{\emph{Repeat for repetitions 2 and 3.}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% TODO: Add additional appendices as needed:
+% \chapter{Survey / Interview Questions}
+% \label{app:survey}
+% If applicable.
+
+\end{appendices}

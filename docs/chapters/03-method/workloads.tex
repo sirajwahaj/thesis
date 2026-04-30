@@ -1,0 +1,65 @@
+% =============================================================================
+% 3.5 Workload Definition
+% =============================================================================
+
+\section{Workload Definition}
+\label{sec:workloads}
+
+\subsection{Workload Job Design}
+\label{subsec:workload-design}
+
+The benchmark workload is a Dagster job named \texttt{thesis\_workload}, consisting of two sequential ops that together produce a reproducible, CPU- and memory-intensive execution profile:
+
+\begin{enumerate}
+  \item \textbf{\texttt{cpu\_burn}} --- executes a tight SHA-256 hashing loop (\texttt{hashlib.sha256(b"dagster-thesis-workload").hexdigest()}) for exactly 30 seconds.
+    This produces constant, single-core CPU load without I/O waiting.
+  \item \textbf{\texttt{memory\_pressure}} --- allocates a 400\,MB NumPy array and then executes the same SHA-256 hashing loop for a further 30 seconds before releasing the allocation.
+    This op runs immediately after \texttt{cpu\_burn} and holds the allocation for its full duration.
+\end{enumerate}
+
+Total wall-clock time per job is approximately 60 seconds under no contention.
+The job is deterministic and stateless: every run produces the same CPU and memory footprint.
+This design was chosen to:
+\begin{itemize}
+  \item Make CPU contention effects observable without external I/O variability.
+  \item Trigger memory pressure sufficient to test container memory limits (400\,MB $\times$ $n$ concurrent jobs vs.\ the VM's 4\,GB total).
+  \item Ensure reproducibility across VM and Kubernetes environments.
+\end{itemize}
+
+\subsection{Concurrency Levels}
+\label{subsec:concurrency-levels}
+
+Six concurrency levels are tested, each running $n$ instances of \texttt{thesis\_workload} simultaneously:
+
+\begin{table}[H]
+  \centering
+  \caption{Concurrency levels and workload profile. All levels use the same per-job resource footprint.}
+  \label{tab:workloads}
+  \small
+  \begin{tabularx}{\textwidth}{clccX}
+    \toprule
+    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Per-Job CPU} & \textbf{Per-Job Mem} & \textbf{Aggregate Memory} \\
+    \midrule
+    L1  & 1  & 1 vCPU & 400\,MB & 0.4\,GB (10\% of VM) \\
+    L2  & 2  & 1 vCPU & 400\,MB & 0.8\,GB \\
+    L3  & 3  & 1 vCPU & 400\,MB & 1.2\,GB \\
+    L4  & 5  & 1 vCPU & 400\,MB & 2.0\,GB (50\% of VM) \\
+    L5  & 7  & 1 vCPU & 400\,MB & 2.8\,GB (70\% of VM) \\
+    L6  & 10 & 1 vCPU & 400\,MB & 4.0\,GB (100\% of VM) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Each level is repeated 3 times per environment. A 60-second cooldown separates repetitions.
+VM container memory limit is set to 2\,GB to prevent a single runaway job from exhausting the host; K8s pod memory limit is set to 2\,GiB to accommodate the 400\,MB workload buffer plus the $\approx$500--600\,MB Python and Dagster framework overhead per pod.
+
+\subsection{Workload Rationale}
+\label{subsec:workload-rationale}
+
+\begin{itemize}
+  \item \textbf{L1--L2} establish the no-contention baseline where CPU contention is absent (1--2 active jobs on a 4-vCPU machine).
+  \item \textbf{L3} begins the CPU saturation zone (3 jobs = 75\% of 4\,vCPUs).
+  \item \textbf{L4--L5} represent the over-subscription zone: more CPUs demanded than available, triggering CFS scheduling contention.
+  \item \textbf{L6} is the stress level: aggregate memory demand equals total VM RAM, and CPU demand is 2.5$\times$ the available cores.
+  \item Level labels are sequential (L1--L6) mapped to concurrency counts (1, 2, 3, 5, 7, 10) to concentrate measurements at key inflection points rather than distributing uniformly.
+\end{itemize}

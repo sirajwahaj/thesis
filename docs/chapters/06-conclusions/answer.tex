@@ -1,0 +1,28 @@
+% =============================================================================
+% 6.2 Answer to the Main Research Question
+% =============================================================================
+
+\section{Answer to the Main Research Question}
+\label{sec:answer}
+
+\begin{quote}
+  \textit{How do reliability, system stability, and execution performance change when a workflow orchestration system is migrated from a single-VM DockerRunLauncher to a Kubernetes Run Launcher under increasing concurrent workload, and at what specific workload level does this migration become net beneficial?}
+\end{quote}
+
+\paragraph{Direct answer.}
+
+\textbf{Reliability} changes dramatically: the VM's success rate collapses from 100\,\% at L1--L2 to 66.7\,\% at L3, 46.7\,\% at L4, and 30.0\,\% at L6, driven by memory exhaustion (Linux OOM kills) on the shared 4\,GB host.
+Kubernetes, by contrast, maintained 100\,\% success rate across all tested concurrency levels through hard per-pod memory limits (2\,GiB per run pod, accommodating the 400\,MB workload buffer and $\approx$500--600\,MB Python/Dagster overhead) that prevent cross-job memory interference.
+
+\textbf{System stability}, measured as execution time variance, improves on Kubernetes: consistent per-pod isolation produces near-constant execution time even at L6, whereas VM variance grows as memory contention and OOM events introduce randomness into survivor timing.
+
+\textbf{Execution performance} at L1--L2 is \emph{comparable between environments}: K8s adds 4--5\,s per-run startup overhead (pod creation + Python initialisation + PostgreSQL connection), equivalent to $\approx$7\% of the 63-second job execution time.
+At higher concurrency, this overhead grows to 11--15\,s due to concurrent initialisation contention, but the VM's reliability collapse from L3 onward makes it definitively inferior.
+For \emph{surviving} VM jobs, execution time is broadly flat (65--80\,s) but only a fraction of jobs survive at L3+.
+
+\textbf{The migration becomes net beneficial at 3 concurrent Dagster jobs} on hardware comparable to the test configuration (4\,vCPU, 4\,GB RAM VM / single-node Kind cluster).
+This is the \emph{reliability} crossover: the first concurrency level at which the VM cannot guarantee $\geq$95\,\% success while Kubernetes can.
+Even if raw execution time for surviving VM jobs were faster, scheduling workloads that produce failures at 66.7\,\% success rate is operationally unacceptable for production pipelines.
+
+Teams whose main concern is execution time stability---not just success rate---benefit from Kubernetes at any concurrency level above $\approx$2 concurrent jobs, since K8s execution time variance is lower at every tested level.
+

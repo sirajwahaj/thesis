@@ -17,7 +17,7 @@ Execute Experiment 1 on the VM. Run all 6 concurrency levels (L1–L6), 3 repeti
 - [ ] 60-second cooldown between batches
 
 ## Notes
-Requires UTM VM (THESIS-001) to be running. Command:
+Requires Multipass VM (THESIS-001) to be running. Command:
 `DAGSTER_PORT=3001 bash scripts/run_experiment.sh exp1 vm`
 or `make exp1-vm`.
 Data path: `data/raw/exp1-vm-degradation/L{level}/run{rep}/`.

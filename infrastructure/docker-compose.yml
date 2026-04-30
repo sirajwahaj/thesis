@@ -1,0 +1,112 @@
+name: thesis
+
+x-dagster-env: &dagster-env
+  DAGSTER_HOME: /opt/dagster/dagster_home
+  DAGSTER_PG_HOSTNAME: postgres
+  DAGSTER_PG_PORT: 5432
+  DAGSTER_PG_USERNAME: dagster
+  DAGSTER_PG_PASSWORD: dagster
+  DAGSTER_PG_DB: dagster
+  WORKLOAD_DURATION_SECONDS: 30
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_PASSWORD: dagster
+      POSTGRES_DB: dagster
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - dagster_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dagster"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  workload:
+    image: ghcr.io/sirajwahaj/thesis-workload:v0.1
+    environment:
+      <<: *dagster-env
+    networks:
+      - dagster_network
+    expose:
+      - "4000"
+    command:
+      [
+        "dagster", "api", "grpc",
+        "-h", "0.0.0.0",
+        "-p", "4000",
+        "-m", "workload"
+      ]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "dagster", "api", "grpc-health-check", "-p", "4000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  dagster-webserver:
+    image: ghcr.io/sirajwahaj/thesis-workload:v0.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      workload:
+        condition: service_healthy
+    environment:
+      <<: *dagster-env
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+    ports:
+      - "3001:3000"
+    networks:
+      - dagster_network
+    restart: unless-stopped
+    command: >
+      dagster-webserver -h 0.0.0.0 -p 3000
+      -w /opt/dagster/dagster_home/workspace.yaml
+    healthcheck:
+      test: ["CMD", "dagster", "api", "grpc-health-check", "-p", "3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  dagster-daemon:
+    image: ghcr.io/sirajwahaj/thesis-workload:v0.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      workload:
+        condition: service_healthy
+    environment:
+      <<: *dagster-env
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dagster_network
+    restart: unless-stopped
+    command: >
+      dagster-daemon run
+      -w /opt/dagster/dagster_home/workspace.yaml
+    healthcheck:
+      test: ["CMD", "dagster-daemon", "liveness-check"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  dagster_network:
+
+volumes:
+  postgres_data:
