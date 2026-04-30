@@ -8,10 +8,10 @@
 \textbf{SQ2 asks:} To what degree does Kubernetes pod isolation contain failures and reduce execution time variance compared to the VM under equivalent concurrent workload levels?
 
 \paragraph{Isolation maintained 100\% success rate where the VM collapsed.}
-Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1--L10), in stark contrast to the VM, which fell to 66.7\,\% at L3, 46.7\,\% at L5, 42.9\,\% at L7, and 30.0\,\% at L10.
+Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1--L6), in stark contrast to the VM, which fell to 66.7\,\% at L4, 61.9\,\% at L5, and 0.0\,\% at L6.
 The isolation mechanism explains this divergence: the VM's DockerRunLauncher runs each job in a separate Docker container, but all containers share the host's 4\,GB memory under a single Linux kernel; when aggregate demand exceeds available memory, the OOM killer terminates containers indiscriminately.
-Kubernetes pod isolation enforced hard per-pod limits (2\,GiB) that bounded each job's memory footprint, and the Kind node's 8\,GB capacity provided sufficient headroom even at L10 ($10 \times \approx 0.6\,\text{GB actual} < 8\,\text{GB}$).
-This is the central empirical finding of SQ2: the same workload that fails at L3 on the VM operates reliably through L10 on Kubernetes, demonstrating that per-pod resource limits are effective at preventing the cross-job memory interference that causes VM-level OOM kills.
+Kubernetes pod isolation enforced hard per-pod limits (2\,GiB) that bounded each job's memory footprint, and the Kind node's 8\,GB capacity provided sufficient headroom even at L6 ($10 \times \approx 0.6\,\text{GB actual} < 8\,\text{GB}$).
+This is the central empirical finding of SQ2: the same workload that fails at L4 on the VM operates reliably through L6 on Kubernetes, demonstrating that per-pod resource limits are effective at preventing the cross-job memory interference that causes VM-level OOM kills.
 
 \paragraph{Variance was lower on Kubernetes.}
 The most practically significant finding of SQ2 is the difference in execution time variance between environments.
@@ -20,9 +20,9 @@ Kubernetes variance remained low across all concurrency levels, because each pod
 For scheduled pipelines with downstream dependencies, predictable job duration is often more valuable than raw speed.
 
 \paragraph{Blast radius containment.}
-The VM demonstrated partial blast radius containment at mid-range concurrency, but the experimental data show that at L3--L10, OOM kills do affect multiple concurrent containers simultaneously (as the Linux OOM killer operates at the system level, not container level).
+The VM demonstrated partial blast radius containment at mid-range concurrency, but the experimental data show that at L4--L6, OOM kills do affect multiple concurrent containers simultaneously (as the Linux OOM killer operates at the system level, not container level).
 Kubernetes pod isolation enforces strict blast radius containment: a failing or resource-exhausting pod is terminated by the kubelet within its own cgroup boundary without affecting other pods.
-This was observed in the Exp2A data: no cross-pod failures were recorded at any concurrency level (L1--L10), confirming that the 2\,GiB per-pod limit successfully contained each job's resource footprint within the node's available capacity.
+This was observed in the Exp2A data: no cross-pod failures were recorded at any concurrency level (L1--L6), confirming that the 2\,GiB per-pod limit successfully contained each job's resource footprint within the node's available capacity.
 
 \paragraph{Casalicchio interference did not manifest.}
 \citet{casalicchio2019} found that co-located containers on the same host can interfere through shared kernel resources even with CPU and memory limits set.

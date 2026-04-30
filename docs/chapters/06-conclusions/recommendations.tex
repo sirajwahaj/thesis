@@ -9,12 +9,12 @@ Based on the experimental findings, the following recommendations are offered to
 
 \begin{enumerate}
   \item \textbf{Profile your expected concurrent job count before migrating.}
-  The reliability migration threshold of \textbf{3 concurrent jobs} (VM success rate $<$95\%) is specific to this hardware configuration (4\,GB RAM VM, 400\,MB per-job allocation).
+  The reliability migration threshold of \textbf{5 concurrent jobs} (VM success rate $<$95\%) is specific to this hardware configuration (4\,GB RAM VM, 400\,MB per-job allocation).
   The threshold will be higher on a VM with more RAM and lower for workloads with larger memory footprints.
   Run the same crossover analysis on your own hardware to determine your exact threshold.
 
   \item \textbf{Monitor both success rate and execution time variance.}
-  The VM failed silently: at L3, 33\% of runs were OOM-killed, but surviving-job execution time remained stable.
+  The VM failed silently: at L4, 33\% of runs were OOM-killed, but the failure was only visible through success rate monitoring, not execution time.
   Monitoring only execution time latency would miss this failure pattern.
   Include job success rate in Dagster observability dashboards.
 

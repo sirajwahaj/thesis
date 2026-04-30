@@ -44,7 +44,7 @@ However, this overhead is a fixed cost per job; at higher concurrency it is offs
 \paragraph{Comparison to Liu et al.\ (2024).}
 \citet{liu2024} identified pod scheduling as a bottleneck for short-duration workloads.
 In this experiment, the scheduling component is negligible ($<$1\,s); the startup overhead ranges from 24\,s to 57\,s depending on concurrency.
-For the tested 60-second workload, K8s adds 36--59\% overhead compared to raw execution time --- meaningful but outweighed by the reliability benefits at L3+.
+For the tested 60-second workload, K8s adds 36--59\% overhead compared to raw execution time --- meaningful but outweighed by the reliability benefits at L4+.
 
 \paragraph{Overhead grows with concurrency but remains bounded.}
 Container startup overhead increased from 24.4\,s at L1 to 56.6\,s at L6, growing with the number of concurrent pods.

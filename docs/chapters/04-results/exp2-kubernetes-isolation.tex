@@ -25,9 +25,9 @@ Table~\ref{tab:results-k8s} shows that Kubernetes maintained a 100\% success rat
     L1  & 1  & 100.0 & 63.4 & 0.1 \\
     L2  & 2  & 100.0 & 64.1 & 0.6 \\
     L3  & 3  & 100.0 & 64.6 & 0.5 \\
-    L5  & 5  & 100.0 & 68.2 & 2.3 \\
-    L7  & 7  & 100.0 & 80.6 & 9.6 \\
-    L10 & 10 & 100.0 & 81.6 & 8.0 \\
+    L4  & 5  & 100.0 & 68.2 & 2.3 \\
+    L5  & 7  & 100.0 & 80.6 & 9.6 \\
+    L6  & 10 & 100.0 & 81.6 & 8.0 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -42,7 +42,7 @@ Table~\ref{tab:results-k8s} shows that Kubernetes maintained a 100\% success rat
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{sq2_vm_vs_k8s_comparison.png}
-  \caption{VM vs.\ Kubernetes comparison: success rate (left) and execution time (right) by concurrency level (Exp2A, $n=3$ reps). K8s maintains 100\,\% success at all levels while VM reliability collapses at L3+. Shaded bands show $\pm$1 standard deviation.}
+  \caption{VM vs.\ Kubernetes comparison: success rate (left) and execution time (right) by concurrency level (Exp2A, $n=3$ reps). K8s maintains 100\,\% success at all levels while VM reliability collapses at L4+. Shaded bands show $\pm$1 standard deviation.}
   \label{fig:k8s-success-rate}
 \end{figure}
 
@@ -54,15 +54,15 @@ Table~\ref{tab:results-k8s} shows that Kubernetes maintained a 100\% success rat
 \end{figure}
 
 \paragraph{Key observation.}
-Kubernetes maintained 100\,\% success rate across all tested levels (L1--L10) with stable execution times.
-Mean execution time increased modestly from 63.4\,s (L1) to 81.6\,s (L10), a relative increase of $\approx$29\,\%.
-The standard deviation at L7 (9.6\,s) and L10 (8.0\,s) is higher than at lower levels, reflecting mild aggregate memory pressure at 7--10 concurrent pods on the 8\,GB node, but remaining well within the pod's 2\,GiB limit.
+Kubernetes maintained 100\,\% success rate across all tested levels (L1--L6) with stable execution times.
+Mean execution time increased modestly from 63.4\,s (L1) to 81.6\,s (L6), a relative increase of $\approx$29\,\%.
+The standard deviation at L5 (9.6\,s) and L6 (8.0\,s) is higher than at lower levels, reflecting mild aggregate memory pressure at 7--10 concurrent pods on the 8\,GB node, but remaining well within the pod's 2\,GiB limit.
 Execution time variance remained low and stable across all levels, confirming that pod-level resource limits effectively shielded jobs from inter-job contention throughout the tested concurrency range.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{sq4_crossover_point.png}
-  \caption{Crossover analysis: cost per successful job delivery (left) and reliability divergence (right) vs.\ concurrency level. Left: VM effective time accounts for failed runs; K8s total includes startup overhead. Right: VM success rate collapses at L3 while K8s maintains 100\,\%. Combined crossover at L3 (3 concurrent jobs).}
+  \caption{Crossover analysis: cost per successful job delivery (left) and reliability divergence (right) vs.\ concurrency level. Left: VM effective time accounts for failed runs; K8s total includes startup overhead. Right: VM success rate collapses at L4 while K8s maintains 100\,\%. Reliability crossover at L4 (5 concurrent jobs).}
   \label{fig:vm-vs-k8s}
 \end{figure}
 

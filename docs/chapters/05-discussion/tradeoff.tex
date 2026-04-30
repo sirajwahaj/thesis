@@ -13,16 +13,16 @@ The experimental results, taken together, reveal a nuanced trade-off rather than
 \begin{description}[style=nextline]
   \item[Execution time variance.]
   Kubernetes execution time variance is lower than VM variance at all tested levels.
-  The VM's variance is further inflated at L3+ by OOM-kill randomness: the Linux OOM killer selects victims non-deterministically, introducing high per-run uncertainty about whether a job will succeed at all.
+  The VM's variance is further inflated at L4+ by OOM-kill randomness: the Linux OOM killer selects victims non-deterministically, introducing high per-run uncertainty about whether a job will succeed at all.
   For scheduled pipelines with downstream SLA dependencies, predictable job duration is often more valuable than absolute speed.
 
   \item[Reliability at moderate concurrency.]
-  The VM's success rate collapsed from 100\,\% to 66.7\,\% between L2 and L3, driven by memory exhaustion.
-  Kubernetes maintained 100\,\% throughout, making it the only viable executor at $\geq$3 concurrent jobs for this workload and hardware configuration.
+  The VM's success rate collapsed from 100\,\% to 66.7\,\% between L3 and L4, driven by memory exhaustion.
+  Kubernetes maintained 100\,\% throughout, making it the only viable executor at $\geq$5 concurrent jobs for this workload and hardware configuration.
 
   \item[Blast radius containment at scale.]
   Kubernetes provides a \emph{hard upper bound} on memory consumption per job via cgroup-enforced pod limits.
-  On the VM, OOM kills at L3+ affected multiple containers simultaneously (the OOM killer operates at the system level, not the container level), making VM blast radius uncontrolled at higher concurrency.
+  On the VM, OOM kills at L4+ affected multiple containers simultaneously (the OOM killer operates at the system level, not the container level), making VM blast radius uncontrolled at higher concurrency.
 \end{description}
 
 \subsection{What Kubernetes Costs}
@@ -30,10 +30,10 @@ The experimental results, taken together, reveal a nuanced trade-off rather than
 
 \begin{description}[style=nextline]
   \item[Container startup overhead.]
-  Every Kubernetes run job incurs 4--15\,s of pre-execution overhead (pod creation + Python startup), growing from $\approx$4\,s at L1 to $\approx$15\,s at L6 under increasing concurrency.
-  For the tested $\approx$63-second workload, this represents a 7--18\,\% wall-clock overhead, shrinking in relative importance for longer jobs.
-  At L1--L2 where the VM is 100\% reliable, the VM is strictly faster in wall-clock time.
-  From L3 onward, the VM's reliability failure makes raw speed comparison less meaningful.
+  Every Kubernetes run job incurs 19--57\,s of pre-execution overhead (pod creation + Python startup), growing from $\approx$19\,s at L1 to $\approx$57\,s at L6 under increasing concurrency.
+  For the tested $\approx$63-second workload, this represents a 30--90\,\% wall-clock overhead, shrinking in relative importance for longer jobs.
+  At L1--L3 where the VM is 100\% reliable, the VM is strictly faster in wall-clock time.
+  From L4 onward, the VM's reliability failure makes raw speed comparison less meaningful.
 
   \item[Infrastructure complexity.]
   Operating a Kubernetes cluster requires significantly more expertise and operational tooling than a single VM Docker deployment.
@@ -51,10 +51,10 @@ The experimental results, taken together, reveal a nuanced trade-off rather than
 Based on the experimental findings, a simple decision rule emerges:
 
 \begin{itemize}
-  \item \textbf{Stay on VM} if: expected peak concurrent jobs $\leq$ 2, job durations are short ($<$5 min), team prefers operational simplicity, and a 100\% success rate is achievable within the VM's RAM budget.
-  \item \textbf{Migrate to Kubernetes} if: expected peak concurrent jobs $\geq$ 3, execution time variance must be controlled, job durations are $>$5 minutes (to amortise startup overhead), or per-job memory isolation is required.
-  \item \textbf{The crossover threshold}: the reliability crossover (VM success rate $<$95\%) occurs at \textbf{L3 (3 concurrent jobs)} on the tested hardware. This is the empirically derived answer to the research question.
+  \item \textbf{Stay on VM} if: expected peak concurrent jobs $\leq$ 3, job durations are short ($<$5 min), team prefers operational simplicity, and a 100\% success rate is achievable within the VM's RAM budget.
+  \item \textbf{Migrate to Kubernetes} if: expected peak concurrent jobs $\geq$ 5, execution time variance must be controlled, job durations are $>$5 minutes (to amortise startup overhead), or per-job memory isolation is required.
+  \item \textbf{The crossover threshold}: the reliability crossover (VM success rate $<$95\%) occurs at \textbf{L4 (5 concurrent jobs)} on the tested hardware. This is the empirically derived answer to the research question.
 \end{itemize}
 
-This framework answers the main research question empirically: Kubernetes becomes \emph{worth it} --- in terms of reliability, and with lower variance --- at \textbf{3 concurrent Dagster jobs} on a 4\,vCPU / 4\,GB RAM VM running a 400\,MB-per-job memory workload.
+This framework answers the main research question empirically: Kubernetes becomes \emph{worth it} --- in terms of reliability, and with lower variance --- at \textbf{5 concurrent Dagster jobs} on a 4\,vCPU / 4\,GB RAM VM running a 400\,MB-per-job memory workload.
 
