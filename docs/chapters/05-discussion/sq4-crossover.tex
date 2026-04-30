@@ -14,20 +14,20 @@ This is the primary crossover point for production decision-making: at three con
 \paragraph{K8s overhead is not flat and grows with load.}
 Container startup overhead grows from $\approx$4\,s at L1 to $\approx$15\,s at L6 (mean across levels: $\approx$10\,s), representing 7--18\,\% of the 68--96\,s total K8s pod time.
 Startup overhead increases with concurrency as more containers initialise simultaneously on the single-node cluster, competing for PostgreSQL connections and Python interpreter init.
-K8s Dagster execution time also increases with concurrency: from 43.2\,s (L1) to 57.1\,s (L5), as the single-node Kind cluster experiences aggregate resource pressure at higher levels.
+K8s execution time also increases with concurrency: from 63.4\,s (L1) to 81.6\,s (L6), as the single-node Kind cluster experiences aggregate resource pressure at higher levels.
 
 \paragraph{The performance crossover and the reliability crossover align at L3.}
 In terms of cost per successfully delivered job (accounting for VM failures as re-execution costs):
-K8s is slightly \emph{more expensive} at L1 ($+$2.4\,s raw, but VM effective = K8s total at this level), and \emph{cheaper} from L2 onwards when VM failure costs are factored in.
-At L3, VM effective time = 104.8\,s (69.9\,s / 0.667) vs K8s total = 69.7\,s: K8s delivers each successful job 35\,s faster in expectation.
-At L4--L6, the VM effective time grows to 163--266\,s while K8s total stays at 75--97\,s.
-The performance and reliability crossovers coincide at \textbf{L3}.
+K8s is slightly \emph{more expensive} at L1 ($+$1.0\,s) and L2 ($+$1.4\,s) on raw survivor time, but \emph{cheaper} from L3 onwards when VM failure costs are factored in.
+At L3, VM effective time = 139.3\,s (92.9\,s / 0.667) vs K8s total = 69.7\,s: K8s delivers each successful job 70\,s faster in expectation.
+At L4--L6, the VM effective time grows to 243--454\,s while K8s total stays at 75--97\,s.
+The performance and reliability crossovers both coincide at \textbf{L3}.
 
 \paragraph{The reliability crossover is the binding constraint.}
 At L3, both conditions for migration are met:
 \begin{enumerate}
   \item VM success rate falls below 95\,\% (66.7\,\%),
-  \item K8s effective cost per successful job is already lower than the VM's ($\approx$70\,s vs $\approx$105\,s when accounting for reruns).
+  \item K8s effective cost per successful job is already lower than the VM's ($\approx$70\,s vs $\approx$139\,s when accounting for reruns).
 \end{enumerate}
 The combined crossover is therefore at \textbf{L3 (3 concurrent jobs)}, and the binding constraint is \emph{reliability}, not raw execution speed.
 

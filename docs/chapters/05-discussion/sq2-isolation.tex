@@ -8,7 +8,7 @@
 \textbf{SQ2 asks:} To what degree does Kubernetes pod isolation contain failures and reduce execution time variance compared to the VM under equivalent concurrent workload levels?
 
 \paragraph{Isolation maintained 100\% success rate where the VM collapsed.}
-Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1--L6), in stark contrast to the VM, which fell to 66.7\,\% at L3, 46.7\,\% at L4, 42.9\,\% at L5, and 30.0\,\% at L6.
+Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1--L6), in stark contrast to the VM, which fell to 66.7\,\% at L3, 40.0\,\% at L4, 38.1\,\% at L5, and 30.0\,\% at L6.
 The isolation mechanism explains this divergence: the VM's DockerRunLauncher runs each job in a separate Docker container, but all containers share the host's 4\,GB memory under a single Linux kernel; when aggregate demand exceeds available memory, the OOM killer terminates containers indiscriminately.
 Kubernetes pod isolation enforced hard per-pod limits (2\,GiB) that bounded each job's memory footprint, and the Kind node's 8\,GB capacity provided sufficient headroom even at L6 ($10 \times \approx 0.6\,\text{GB actual} < 8\,\text{GB}$).
 This is the central empirical finding of SQ2: the same workload that fails at L3 on the VM operates reliably through L6 on Kubernetes, demonstrating that per-pod resource limits are effective at preventing the cross-job memory interference that causes VM-level OOM kills.
