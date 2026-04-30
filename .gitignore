@@ -229,8 +229,9 @@ k8s/helm/dagster-thesis/Chart.lock
 k8s/helm/dagster-thesis/charts/
 
 # Experiment data and results (large binary/CSV files)
-# Commit only after all experiments are complete for reproducibility
-# data/raw/
-# data/processed/
-# results/
+# Raw data should not be committed; processed data and results are regenerated
+data/raw/
+data/processed/
+results/
 
+project-dagster-university/*
