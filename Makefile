@@ -510,8 +510,39 @@ monitoring-down:
 	@echo "Stopping monitoring stack..."
 	bash scripts/bash/monitoring-up.sh down
 
+monitoring-restart:
+	@echo "Restarting monitoring stack..."
+	bash scripts/bash/monitoring-up.sh restart
+
 monitoring-status:
 	@bash scripts/bash/monitoring-up.sh status
+
+monitoring-logs:
+	@bash scripts/bash/monitoring-up.sh logs
+
+monitoring-validate:
+	@echo "Validating monitoring configs and live health..."
+	bash scripts/bash/monitoring-validate.sh all
+
+monitoring-validate-local:
+	@echo "Validating monitoring configs locally (no VM needed)..."
+	bash scripts/bash/monitoring-validate.sh local
+
+monitoring-update:
+	@echo "Pushing updated configs to VM without restart..."
+	bash scripts/bash/monitoring-up.sh update
+
+monitoring-test:
+	@echo "Running promtool unit tests for Prometheus rules..."
+	bash scripts/bash/monitoring-test.sh
+
+monitoring-export-dashboards:
+	@echo "Exporting live Grafana dashboards to monitoring/grafana/dashboards/..."
+	bash scripts/bash/export-grafana-dashboards.sh
+
+monitoring-export-metrics:
+	@echo "Exporting current Prometheus metrics snapshot to data/processed/..."
+	bash scripts/bash/export-prometheus-metrics.sh
 
 monitoring-k8s:
 	@echo "Deploying kube-prometheus-stack on Kind cluster..."

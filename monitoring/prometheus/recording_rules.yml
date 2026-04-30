@@ -59,3 +59,51 @@ groups:
       # Transactions per second
       - record: thesis:postgres_tps:rate5m
         expr: sum(rate(pg_stat_database_xact_commit{datname="dagster"}[5m]))
+
+  # ── K8s pod scheduling and startup latency (SQ3) ────────────────────────
+  # These require kube-state-metrics from the federated K8s Prometheus.
+  # Results are in seconds. Used to populate k8s-pods.json and comparison.json.
+  - name: thesis_k8s_aggregations
+    interval: 15s
+    rules:
+      # Pod scheduling latency: pod submitted → pod assigned to a node (scheduler latency)
+      # kube_pod_status_scheduled_time - kube_pod_created gives the scheduling latency per pod
+      - record: thesis:k8s_pod_scheduling_latency:seconds
+        expr: |
+          kube_pod_status_scheduled_time{namespace="dagster", cluster="kind-thesis"}
+          - kube_pod_created{namespace="dagster", cluster="kind-thesis"}
+
+      # Pod startup latency: pod scheduled → pod running (kubelet startup time)
+      - record: thesis:k8s_pod_startup_latency:seconds
+        expr: |
+          kube_pod_status_ready_time{namespace="dagster", cluster="kind-thesis"}
+          - kube_pod_status_scheduled_time{namespace="dagster", cluster="kind-thesis"}
+
+      # Total pod overhead (scheduling + startup): latency before workload begins executing
+      - record: thesis:k8s_pod_overhead_total:seconds
+        expr: |
+          kube_pod_status_ready_time{namespace="dagster", cluster="kind-thesis"}
+          - kube_pod_created{namespace="dagster", cluster="kind-thesis"}
+
+      # Mean scheduling latency across all current dagster-run pods
+      - record: thesis:k8s_mean_scheduling_latency:seconds
+        expr: avg(thesis:k8s_pod_scheduling_latency:seconds)
+
+      # Max scheduling latency (worst-case for blast radius analysis)
+      - record: thesis:k8s_max_scheduling_latency:seconds
+        expr: max(thesis:k8s_pod_scheduling_latency:seconds)
+
+      # Total K8s pod run time (CPU seconds consumed in dagster namespace)
+      # Used for net execution time delta (SQ4)
+      - record: thesis:k8s_total_pod_time:seconds
+        expr: sum(rate(container_cpu_usage_seconds_total{namespace="dagster", container!="", container!="POD", cluster="kind-thesis"}[5m]))
+
+      # VM effective time (VM execution / success rate proxy — adjust weights as needed)
+      # This is a proxy that gets more meaningful once real experiment data is in Prometheus
+      - record: thesis:vm_effective_time:seconds
+        expr: |
+          sum(rate(container_cpu_usage_seconds_total{name=~".*dagster.*run.*", cluster!="kind-thesis"}[5m]))
+          / clamp_min(
+              count(container_last_seen{name=~".*dagster.*run.*", cluster!="kind-thesis"}) / 10,
+              0.01
+            )

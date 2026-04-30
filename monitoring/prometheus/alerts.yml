@@ -212,3 +212,60 @@ groups:
         annotations:
           summary: "Prometheus using >1 GiB RAM"
           description: "Prometheus memory at {{ $value | humanize1024 }}. May need to increase retention or reduce cardinality."
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Experiment Operational Alerts (SQ1–SQ4 integrity guards)
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: experiment_ops
+    rules:
+      # Alert if the Dagster daemon container has disappeared entirely
+      # (not just not running — absent() means the metric no longer exists).
+      # A silent daemon means no run launchers, sensor ticks, or schedule evaluations.
+      - alert: DagsterDaemonCrashed
+        expr: absent(container_last_seen{name=~".*dagster.*daemon.*"})
+        for: 2m
+        labels:
+          severity: critical
+          component: dagster
+        annotations:
+          summary: "Dagster daemon container is missing"
+          description: "No container named *dagster*daemon* seen for 2+ minutes. All run launching and sensor evaluation has stopped. Experiment results may be incomplete."
+          runbook: "On VM: `docker ps -a | grep daemon`. On K8s: `kubectl get pods -n dagster`."
+
+      # Alert if no new Dagster run containers have appeared in over 10 minutes
+      # while experiments should be running. Guards against trigger_dagster_runs.py hang.
+      - alert: ExperimentStuck
+        expr: |
+          (time() - max(container_start_time_seconds{name=~".*dagster.*run.*"})) > 600
+          and count(container_last_seen{name=~".*dagster.*run.*"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: experiment
+        annotations:
+          summary: "No new Dagster run container started in 10+ minutes"
+          description: "Last run container started {{ $value | humanizeDuration }} ago. Experiment may be stuck. Expected new containers for each concurrent run."
+          runbook: "Check `scripts/bash/run_experiment.sh` output. Re-trigger if needed."
+
+      # Alert when PostgreSQL connections are close to max_connections.
+      # At L6 (10 concurrent jobs) each job may hold 2–3 connections, approaching the default 100 limit.
+      - alert: PostgresConnectionExhaustion
+        expr: thesis:postgres_connections:ratio > 0.85
+        for: 2m
+        labels:
+          severity: warning
+          component: postgres
+        annotations:
+          summary: "PostgreSQL connection utilization above 85%"
+          description: "{{ $value | humanizePercentage }} of max_connections used. At L6 concurrency this may cause Dagster run launches to fail with 'too many connections'."
+          runbook: "Check `SELECT count(*), state FROM pg_stat_activity GROUP BY state;` on the VM."
+
+      - alert: PostgresConnectionCritical
+        expr: thesis:postgres_connections:ratio > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          component: postgres
+        annotations:
+          summary: "PostgreSQL connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of max_connections used. New Dagster runs will fail to launch. Increase max_connections or reduce concurrency level immediately."

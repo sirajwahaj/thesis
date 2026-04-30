@@ -14,7 +14,7 @@ datasources:
       httpMethod: POST
       exemplarTraceIdDestinations:
         - name: traceID
-          datasourceUid: loki
+          datasourceUid: tempo
 
   - name: Loki
     type: loki
@@ -38,3 +38,25 @@ datasources:
     jsonData:
       implementation: prometheus
       handleGrafanaManagedAlerts: true
+
+  # ── Tempo (distributed tracing) ─────────────────────────────────────────
+  # Receives OTEL traces from Dagster ops via the OTLP gRPC endpoint (:4317).
+  # Link from Prometheus exemplars: Prometheus → Tempo trace lookup.
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: Prometheus
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: loki
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"

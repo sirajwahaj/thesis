@@ -87,6 +87,14 @@ case "$ACTION" in
         "$MONITORING_DIR/promtail/promtail.yml" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/promtail/"
 
+    # Copy alerting provisioning (contact points + rules)
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "mkdir -p $VM_MONITORING_DIR/grafana/provisioning/alerting"
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/provisioning/alerting/contact-points.yml" \
+        "$MONITORING_DIR/grafana/provisioning/alerting/rules.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/alerting/"
+
     scp $SSH_OPTS \
         "$MONITORING_DIR/grafana/provisioning/datasources/prometheus.yml" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/datasources/"
@@ -99,14 +107,38 @@ case "$ACTION" in
         "$MONITORING_DIR/grafana/grafana.ini" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/"
 
-    scp $SSH_OPTS \
-        "$MONITORING_DIR/grafana/dashboards/experiment-overview.json" \
-        "$MONITORING_DIR/grafana/dashboards/dagster-containers.json" \
-        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/dashboards/"
+    # Copy all dashboards (glob to pick up any new files automatically)
+    for dash in "$MONITORING_DIR"/grafana/dashboards/*.json; do
+        scp $SSH_OPTS "$dash" ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/dashboards/"
+    done
 
     echo "[OK] Configs copied"
 
     # Verify Docker is running on the VM before attempting compose operations
+    # ── Validate configs BEFORE deploying (fail fast) ─────────────────────
+    echo "-> Validating Prometheus config locally..."
+    if command -v promtool &>/dev/null; then
+        if ! promtool check config "$MONITORING_DIR/prometheus/prometheus.yml" &>/dev/null; then
+            echo "[FAIL] prometheus.yml failed promtool check. Fix before deploying."
+            promtool check config "$MONITORING_DIR/prometheus/prometheus.yml"
+            exit 1
+        fi
+        echo "   [OK] prometheus.yml valid"
+    else
+        echo "   [SKIP] promtool not installed locally (brew install prometheus to enable)"
+    fi
+
+    if command -v amtool &>/dev/null; then
+        if ! amtool check-config "$MONITORING_DIR/alertmanager/alertmanager.yml" &>/dev/null; then
+            echo "[FAIL] alertmanager.yml failed amtool check. Fix before deploying."
+            amtool check-config "$MONITORING_DIR/alertmanager/alertmanager.yml"
+            exit 1
+        fi
+        echo "   [OK] alertmanager.yml valid"
+    else
+        echo "   [SKIP] amtool not installed locally (brew install alertmanager to enable)"
+    fi
+
     echo "-> Checking Docker on VM..."
     if ! ssh $SSH_OPTS ubuntu@"$VM_IP" "docker info" &>/dev/null; then
         echo "[FAIL] Docker is not running on the VM."
@@ -125,17 +157,45 @@ case "$ACTION" in
     ssh $SSH_OPTS ubuntu@"$VM_IP" \
         "cd $VM_MONITORING_DIR && docker compose pull && docker compose up -d"
 
+    # ── Wait for services to become healthy ──────────────────────────────
+    echo ""
+    echo "-> Waiting for monitoring services to be healthy..."
+    _WAIT_SECS=0
+    _MAX_WAIT=120
+    while [[ $_WAIT_SECS -lt $_MAX_WAIT ]]; do
+        PROM_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
+            "curl -sf http://localhost:9090/-/healthy" 2>/dev/null && echo "yes" || echo "no")
+        GRAF_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
+            "curl -sf http://localhost:3000/api/health" 2>/dev/null && echo "yes" || echo "no")
+        LOKI_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
+            "curl -sf http://localhost:3100/ready" 2>/dev/null && echo "yes" || echo "no")
+        if [[ "$PROM_OK" == "yes" && "$GRAF_OK" == "yes" && "$LOKI_OK" == "yes" ]]; then
+            break
+        fi
+        echo "   Prometheus:$PROM_OK Grafana:$GRAF_OK Loki:$LOKI_OK — waiting..."
+        sleep 5
+        _WAIT_SECS=$((_WAIT_SECS + 5))
+    done
+    if [[ $_WAIT_SECS -ge $_MAX_WAIT ]]; then
+        echo "[WARN] Services did not become healthy within ${_MAX_WAIT}s — check logs:"
+        echo "       make monitoring-logs"
+    fi
+
     echo ""
     echo "================================================================"
     echo "  Monitoring stack running on VM ($VM_IP)!"
     echo ""
-    echo "  Grafana:    http://$VM_IP:3000  (admin / thesis2026)"
-    echo "  Prometheus: http://$VM_IP:9090"
-    echo "  cAdvisor:   http://$VM_IP:8080"
+    echo "  Grafana:      http://$VM_IP:3000  (admin / \$GRAFANA_ADMIN_PASSWORD)"
+    echo "  Prometheus:   http://$VM_IP:9090"
+    echo "  Alertmanager: http://$VM_IP:9093"
+    echo "  cAdvisor:     http://$VM_IP:8080"
+    echo "  Loki:         http://$VM_IP:3100 (API only)"
     echo ""
-    echo "  Dashboards are auto-provisioned:"
-    echo "    - Thesis Experiment Overview"
+    echo "  Dashboards auto-provisioned (Thesis folder in Grafana):"
+    echo "    - Thesis Infrastructure Overview"
     echo "    - Dagster Container Resources"
+    echo "    - K8s Pods (if k8s experiments running)"
+    echo "    - VM vs K8s Comparison"
     echo "================================================================"
     ;;
 
@@ -160,11 +220,38 @@ case "$ACTION" in
 
   logs)
     ssh $SSH_OPTS ubuntu@"$VM_IP" \
-        "cd $VM_MONITORING_DIR && docker compose logs --tail=50"
+        "cd $VM_MONITORING_DIR && docker compose logs --tail=100 --follow"
+    ;;
+
+  update)
+    # Push new configs WITHOUT a full restart (Prometheus hot-reload, Grafana watches provisioning dir)
+    echo "==> Pushing updated configs to VM (no restart)..."
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/prometheus/prometheus.yml" \
+        "$MONITORING_DIR/prometheus/alerts.yml" \
+        "$MONITORING_DIR/prometheus/recording_rules.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/prometheus/"
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/alertmanager/alertmanager.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/alertmanager/"
+    for dash in "$MONITORING_DIR"/grafana/dashboards/*.json; do
+        scp $SSH_OPTS "$dash" ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/dashboards/"
+    done
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/grafana/provisioning/alerting/contact-points.yml" \
+        "$MONITORING_DIR/grafana/provisioning/alerting/rules.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/grafana/provisioning/alerting/"
+    # Hot-reload Prometheus (no restart needed)
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "curl -sf -X POST http://localhost:9090/-/reload && echo '[OK] Prometheus reloaded'" || true
+    # Hot-reload Alertmanager
+    ssh $SSH_OPTS ubuntu@"$VM_IP" \
+        "curl -sf -X POST http://localhost:9093/-/reload && echo '[OK] Alertmanager reloaded'" || true
+    echo "[OK] Configs updated (Grafana picks up dashboard changes automatically)"
     ;;
 
   *)
-    echo "Usage: $0 {up|down|restart|status|logs}"
+    echo "Usage: $0 {up|down|restart|status|logs|update}"
     exit 1
     ;;
 esac

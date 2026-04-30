@@ -1,0 +1,206 @@
+{
+  "annotations": { "list": [
+    { "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "enable": true,
+      "expr": "{service=\"dagster-daemon\"} |= \"experiment\"",
+      "iconColor": "purple",
+      "name": "Experiment Events",
+      "titleFormat": "Experiment Event"
+    }
+  ]},
+  "description": "Side-by-side comparison of VM (Exp1) vs K8s (Exp2A) results. Shows the crossover point (SQ4): where K8s overhead becomes smaller than VM contention degradation. Requires federation of K8s Prometheus into VM Prometheus.",
+  "editable": true,
+  "id": null,
+  "uid": "thesis-vm-k8s-comparison",
+  "title": "VM vs K8s Comparison (SQ4 Crossover)",
+  "tags": ["thesis", "comparison", "SQ4", "crossover"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      }
+    ]
+  },
+  "panels": [
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 1, "title": "🔑 Key Metrics at a Glance", "type": "row" },
+    {
+      "id": 2,
+      "title": "VM OOM Kills (total)",
+      "description": "Total OOM kills on the VM across all concurrency levels. Zero on K8s (isolated pods). Core SQ2 metric.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]},
+          "displayName": "VM OOM kills"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "expr": "increase(container_oom_events_total{name!~\"thesis-.*\", cluster=\"thesis-vm\"}[$__range])",
+        "legendFormat": "VM OOM kills",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" }
+      }]
+    },
+    {
+      "id": 3,
+      "title": "K8s OOM Kills (total)",
+      "description": "OOM kills in K8s pods. Should be 0 at L1-L6 given 2GiB limit per pod and well-behaved workload.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 },
+            { "color": "red", "value": 3 }
+          ]},
+          "displayName": "K8s OOM kills"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"dagster\", cluster=\"kind-thesis\"}[$__range]) or vector(0)",
+        "legendFormat": "K8s pod restarts",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" }
+      }]
+    },
+    {
+      "id": 4,
+      "title": "VM Peak Memory",
+      "description": "Peak VM host memory utilization during the time range. Directly linked to OOM kill cascade.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 0.7 },
+            { "color": "red", "value": 0.9 }
+          ]},
+          "displayName": "VM peak memory"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["max"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{ "expr": "thesis:node_memory_utilization:ratio", "legendFormat": "VM memory", "datasource": { "type": "prometheus", "uid": "${datasource}" } }]
+    },
+    {
+      "id": 5,
+      "title": "K8s Max Pod Memory / 2GiB",
+      "description": "Highest memory utilization as fraction of the 2GiB pod limit. Approaches 1.0 just before OOM kill.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 0.7 },
+            { "color": "red", "value": 0.9 }
+          ]},
+          "displayName": "K8s max pod memory / 2GiB"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["max"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{ "expr": "max(container_memory_usage_bytes{namespace=\"dagster\", container!=\"\", container!=\"POD\"}) / 2147483648", "legendFormat": "", "datasource": { "type": "prometheus", "uid": "${datasource}" } }]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }, "id": 10, "title": "📈 CPU Utilization — VM vs K8s Node", "type": "row" },
+    {
+      "id": 11,
+      "title": "CPU Utilization: VM host vs K8s node",
+      "description": "VM host CPU shows contention at high concurrency (SQ1). K8s node also shows load but pods are isolated. The gap between them drives the SQ4 crossover.",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 2, "fillOpacity": 8 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "VM CPU" }, "properties": [{ "id": "color", "value": { "fixedColor": "#C0392B", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "K8s node CPU" }, "properties": [{ "id": "color", "value": { "fixedColor": "#2980B9", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        { "expr": "thesis:node_cpu_utilization:ratio{cluster=\"thesis-vm\"}", "legendFormat": "VM CPU", "datasource": { "type": "prometheus", "uid": "${datasource}" } },
+        { "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", cluster=\"kind-thesis\"}[2m]))", "legendFormat": "K8s node CPU", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+      ]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 }, "id": 20, "title": "⚖️ Crossover Analysis (SQ4)", "type": "row" },
+    {
+      "id": 21,
+      "title": "Running Workload Containers: VM vs K8s",
+      "description": "VM container count drops at L3+ due to OOM kills. K8s maintains full count (pod isolation). The divergence IS the blast-radius difference (SQ2).",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "VM containers" }, "properties": [{ "id": "color", "value": { "fixedColor": "#C0392B", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "K8s pods" }, "properties": [{ "id": "color", "value": { "fixedColor": "#2980B9", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        { "expr": "thesis:dagster_workload_containers:count{cluster=\"thesis-vm\"}", "legendFormat": "VM containers", "datasource": { "type": "prometheus", "uid": "${datasource}" } },
+        { "expr": "count(kube_pod_status_phase{namespace=\"dagster\", phase=\"Running\", cluster=\"kind-thesis\"}) or vector(0)", "legendFormat": "K8s pods", "datasource": { "type": "prometheus", "uid": "${datasource}" } }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Net Benefit Indicator (positive = K8s wins)",
+      "description": "VM effective time (exec / success_rate) minus K8s total pod time. Positive values mean K8s is net beneficial. Crossover (SQ4) is where this turns positive and stays positive.",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 0 }
+          ]},
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [{
+        "expr": "thesis:vm_effective_time:seconds - thesis:k8s_total_pod_time:seconds",
+        "legendFormat": "Net benefit (VM eff. - K8s total)",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" }
+      }]
+    }
+  ]
+}

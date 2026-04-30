@@ -48,3 +48,13 @@ compute_logs:
   config:
     base_dir:
       env: DAGSTER_HOME
+
+# ── OpenTelemetry tracing → Grafana Tempo ──────────────────────────────────
+# When OTEL_EXPORTER_OTLP_ENDPOINT is set (in .env / compose), Dagster will
+# emit span traces for each op execution to Tempo.
+# Set:   OTEL_EXPORTER_OTLP_ENDPOINT=http://<monitoring-host>:4317
+# Tempo then makes traces queryable from Grafana (see thesis-vm datasource).
+# This section enables telemetry metadata but the actual exporter is controlled
+# by the OTEL_ env vars (standard OpenTelemetry SDK pattern — no config file change needed).
+telemetry:
+  enabled: true

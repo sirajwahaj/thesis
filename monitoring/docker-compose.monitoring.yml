@@ -62,6 +62,10 @@ services:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
       - "--storage.path=/alertmanager"
       - "--web.listen-address=:9093"
+    environment:
+      # Used in alertmanager.yml for Grafana annotation webhook auth.
+      # Set in .env.monitoring (see monitoring/.env.monitoring.example).
+      GRAFANA_API_KEY: ${GRAFANA_API_KEY:-}
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
@@ -154,6 +158,47 @@ services:
       timeout: 5s
       retries: 3
 
+  # ── Pushgateway (custom experiment metrics) ────────────────────────────────
+  # Allows scripts to push one-off metrics (e.g. experiment_run_success_total)
+  # that don't fit the pull model. Use scripts/bash/push-grafana-annotation.sh.
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: thesis-pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9091/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Grafana Tempo (distributed tracing) ───────────────────────────────────
+  # Receives OTEL traces from Dagster ops via OTLP gRPC (:4317).
+  # Trace data is correlated with Prometheus metrics via exemplars.
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: thesis-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP API (Grafana queries)
+      - "4317:4317"   # OTLP gRPC (Dagster sends traces here)
+      - "4318:4318"   # OTLP HTTP (alternative endpoint)
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3200/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # ── Node Exporter (Host Metrics) ───────────────────────────────────────────
   node-exporter:
     image: prom/node-exporter:v1.8.1
@@ -226,3 +271,4 @@ volumes:
   loki_data:
   alertmanager_data:
   promtail_positions:
+  tempo_data:

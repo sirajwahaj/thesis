@@ -1,0 +1,58 @@
+# Grafana Contact Points (notification channels) — provisioned at startup.
+# These are the Grafana-native alert notification channels (Grafana Managed Alerts).
+# Prometheus-fired alerts go via Alertmanager; these are for Grafana-native alert rules.
+#
+# Reference: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
+apiVersion: 1
+
+contactPoints:
+  # ── Default contact point: visible in Grafana UI, no external channel needed ──
+  - orgId: 1
+    name: thesis-default
+    receivers:
+      # Grafana's built-in notification history — always enabled, zero config.
+      - uid: thesis-grafana-oncall
+        type: oncall
+        disableResolveMessage: false
+        settings: {}
+
+  # ── Slack contact point (opt-in: set SLACK_WEBHOOK_URL in .env.monitoring) ──
+  - orgId: 1
+    name: thesis-slack
+    receivers:
+      - uid: thesis-slack-webhook
+        type: slack
+        disableResolveMessage: false
+        settings:
+          url: $SLACK_WEBHOOK_URL
+          title: |
+            {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }}
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}: {{ len .Alerts.Firing }}{{ end }}]
+            {{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts -}}
+            *{{ .Labels.alertname }}* ({{ .Labels.severity }})
+            {{ .Annotations.summary }}
+            {{ end }}
+          username: Thesis Alerts
+          icon_emoji: ":bell:"
+
+policies:
+  - orgId: 1
+    receiver: thesis-default
+    group_by:
+      - alertname
+      - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - receiver: thesis-slack
+        matchers:
+          - severity = critical
+        group_wait: 10s
+        repeat_interval: 1h
+        continue: true
+      - receiver: thesis-default
+        matchers:
+          - severity = warning

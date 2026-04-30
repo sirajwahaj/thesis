@@ -64,6 +64,43 @@ case "$ACTION" in
       --set prometheus.service.nodePort=30090 \
       --wait --timeout 5m
 
+    # ── Deploy Loki for K8s log aggregation ────────────────────────────────
+    echo ""
+    echo "==> Deploying Loki on Kind cluster..."
+
+    if ! helm repo list 2>/dev/null | grep -q "grafana"; then
+      helm repo add grafana https://grafana.github.io/helm-charts
+    fi
+    helm repo update
+
+    helm upgrade --install loki grafana/loki-stack \
+      --namespace "$NAMESPACE" \
+      --set loki.enabled=true \
+      --set loki.persistence.enabled=false \
+      --set loki.resources.requests.memory=128Mi \
+      --set loki.resources.limits.memory=256Mi \
+      --set promtail.enabled=true \
+      --set grafana.enabled=false \
+      --wait --timeout 3m
+
+    # ── Add Loki datasource to the existing Grafana ────────────────────────
+    # Wait for Grafana to be ready
+    kubectl wait --for=condition=ready pod -l "app.kubernetes.io/name=grafana" \
+        -n "$NAMESPACE" --timeout=60s 2>/dev/null || true
+
+    GRAFANA_POD=$(kubectl get pod -n "$NAMESPACE" -l "app.kubernetes.io/name=grafana" \
+        -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || echo "")
+
+    if [[ -n "$GRAFANA_POD" ]]; then
+        echo "-> Adding Loki datasource to Grafana..."
+        LOKI_SVC="http://loki.${NAMESPACE}.svc.cluster.local:3100"
+        kubectl exec -n "$NAMESPACE" "$GRAFANA_POD" -- \
+            curl -sf -X POST http://admin:"${GRAFANA_ADMIN_PASSWORD}"@localhost:3000/api/datasources \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"Loki\",\"type\":\"loki\",\"url\":\"${LOKI_SVC}\",\"access\":\"proxy\",\"isDefault\":false}" \
+            2>/dev/null && echo "   [OK] Loki datasource added" || echo "   [SKIP] Could not add Loki datasource automatically"
+    fi
+
     echo ""
     echo "================================================================"
     echo "  K8s Monitoring stack deployed!"
