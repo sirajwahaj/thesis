@@ -58,6 +58,7 @@ case "$ACTION" in
                        $VM_MONITORING_DIR/alertmanager \
                        $VM_MONITORING_DIR/loki \
                        $VM_MONITORING_DIR/promtail \
+                       $VM_MONITORING_DIR/tempo \
                        $VM_MONITORING_DIR/grafana/provisioning/datasources \
                        $VM_MONITORING_DIR/grafana/provisioning/dashboards \
                        $VM_MONITORING_DIR/grafana/dashboards && \
@@ -86,6 +87,10 @@ case "$ACTION" in
     scp $SSH_OPTS \
         "$MONITORING_DIR/promtail/promtail.yml" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/promtail/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/tempo/tempo.yaml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/tempo/"
 
     # Copy alerting provisioning (contact points + rules)
     ssh $SSH_OPTS ubuntu@"$VM_IP" \
@@ -163,16 +168,15 @@ case "$ACTION" in
     _WAIT_SECS=0
     _MAX_WAIT=120
     while [[ $_WAIT_SECS -lt $_MAX_WAIT ]]; do
-        PROM_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
-            "curl -sf http://localhost:9090/-/healthy" 2>/dev/null && echo "yes" || echo "no")
-        GRAF_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
-            "curl -sf http://localhost:3000/api/health" 2>/dev/null && echo "yes" || echo "no")
-        LOKI_OK=$(ssh $SSH_OPTS ubuntu@"$VM_IP" \
-            "curl -sf http://localhost:3100/ready" 2>/dev/null && echo "yes" || echo "no")
-        if [[ "$PROM_OK" == "yes" && "$GRAF_OK" == "yes" && "$LOKI_OK" == "yes" ]]; then
+        ssh $SSH_OPTS ubuntu@"$VM_IP" "curl -sf http://localhost:9090/-/healthy" &>/dev/null && PROM_OK="yes" || PROM_OK="no"
+        ssh $SSH_OPTS ubuntu@"$VM_IP" "curl -sf http://localhost:3000/api/health" &>/dev/null && GRAF_OK="yes" || GRAF_OK="no"
+        ssh $SSH_OPTS ubuntu@"$VM_IP" "curl -sf http://localhost:3100/ready" &>/dev/null && LOKI_OK="yes" || LOKI_OK="no"
+        ssh $SSH_OPTS ubuntu@"$VM_IP" "curl -sf http://localhost:9091/-/healthy" &>/dev/null && PUSH_OK="yes" || PUSH_OK="no"
+        ssh $SSH_OPTS ubuntu@"$VM_IP" "curl -sf http://localhost:3200/ready" &>/dev/null && TEMPO_OK="yes" || TEMPO_OK="no"
+        if [[ "$PROM_OK" == "yes" && "$GRAF_OK" == "yes" && "$LOKI_OK" == "yes" && "$PUSH_OK" == "yes" && "$TEMPO_OK" == "yes" ]]; then
             break
         fi
-        echo "   Prometheus:$PROM_OK Grafana:$GRAF_OK Loki:$LOKI_OK — waiting..."
+        echo "   Prometheus:$PROM_OK Grafana:$GRAF_OK Loki:$LOKI_OK Pushgateway:$PUSH_OK Tempo:$TEMPO_OK — waiting..."
         sleep 5
         _WAIT_SECS=$((_WAIT_SECS + 5))
     done
@@ -188,8 +192,14 @@ case "$ACTION" in
     echo "  Grafana:      http://$VM_IP:3000  (admin / \$GRAFANA_ADMIN_PASSWORD)"
     echo "  Prometheus:   http://$VM_IP:9090"
     echo "  Alertmanager: http://$VM_IP:9093"
+    echo "  Pushgateway:  http://$VM_IP:9091"
+    echo "  Tempo:        http://$VM_IP:3200  (OTLP gRPC: $VM_IP:4317)"
     echo "  cAdvisor:     http://$VM_IP:8080"
     echo "  Loki:         http://$VM_IP:3100 (API only)"
+    echo ""
+    echo "  K8s NodePort services (Kind runs on localhost, not VM):"
+    echo "    K8s Grafana:     http://localhost:30300"
+    echo "    K8s Prometheus:  http://localhost:30090"
     echo ""
     echo "  Dashboards auto-provisioned (Thesis folder in Grafana):"
     echo "    - Thesis Infrastructure Overview"
