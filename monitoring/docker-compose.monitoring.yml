@@ -32,10 +32,9 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=30d"
+      - "--storage.tsdb.retention.time=7d"
       - "--storage.tsdb.retention.size=2GB"
       - "--web.enable-lifecycle"
-      - "--web.enable-admin-api"
       - "--web.console.libraries=/etc/prometheus/console_libraries"
       - "--web.console.templates=/etc/prometheus/consoles"
     volumes:
@@ -107,6 +106,7 @@ services:
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail_positions:/promtail
     networks:
       - monitoring
     depends_on:
@@ -120,7 +120,8 @@ services:
     container_name: thesis-grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: thesis2026
+      # Set GRAFANA_ADMIN_PASSWORD in your environment or a .env file to override
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-thesis2026}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/experiment-overview.json
       GF_FEATURE_TOGGLES_ENABLE: "traceToMetrics tempoSearch tempoBackendSearch"
@@ -166,6 +167,8 @@ services:
     pid: host
 
   # ── cAdvisor (Container Metrics) ───────────────────────────────────────────
+  # NOTE: cAdvisor uses Docker-specific mounts (docker.sock, /var/lib/docker).
+  # The VM monitoring stack requires Docker CE; it is not compatible with Podman.
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: thesis-cadvisor
@@ -216,3 +219,4 @@ volumes:
   grafana_data:
   loki_data:
   alertmanager_data:
+  promtail_positions:

@@ -6,7 +6,7 @@
 # using the kube-prometheus-stack Helm chart. Provides:
 #   - Node metrics (kubelet, node-exporter)
 #   - Pod-level CPU/memory (for K8s experiment run pods)
-#   - Grafana dashboards accessible at localhost:3000
+#   - Grafana dashboards accessible at localhost:30300
 #
 # Prerequisites:
 #   - Kind cluster 'thesis' running
@@ -16,12 +16,23 @@
 # Usage:
 #   bash scripts/bash/monitoring-k8s.sh          # install
 #   bash scripts/bash/monitoring-k8s.sh uninstall # remove
+#
+# Environment variables:
+#   GRAFANA_ADMIN_PASSWORD   Grafana admin password (default: randomly generated)
 # =============================================================================
 set -euo pipefail
 
 NAMESPACE="monitoring"
 RELEASE="kube-prometheus"
 ACTION="${1:-install}"
+
+# Use provided password or generate a random one for this session
+if [[ -z "${GRAFANA_ADMIN_PASSWORD:-}" ]]; then
+    GRAFANA_ADMIN_PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16)"
+    _PASSWORD_GENERATED=true
+else
+    _PASSWORD_GENERATED=false
+fi
 
 case "$ACTION" in
   install|up)
@@ -42,7 +53,7 @@ case "$ACTION" in
       --set prometheus.prometheusSpec.retention=3d \
       --set prometheus.prometheusSpec.resources.requests.memory=256Mi \
       --set prometheus.prometheusSpec.resources.limits.memory=512Mi \
-      --set grafana.adminPassword=admin \
+      --set grafana.adminPassword="${GRAFANA_ADMIN_PASSWORD}" \
       --set grafana.service.type=NodePort \
       --set grafana.service.nodePort=30300 \
       --set "grafana.grafana\\.ini.server.root_url=http://localhost:30300" \
@@ -57,7 +68,13 @@ case "$ACTION" in
     echo "================================================================"
     echo "  K8s Monitoring stack deployed!"
     echo ""
-    echo "  Grafana:    http://localhost:30300  (admin / admin)"
+    echo "  Grafana:    http://localhost:30300"
+    if [[ "$_PASSWORD_GENERATED" == "true" ]]; then
+        echo "  Credentials: admin / ${GRAFANA_ADMIN_PASSWORD}"
+        echo "  (password was auto-generated; set GRAFANA_ADMIN_PASSWORD to use your own)"
+    else
+        echo "  Credentials: admin / <your GRAFANA_ADMIN_PASSWORD>"
+    fi
     echo "  Prometheus: http://localhost:30090"
     echo ""
     echo "  View Dagster run pods:"

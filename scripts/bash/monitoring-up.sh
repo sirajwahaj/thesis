@@ -102,6 +102,19 @@ case "$ACTION" in
 
     echo "[OK] Configs copied"
 
+    # Verify Docker is running on the VM before attempting compose operations
+    echo "-> Checking Docker on VM..."
+    if ! ssh $SSH_OPTS ubuntu@"$VM_IP" "docker info" &>/dev/null; then
+        echo "[FAIL] Docker is not running on the VM."
+        echo "       Run 'make vm-provision' to install Docker, then retry."
+        exit 1
+    fi
+    if ! ssh $SSH_OPTS ubuntu@"$VM_IP" "docker compose version" &>/dev/null; then
+        echo "[FAIL] 'docker compose' (plugin) not available on the VM."
+        echo "       Run 'make vm-provision' to install Docker CE, then retry."
+        exit 1
+    fi
+
     # Pull images and start monitoring
     echo ""
     echo "-> Starting monitoring containers on VM..."
@@ -112,7 +125,7 @@ case "$ACTION" in
     echo "================================================================"
     echo "  Monitoring stack running on VM ($VM_IP)!"
     echo ""
-    echo "  Grafana:    http://$VM_IP:3000  (admin / admin)"
+    echo "  Grafana:    http://$VM_IP:3000  (admin / thesis2026)"
     echo "  Prometheus: http://$VM_IP:9090"
     echo "  cAdvisor:   http://$VM_IP:8080"
     echo ""
