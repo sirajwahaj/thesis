@@ -14,8 +14,16 @@
 \usepackage{setspace}
 \onehalfspacing
 
+% --- Färger (måste definieras innan hyperref) ---
+\definecolor{InsightBlue}{HTML}{1F4E79}
+\definecolor{InsightDark}{HTML}{18354F}
+\definecolor{InsightLight}{HTML}{F4F7FA}
+\definecolor{InsightGray}{HTML}{5E6B78}
+\definecolor{TitleSeparator}{HTML}{2D5A96}
+
 % --- Hyperlinks (för innehållsförteckning och referenser) ---
-\usepackage[colorlinks=true, linkcolor=InsightBlue, urlcolor=InsightBlue, bookmarksnumbered=true]{hyperref}
+\usepackage[colorlinks=true, bookmarksnumbered=true]{hyperref}
+\hypersetup{linkcolor=InsightBlue, urlcolor=InsightBlue}
 
 % --- Rubriker ---
 \usepackage{titlesec}
@@ -36,13 +44,6 @@
 
 % --- Grafik ---
 \usepackage{graphicx}
-
-% --- Färger ---
-\definecolor{InsightBlue}{HTML}{1F4E79}
-\definecolor{InsightDark}{HTML}{18354F}
-\definecolor{InsightLight}{HTML}{F4F7FA}
-\definecolor{InsightGray}{HTML}{5E6B78}
-\definecolor{TitleSeparator}{HTML}{2D5A96}
 
 % --- Sidhuvud och sidfot ---
 \usepackage{fancyhdr}
