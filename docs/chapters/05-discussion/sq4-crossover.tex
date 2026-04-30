@@ -18,9 +18,9 @@ Startup overhead increases with concurrency as more containers initialise simult
 \paragraph{The performance crossover is not reached within L1--L6.}
 In terms of cost per successfully delivered job (accounting for VM failures as re-execution costs):
 K8s is more expensive at low concurrency (L1: K8s total 86.3\,s vs VM effective 66.8\,s, a +25\,\% cost).
-However, as the VM fails at L4+, its effective cost explodes: at L4, VM effective = 252.8\,s (168.6\,s / 0.667) vs K8s total = estimated $>$168\,s + overhead $>$192\,s.
-The performance crossover (K8s total < VM effective) occurs between L1 and L4, suggesting K8s becomes performance-competitive before L4.
-At L4--L6, the VM effective time continues growing to 252--undefined while K8s total stabilises at $\approx$92--107\,s.
+However, as the VM fails at L4+, its effective cost explodes: at L4, VM effective = 252.8\,s (168.6\,s / 0.667) vs K8s total = 74.9\,s (execution + startup overhead).
+The performance crossover (K8s total < VM effective) occurs at L4, where K8s is over 3$\times$ faster per successful delivery.
+At L5, the VM effective time grows to 749.8\,s (464.1\,s / 0.619) while K8s total stabilises at $\approx$92\,s; at L6 the VM delivers zero jobs, making effective cost undefined.
 The performance and reliability crossovers both favour K8s, but the reliability crossover is the binding constraint.
 
 \paragraph{The crossover analysis: net beneficial at L4.}

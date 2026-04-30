@@ -106,5 +106,5 @@ These data directly address SQ3 and feed into the crossover analysis in Section~
 Startup overhead is computed by joining \texttt{pod\_timing.csv} with \texttt{dagster\_runs.csv} on \texttt{run\_id}: startup\,overhead = total\,pod\,lifetime $-$ Dagster\,exec\,time.
 Note: the \texttt{job\_start\_ts} field records the \texttt{ContainersReady} condition change on container \emph{exit}, so subtracting \texttt{submitted\_ts} gives total pod lifetime, not startup time.
 
-At L1--L6, all pods were scheduled within $<$1\,s of submission and container startup overhead measured 4.3\,s (L1) to 14.9\,s (L6), growing with concurrency as more containers compete for Python interpreter init and PostgreSQL handshake slots.
+At L1--L6, all pods were scheduled within $<$1\,s of submission and container startup overhead measured 24.4\,s (L1) to 56.6\,s (L6), growing with concurrency as more containers compete for Python interpreter init and PostgreSQL handshake slots.
 No scheduling timeouts or pending states were observed at any tested level (Table~\ref{tab:overhead-summary}).
