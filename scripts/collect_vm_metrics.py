@@ -58,7 +58,7 @@ def _count_docker_containers() -> int:
             ["docker", "ps", "-q", "--filter", "label=dagster/image_type=run_worker"],
             capture_output=True, text=True, timeout=2,
         )
-        lines = [l.strip() for l in result.stdout.splitlines() if l.strip()]
+        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
         return len(lines)
     except Exception:
         return 0

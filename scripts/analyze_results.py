@@ -84,8 +84,8 @@ def main() -> None:
 
     if rc == 0:
         print("\nAnalysis complete.")
-        print(f"  Outputs  → data/processed/")
-        print(f"  Figures  → results/")
+        print("  Outputs  → data/processed/")
+        print("  Figures  → results/")
         print(f"  Notebook → {args.notebook}  (outputs saved in-place)")
         print()
         print("Run `make copy-figures` to copy PNGs into docs/figures/ for LaTeX.")
