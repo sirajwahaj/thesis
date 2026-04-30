@@ -65,7 +65,7 @@ curl http://localhost:5001/v2/thesis-workload/tags/list   # list tags
 ## Containerfile notes
 
 - Base: `python:3.12-slim` (keeps image small for quick pulls in Kind)
-- Installs: `uv` + `dagster 1.12.7` + `dagster-k8s 1.12.7`
+- Installs: `uv` + `dagster 1.12.22` + `dagster-k8s 1.12.22`
 - Entry point: `dagster api grpc --host 0.0.0.0 --port 4000`
 - Working dir: `/opt/thesis/workload`
 - No root: runs as `dagster` user (UID 1000)

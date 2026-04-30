@@ -1,0 +1,19 @@
+% =============================================================================
+% 2.1 Pillar 1 — Resource Contention and Non-Linear Performance Degradation
+% =============================================================================
+
+\section{Pillar 1 --- Resource Contention and Non-Linear Performance Degradation}
+\label{sec:pillar1}
+
+\emph{Theoretical basis for SQ1.}
+
+Resource contention arises when multiple processes compete for finite shared resources---most commonly CPU cycles and memory---on a single host. The defining characteristic relevant to this thesis is that performance degradation under contention is \emph{non-linear}: it does not scale proportionally with load but accelerates disproportionately as resource utilisation approaches capacity limits.
+
+\citet{nanda1991} provide the foundational empirical framework for this phenomenon in shared-memory multiprocessors. They introduce two normalised metrics---\emph{efficiency} and \emph{overhead factor}---to quantify the gap between ideal parallel speedup and actual performance when concurrent processes share memory resources. Their key finding is that contention-induced overhead compounds multiplicatively rather than additively, and can be decomposed into identifiable components: software synchronisation overhead, lock contention, and hardware memory access contention. This decomposition is directly relevant to understanding VM failure modes: when Dagster's DockerRunLauncher runs concurrent jobs as Docker containers on the same host, the overhead includes OS-level container scheduling, shared host memory contention, and I/O channel arbitration.
+
+\citet{arora2023} extends contention analysis to multicore processors, demonstrating that shared resource contention is inherently non-deterministic---it can influence the temporal behaviour of tasks in unpredictable ways. A task executing on one core competes with co-running tasks for access to shared caches, memory bus, and main memory. The work shows that contention depends not only on the number of concurrent tasks but also on memory access patterns and arbitration policies. Critically, \citeauthor{arora2023} demonstrates that contention effects can cause timing violations that cascade through dependent tasks---the same cascading failure mode seen when Docker containers on a shared VM host exhaust memory and the kernel OOM killer terminates multiple containers at once.
+
+\citet{casalicchio2019} brings contention theory into the container domain, demonstrating that when multiple container instances run on the same host, they generate ``interference in the contention of physical resources.'' Under concurrent workloads with CPU utilisation above 75\%, response times under the default Kubernetes Horizontal Pod Autoscaler (KHPA) are 2 to 3 orders of magnitude higher than under a contention-aware algorithm. This finding confirms that resource contention remains a severe problem even in containerised environments when containers share a host.
+
+\paragraph{Research connection.}
+SQ1 identifies the empirical concurrency threshold at which non-linear contention collapse occurs for Dagster pipeline workloads on a single VM. The literature predicts the collapse will be sudden rather than gradual.

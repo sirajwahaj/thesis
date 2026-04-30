@@ -1,0 +1,46 @@
+name: 💡 Suggestion / Improvement
+description: Suggest an improvement to scripts, analysis, methodology, or documentation
+title: "[Suggestion] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        All suggestions are welcome — from typo fixes to methodology improvements.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the current limitation or gap.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: What would you change or add?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Scripts / tooling
+        - Data collection
+        - Analysis / statistics
+        - LaTeX / writing
+        - Infrastructure
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional Context
+      description: Links, references, examples — anything helpful.

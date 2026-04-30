@@ -1,0 +1,69 @@
+% ============================================================
+%  sections/solution.tex
+% ============================================================
+
+\section{The Solution}
+
+Runway is a \textbf{Dagster-native plugin} (Airflow support in v1.1) that adds three layers
+of intelligence to any existing pipeline deployment. Setup takes under 10 minutes.
+No new infrastructure. No data leaves the machine.
+
+\subsection{Layer 1 — Collect (zero-config)}
+
+A Dagster sensor attaches to the pipeline event log and records, after every run:
+
+\begin{itemize}
+  \item Job duration, start time, success or failure status
+  \item Concurrency level (number of simultaneous jobs)
+  \item Memory and CPU utilisation at the host level
+\end{itemize}
+
+Data is stored locally in SQLite (default) or Postgres. No external service required.
+
+\subsection{Layer 2 — Predict (no labelled data needed)}
+
+Runway fits a trend model over the last 30 runs per pipeline. It outputs:
+
+\begin{itemize}
+  \item \textbf{Trend direction:} is latency increasing, stable, or improving?
+  \item \textbf{Breach date:} the projected date at which the pipeline will exceed the user's SLA threshold (configurable, default 2× baseline latency)
+  \item \textbf{Confidence interval:} a range rather than a point estimate — because honest uncertainty is more useful than false precision
+\end{itemize}
+
+The model is a rolling linear regression with exponential weighting (recent runs count more).
+No GPU, no LLM, no training data required.
+
+\subsection{Layer 3 — Recommend (research-backed)}
+
+The recommendation engine applies the \textbf{crossover framework} developed in peer-reviewed
+experimental research (Wahaj, 2026): the empirically validated thresholds at which a
+shared-VM Docker deployment becomes unreliable under concurrent workload and a Kubernetes
+migration becomes net beneficial.
+
+\begin{center}
+\small
+\begin{tabular}{l l}
+  \toprule
+  \textbf{Detected condition} & \textbf{Recommendation} \\
+  \midrule
+  Concurrent jobs $\geq$ 3, VM deployment     & Migrate to Kubernetes before week \textit{N} \\
+  Latency growth $>$ 8\%/week                 & Add retry logic and set memory limits \\
+  Success rate declining, memory trend up     & Increase VM RAM or add pod memory limits \\
+  Queue depth growing, scheduling backlog     & Increase Dagster run worker replicas \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{What the user receives}
+
+A weekly Slack message (immediate alert when breach window $\leq$ 14 days):
+
+\begin{callout}
+\texttt{\textbf{[Runway] Pipeline: orders\_etl — Action needed in 17 days}}\\[4pt]
+\texttt{P95 latency: +14\% over last 14 runs (now 118s, SLA: 120s)}\\
+\texttt{Concurrent jobs: 4 avg, trending to 6 by next month}\\[4pt]
+\texttt{Prediction: SLA breach in \textasciitilde17 days (range: 12–23 days)}\\[4pt]
+\texttt{Recommendation: At 5+ concurrent jobs your VM will start dropping runs.}\\
+\texttt{Migrate to Kubernetes before 15 May. Est. overhead: 5–12s per run.}\\[4pt]
+\texttt{— Runway · View trend · Snooze · Configure SLA}
+\end{callout}
