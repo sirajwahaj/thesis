@@ -1,4 +1,4 @@
-# Grafana datasource provisioning — auto-configure Prometheus on startup
+# Grafana datasource provisioning — Prometheus (metrics) + Loki (logs)
 apiVersion: 1
 
 datasources:
@@ -9,4 +9,27 @@ datasources:
     isDefault: true
     editable: false
     jsonData:
-      timeInterval: "15s"
+      timeInterval: "10s"
+      exemplarTraceIdDestinations:
+        - name: traceID
+          datasourceUid: loki
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - name: Container
+          matcherRegex: "container=\"(.*?)\""
+          url: ""
+
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: false
+    jsonData:
+      implementation: prometheus

@@ -1,0 +1,61 @@
+# Prometheus Recording Rules — pre-aggregate expensive queries for dashboards
+# These run every evaluation_interval and store results as new time series
+groups:
+  - name: thesis_vm_aggregations
+    interval: 10s
+    rules:
+      # CPU utilization as a percentage (simpler dashboard queries)
+      - record: thesis:node_cpu_utilization:ratio
+        expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[2m]))
+
+      # Memory utilization as a percentage
+      - record: thesis:node_memory_utilization:ratio
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes
+
+      # Disk I/O rate (bytes/sec)
+      - record: thesis:node_disk_io_read:rate5m
+        expr: sum(rate(node_disk_read_bytes_total[5m]))
+
+      - record: thesis:node_disk_io_write:rate5m
+        expr: sum(rate(node_disk_written_bytes_total[5m]))
+
+      # Network throughput
+      - record: thesis:node_network_receive:rate5m
+        expr: sum(rate(node_network_receive_bytes_total{device!~"lo|veth.*|br-.*"}[5m]))
+
+      - record: thesis:node_network_transmit:rate5m
+        expr: sum(rate(node_network_transmit_bytes_total{device!~"lo|veth.*|br-.*"}[5m]))
+
+  - name: thesis_container_aggregations
+    interval: 10s
+    rules:
+      # Dagster workload container count (running experiments)
+      - record: thesis:dagster_workload_containers:count
+        expr: count(container_last_seen{name=~".*dagster.*run.*|.*workload.*"})
+
+      # Total container CPU usage (workload containers only)
+      - record: thesis:dagster_container_cpu:rate2m
+        expr: sum(rate(container_cpu_usage_seconds_total{name=~".*dagster.*run.*|.*workload.*"}[2m]))
+
+      # Total container memory usage (workload containers)
+      - record: thesis:dagster_container_memory:bytes
+        expr: sum(container_memory_usage_bytes{name=~".*dagster.*run.*|.*workload.*"})
+
+      # Per-container CPU (for individual job tracking)
+      - record: thesis:container_cpu:rate1m
+        expr: rate(container_cpu_usage_seconds_total{name=~".+"}[1m])
+
+      # All running containers count
+      - record: thesis:containers_running:count
+        expr: count(container_last_seen{name=~".+"})
+
+  - name: thesis_postgres_aggregations
+    interval: 15s
+    rules:
+      # Active connections ratio
+      - record: thesis:postgres_connections:ratio
+        expr: sum(pg_stat_activity_count) / pg_settings_max_connections
+
+      # Transactions per second
+      - record: thesis:postgres_tps:rate5m
+        expr: sum(rate(pg_stat_database_xact_commit{datname="dagster"}[5m]))

@@ -55,6 +55,9 @@ case "$ACTION" in
     # Create monitoring directory structure on VM
     ssh $SSH_OPTS ubuntu@"$VM_IP" \
         "sudo mkdir -p $VM_MONITORING_DIR/prometheus \
+                       $VM_MONITORING_DIR/alertmanager \
+                       $VM_MONITORING_DIR/loki \
+                       $VM_MONITORING_DIR/promtail \
                        $VM_MONITORING_DIR/grafana/provisioning/datasources \
                        $VM_MONITORING_DIR/grafana/provisioning/dashboards \
                        $VM_MONITORING_DIR/grafana/dashboards && \
@@ -69,7 +72,20 @@ case "$ACTION" in
     scp $SSH_OPTS \
         "$MONITORING_DIR/prometheus/prometheus.yml" \
         "$MONITORING_DIR/prometheus/alerts.yml" \
+        "$MONITORING_DIR/prometheus/recording_rules.yml" \
         ubuntu@"$VM_IP":"$VM_MONITORING_DIR/prometheus/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/alertmanager/alertmanager.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/alertmanager/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/loki/loki.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/loki/"
+
+    scp $SSH_OPTS \
+        "$MONITORING_DIR/promtail/promtail.yml" \
+        ubuntu@"$VM_IP":"$VM_MONITORING_DIR/promtail/"
 
     scp $SSH_OPTS \
         "$MONITORING_DIR/grafana/provisioning/datasources/prometheus.yml" \

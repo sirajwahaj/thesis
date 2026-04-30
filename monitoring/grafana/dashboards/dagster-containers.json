@@ -1,115 +1,90 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "description": "Per-container resource usage during Dagster workload runs — tracks CPU, memory, and network per Docker container to identify resource contention at each concurrency level",
+  "annotations": { "list": [{ "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+  "description": "Per-container resource usage during Dagster experiment runs — tracks individual workload containers for SQ1-SQ3 analysis",
   "editable": true,
   "id": null,
   "uid": "thesis-dagster-containers",
   "title": "Dagster Container Resources",
-  "tags": ["thesis", "dagster", "containers"],
+  "tags": ["thesis", "dagster", "containers", "experiments"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
-  "time": {
-    "from": "now-10m",
-    "to": "now"
-  },
-  "templating": {
-    "list": []
-  },
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": { "list": [] },
   "panels": [
+    { "title": "Per-Container CPU", "type": "row", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "collapsed": false },
     {
-      "title": "CPU per Container (workload runs)",
+      "title": "CPU Usage per Container",
       "type": "timeseries",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 1 },
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "custom": {
-            "lineWidth": 2
-          }
-        }
-      },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" } } },
       "targets": [
-        {
-          "expr": "rate(container_cpu_usage_seconds_total{name=~\".*run.*|.*workload.*\"}[30s])",
-          "legendFormat": "{{name}}",
-          "refId": "A"
-        }
+        { "expr": "rate(container_cpu_usage_seconds_total{name=~\".+\", name!~\"thesis-(prometheus|grafana|loki|promtail|alertmanager|node-exporter|cadvisor|postgres-exporter)\"}[1m])", "legendFormat": "{{name}}" }
+      ]
+    },
+    { "title": "Per-Container Memory", "type": "row", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 }, "collapsed": false },
+    {
+      "title": "Memory Usage per Container",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never" } } },
+      "targets": [
+        { "expr": "container_memory_usage_bytes{name=~\".+\", name!~\"thesis-(prometheus|grafana|loki|promtail|alertmanager|node-exporter|cadvisor|postgres-exporter)\"}", "legendFormat": "{{name}}" }
+      ]
+    },
+    { "title": "Container Lifecycle", "type": "row", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }, "collapsed": false },
+    {
+      "title": "Container Start/Stop Events",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 20 } } },
+      "targets": [
+        { "expr": "changes(container_start_time_seconds{name=~\".+\"}[1m])", "legendFormat": "Starts ({{name}})" }
       ]
     },
     {
-      "title": "Memory per Container (workload runs)",
+      "title": "OOM Events",
       "type": "timeseries",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 10 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "lineWidth": 2
-          }
-        }
-      },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 30, "drawStyle": "bars" } } },
       "targets": [
-        {
-          "expr": "container_memory_usage_bytes{name=~\".*run.*|.*workload.*\"}",
-          "legendFormat": "{{name}}",
-          "refId": "A"
-        }
+        { "expr": "increase(container_oom_events_total[2m])", "legendFormat": "OOM: {{name}}" }
+      ]
+    },
+    { "title": "Container Network", "type": "row", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 }, "collapsed": false },
+    {
+      "title": "Network Receive per Container",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "lineWidth": 1, "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "rate(container_network_receive_bytes_total{name=~\".+\", name!~\"thesis-(prometheus|grafana|loki|promtail|alertmanager|node-exporter|cadvisor|postgres-exporter)\"}[2m])", "legendFormat": "{{name}}" }
       ]
     },
     {
-      "title": "Container Count Over Time",
+      "title": "Network Transmit per Container",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 10 }
-            ]
-          }
-        }
-      },
+      "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "lineWidth": 1, "fillOpacity": 10 } } },
       "targets": [
-        {
-          "expr": "count(container_memory_usage_bytes{name=~\".*run.*|.*workload.*\"} > 0)",
-          "legendFormat": "Active workload containers",
-          "refId": "A"
-        }
+        { "expr": "rate(container_network_transmit_bytes_total{name=~\".+\", name!~\"thesis-(prometheus|grafana|loki|promtail|alertmanager|node-exporter|cadvisor|postgres-exporter)\"}[2m])", "legendFormat": "{{name}}" }
       ]
     },
+    { "title": "Dagster Run Logs", "type": "row", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 }, "collapsed": false },
     {
-      "title": "Container Network I/O",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps"
-        }
-      },
-      "targets": [
-        {
-          "expr": "rate(container_network_receive_bytes_total{name=~\".*run.*|.*workload.*\"}[30s])",
-          "legendFormat": "RX {{name}}",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(container_network_transmit_bytes_total{name=~\".*run.*|.*workload.*\"}[30s])",
-          "legendFormat": "TX {{name}}",
-          "refId": "B"
-        }
-      ]
+      "title": "Workload Container Logs",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 41 },
+      "datasource": "Loki",
+      "targets": [{ "expr": "{container=~\".*dagster.*run.*|.*workload.*\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "enableLogDetails": true }
     }
   ]
 }
