@@ -39,9 +39,11 @@ def run_notebook(notebook_path: str, timeout: int = 600) -> int:
     try:
         import nbformat  # noqa: F401 — just check it's installed
     except ImportError:
-        print("Installing nbconvert + nbformat...")
+        print("Installing nbconvert + nbformat via uv...")
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-q", "nbconvert", "nbformat"],
+            ["uv", "pip", "install", "--project",
+             os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"),
+             "-q", "nbconvert", "nbformat"],
             check=True,
         )
 

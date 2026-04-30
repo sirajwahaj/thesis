@@ -24,6 +24,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 VM_IP_FILE="$REPO_ROOT/vm-ip.txt"
 SSH_KEY="$HOME/.ssh/thesis_vm"
 
+# Windows (Git Bash): use podman provider for kind
+if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
+  export KIND_EXPERIMENTAL_PROVIDER="podman"
+fi
+
 CHECK_VM=true
 CHECK_K8S=true
 CHECK_LOCAL=true

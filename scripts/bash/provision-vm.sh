@@ -76,23 +76,45 @@ if ! ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
 fi
 echo "[OK] SSH connection OK"
 
-# ---- Install Ansible collections (once) ----
-echo ""
-echo "-> Checking Ansible Galaxy requirements..."
-echo "[OK] No additional collections required"
-
-# ---- Run playbook ----
+# ---- Run playbook (or SSH fallback on Windows) ----
 echo ""
 echo "----------------------------------------------------------------"
-echo "Running Ansible provisioning playbook..."
+echo "Running provisioning..."
 echo "----------------------------------------------------------------"
 echo ""
 
-# Run from ansible directory so ansible.cfg is picked up
-(cd "$ANSIBLE_DIR" && ansible-playbook \
-  -i "inventory.ini" \
-  "playbooks/provision-vm.yml" \
-  -v)
+# Ansible doesn't run natively on Windows (no os.get_blocking).
+# On Windows (Git Bash / MINGW), provision via SSH directly.
+if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
+  echo "-> Windows detected: provisioning via SSH (Ansible not supported on Windows)"
+  ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "ubuntu@$VM_IP" bash -s << 'SSHSCRIPT'
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+echo "[1/6] Updating apt..."
+sudo apt-get update -qq
+echo "[2/6] Installing prerequisites..."
+sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release netcat-openbsd git
+echo "[3/6] Adding Docker GPG key..."
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "[4/6] Adding Docker repo..."
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "[5/6] Installing Docker CE..."
+sudo apt-get update -qq
+sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+echo "[6/6] Configuring Docker..."
+sudo systemctl enable docker && sudo systemctl start docker
+sudo usermod -aG docker ubuntu
+echo "[OK] Docker $(docker --version)"
+SSHSCRIPT
+else
+  # Run from ansible directory so ansible.cfg is picked up
+  (cd "$ANSIBLE_DIR" && ansible-playbook \
+    -i "inventory.ini" \
+    "playbooks/provision-vm.yml" \
+    -v)
+fi
 
 echo ""
 echo "================================================================"

@@ -35,23 +35,29 @@ done
 echo ""
 echo "── Dagster K8s Deployment ----------------------------------------"
 
-# ---- Auto-detect podman socket for Docker API ----
-PODMAN_SOCKET="${DOCKER_HOST:-}"
-if [[ -z "$PODMAN_SOCKET" ]]; then
-  # Try the thesis machine socket first, then default
-  for candidate in \
-    "/var/folders"*"/T/podman/thesis-api.sock" \
-    "${XDG_RUNTIME_DIR:-/tmp}/podman/podman.sock" \
-    "/var/run/docker.sock"; do
-    # shellcheck disable=SC2086
-    candidate_expanded="$(ls $candidate 2>/dev/null | head -1 || true)"
-    if [[ -S "${candidate_expanded}" ]]; then
-      PODMAN_SOCKET="unix://${candidate_expanded}"
-      break
-    fi
-  done
+# ---- Auto-detect container runtime socket ----
+if [[ -z "${DOCKER_HOST:-}" ]]; then
+  # Windows (Git Bash / MINGW): use Podman Desktop named pipe
+  if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
+    export DOCKER_HOST="npipe:////./pipe/docker_engine"
+    export KIND_EXPERIMENTAL_PROVIDER="podman"
+    echo "→ Windows detected: using Podman (KIND_EXPERIMENTAL_PROVIDER=podman)"
+  # macOS: find the podman machine socket
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    for candidate in \
+      "/var/folders"*"/T/podman/thesis-api.sock" \
+      "${XDG_RUNTIME_DIR:-/tmp}/podman/podman.sock" \
+      "/var/run/docker.sock"; do
+      candidate_expanded="$(ls $candidate 2>/dev/null | head -1 || true)"
+      if [[ -S "${candidate_expanded}" ]]; then
+        export DOCKER_HOST="unix://${candidate_expanded}"
+        break
+      fi
+    done
+  elif [[ -S "/var/run/docker.sock" ]]; then
+    export DOCKER_HOST="unix:///var/run/docker.sock"
+  fi
 fi
-export DOCKER_HOST="${PODMAN_SOCKET}"
 echo "→ Using container runtime via: ${DOCKER_HOST:-system default}"
 
 # ---- Prerequisites ----
@@ -80,9 +86,19 @@ fi
   "$REPO_ROOT/src/"
 echo "[OK] Image built: ${IMAGE_NAME}:${IMAGE_TAG}"
 
-# ---- Load image directly into Kind nodes (no registry required) ----
+# ---- Load image directly into Kind nodes ----
+# kind load docker-image only works with Docker API.
+# For Podman on Windows, /dev/stdin doesn't exist — save to a temp file first.
 echo "→ Loading image into Kind cluster '$CLUSTER_NAME'..."
-kind load docker-image "${IMAGE_NAME}:${IMAGE_TAG}" --name "$CLUSTER_NAME"
+if [[ "$CONTAINER_RUNTIME" == "podman" ]]; then
+  TMP_TAR="$(mktemp --suffix=.tar 2>/dev/null || echo "/tmp/thesis-workload-$$.tar")"
+  echo "  Saving image to temp archive: $TMP_TAR"
+  podman save -o "$TMP_TAR" "${IMAGE_NAME}:${IMAGE_TAG}"
+  kind load image-archive "$TMP_TAR" --name "$CLUSTER_NAME"
+  rm -f "$TMP_TAR"
+else
+  kind load docker-image "${IMAGE_NAME}:${IMAGE_TAG}" --name "$CLUSTER_NAME"
+fi
 echo "[OK] Image loaded into Kind"
 
 # ---- Reset if requested ----

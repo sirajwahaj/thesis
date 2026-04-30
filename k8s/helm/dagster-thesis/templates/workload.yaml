@@ -65,10 +65,10 @@ spec:
                 - grpc-health-check
                 - -p
                 - "4000"
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.workload.livenessProbe.initialDelaySeconds | default 60 }}
+            periodSeconds: {{ .Values.workload.livenessProbe.periodSeconds | default 15 }}
+            timeoutSeconds: {{ .Values.workload.livenessProbe.timeoutSeconds | default 15 }}
+            failureThreshold: {{ .Values.workload.livenessProbe.failureThreshold | default 5 }}
       volumes:
         - name: dagster-home-rw
           emptyDir: {}

@@ -38,6 +38,14 @@ PDF_OUT           = docs/thesis.pdf
 FIGURES           = docs/figures
 RESULTS           = results
 
+# Python venv (created by 'make install' via uv sync in src/)
+# Windows Git Bash uses Scripts/, Linux/macOS uses bin/
+ifeq ($(OS),Windows_NT)
+  PYTHON          = src/.venv/Scripts/python
+else
+  PYTHON          = src/.venv/bin/python
+endif
+
 # Container configuration
 REGISTRY          = ghcr.io/sirajwahaj
 WORKLOAD_IMAGE    = $(REGISTRY)/thesis-workload
@@ -54,7 +62,7 @@ VALIDATE_TIMEOUT  = 30  # seconds to wait for services to start
 # ==========================
 
 .PHONY: all help \
-        bootstrap \
+        bootstrap install \
         vm-up vm-provision vm-validate \
         deploy destroy truncate \
         k8s-create k8s-metrics k8s-deploy-dagster k8s-setup k8s-validate k8s-destroy \
@@ -160,6 +168,20 @@ bootstrap:
 	@echo "Bootstrap: Cross-Platform Environment Setup"
 	@echo "----------------------------------------------------------------"
 	bash scripts/bash/bootstrap.sh
+
+# ==========================
+# Python / uv Targets
+# ==========================
+
+install:
+	@echo "----------------------------------------------------------------"
+	@echo "Installing Python dependencies via uv (src/pyproject.toml)"
+	@echo "----------------------------------------------------------------"
+	cd src && uv sync
+	@echo ""
+	@echo "[OK] venv ready: src/.venv"
+	@echo "   Python: $(PYTHON)"
+	@echo ""
 
 bootstrap-deps:
 	@echo "Installing dependencies only (no VM creation)..."

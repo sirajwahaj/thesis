@@ -25,13 +25,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# ---- Auto-detect Docker/podman socket for kind ----
+# ---- Auto-detect container runtime socket for kind ----
 if [[ -z "${DOCKER_HOST:-}" ]]; then
-  # Find the thesis podman machine socket if running
-  THESIS_SOCK="$(ls /var/folders/*/T/podman/thesis-api.sock 2>/dev/null | head -1 || true)"
-  if [[ -S "${THESIS_SOCK}" ]]; then
-    export DOCKER_HOST="unix://${THESIS_SOCK}"
-    echo "→ Using podman machine 'thesis': ${DOCKER_HOST}"
+  # Windows (Git Bash / MINGW): use Podman Desktop named pipe
+  if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
+    export DOCKER_HOST="npipe:////./pipe/docker_engine"
+    export KIND_EXPERIMENTAL_PROVIDER="podman"
+    echo "→ Windows detected: using Podman (KIND_EXPERIMENTAL_PROVIDER=podman)"
+  # macOS: find the podman machine socket
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    THESIS_SOCK="$(ls /var/folders/*/T/podman/thesis-api.sock 2>/dev/null | head -1 || true)"
+    if [[ -S "${THESIS_SOCK}" ]]; then
+      export DOCKER_HOST="unix://${THESIS_SOCK}"
+      echo "→ Using podman machine 'thesis': ${DOCKER_HOST}"
+    elif [[ -S "/var/run/docker.sock" ]]; then
+      export DOCKER_HOST="unix:///var/run/docker.sock"
+      echo "→ Using Docker socket: ${DOCKER_HOST}"
+    fi
   elif [[ -S "/var/run/docker.sock" ]]; then
     export DOCKER_HOST="unix:///var/run/docker.sock"
     echo "→ Using Docker socket: ${DOCKER_HOST}"

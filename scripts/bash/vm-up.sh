@@ -39,36 +39,11 @@ INVENTORY_FILE="$ANSIBLE_DIR/inventory.ini"
 PLAYBOOK="$ANSIBLE_DIR/playbooks/provision-vm.yml"
 
 # =============================================================================
-# Windows: Vagrant path
-# =============================================================================
-if [[ "$(uname)" == *"NT"* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
-    echo ""
-    echo "================================================================"
-    echo "  Windows Detected — Use Vagrant to create the VM"
-    echo "================================================================"
-    echo ""
-    echo "  1. Install VirtualBox: https://www.virtualbox.org/wiki/Downloads"
-    echo "  2. Install Vagrant:    https://developer.hashicorp.com/vagrant/downloads"
-    echo "  3. Run:"
-    echo ""
-    echo "       cd infrastructure"
-    echo "       vagrant up"
-    echo ""
-    echo "  The Vagrantfile provisions Docker CE automatically via Ansible."
-    echo ""
-    echo "  After 'vagrant up':"
-    echo "    vagrant ssh -c 'hostname -I | awk \"{print \\\$1}\"' > ../vm-ip.txt"
-    echo "    make build && make push && make deploy"
-    echo ""
-    exit 0
-fi
-
-# =============================================================================
-# macOS: Multipass path
+# Multipass path (macOS + Windows — Multipass is cross-platform)
 # =============================================================================
 echo ""
 echo "================================================================"
-echo "  Thesis VM Setup — Multipass (macOS)"
+echo "  Thesis VM Setup — Multipass"
 echo "================================================================"
 echo ""
 
