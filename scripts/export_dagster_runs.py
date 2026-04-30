@@ -2,11 +2,16 @@
 """
 Export Dagster run records from PostgreSQL for analysis.
 
-Extracts: run_id, status, start_time, end_time, job_name, concurrency_level, repetition
-from the Dagster runs and run_tags tables.
+Extracts: run_id, status, start_time, end_time, job_name, concurrency_level,
+repetition, memory_mb_allocated, peak_rss_mb
+from the Dagster runs, run_tags, and event_logs tables.
 
 Required CSV columns per data-pipeline rules:
   run_id, status, start_time, end_time, job_name, concurrency_level, repetition
+
+Additional columns added for memory analysis (SQ1, SQ2):
+  memory_mb_allocated  - MB allocated by the memory_pressure op (from event log)
+  peak_rss_mb          - peak RSS reported by the memory_pressure op
 
 Usage:
     python export_dagster_runs.py --output data/raw/exp1/vm/L1/run1/dagster_runs.csv
@@ -35,6 +40,47 @@ def ts_to_iso(value) -> str:
     if hasattr(value, "isoformat"):
         return value.isoformat()
     return str(value)
+
+
+def _extract_memory_outputs(cur, run_id: str) -> tuple[str, str]:
+    """Extract memory_mb_allocated and peak_rss_mb from the Dagster event log.
+
+    The memory_pressure op outputs these as step success metadata in the
+    event_logs table. Returns ('', '') if the op did not complete (e.g. OOM kill).
+    """
+    try:
+        cur.execute("""
+            SELECT event_body
+            FROM event_logs
+            WHERE run_id = %s
+              AND dagster_event_type = 'STEP_OUTPUT'
+              AND event_body LIKE '%%memory_mb_allocated%%'
+            ORDER BY id DESC
+            LIMIT 1
+        """, (run_id,))
+        row = cur.fetchone()
+        if not row:
+            return "", ""
+
+        import json
+        event = json.loads(row[0])
+        # Navigate Dagster event structure: event_specific_data → step_output_data → output_value
+        # The output value is the dict returned by memory_pressure()
+        output = (
+            event
+            .get("event_specific_data", {})
+            .get("output", {})
+            .get("value", {})
+        )
+        if isinstance(output, dict):
+            return (
+                str(output.get("memory_mb_allocated", "")),
+                str(output.get("peak_rss_mb", "")),
+            )
+        return "", ""
+    except Exception:
+        # Non-fatal: runs that OOM-killed will not have this event
+        return "", ""
 
 
 def export_dagster_runs(
@@ -85,9 +131,11 @@ def export_dagster_runs(
         writer.writerow([
             "run_id", "status", "start_time", "end_time",
             "job_name", "concurrency_level", "repetition",
+            "memory_mb_allocated", "peak_rss_mb",
         ])
         for row in rows:
             run_id, status, start_time, end_time, job_name, conc_level, repetition = row
+            memory_mb, peak_rss = _extract_memory_outputs(cur, run_id)
             writer.writerow([
                 run_id,
                 status,
@@ -96,6 +144,8 @@ def export_dagster_runs(
                 job_name or "",
                 conc_level,
                 repetition,
+                memory_mb,
+                peak_rss,
             ])
 
     conn.close()

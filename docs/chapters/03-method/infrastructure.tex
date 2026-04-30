@@ -1,0 +1,64 @@
+% =============================================================================
+% 3.2 Infrastructure Strategy — Local-First with Optional Cloud Validation
+% =============================================================================
+
+\section{Infrastructure Strategy --- Local-First with Optional Cloud Validation}
+\label{sec:infrastructure}
+
+A critical design decision in this thesis is the \textbf{local-first infrastructure strategy}, which addresses budget uncertainty and maximises experimental control.
+
+\subsection{Primary Environment: Local Infrastructure}
+\label{subsec:local-infra}
+
+All experiments are designed to run entirely on the researcher's local machine using:
+
+\begin{description}[style=nextline]
+  \item[VM Baseline] A Linux virtual machine provisioned via \textbf{Multipass} (Ubuntu 22.04), configured with 4~vCPU and 4~GB RAM. Dagster is deployed with the \texttt{DockerRunLauncher}, which launches each pipeline run as an isolated Docker container on the VM.
+  \item[Kubernetes Comparison] A \textbf{Kind} (Kubernetes in Docker) cluster running on the same physical host, configured with resource limits matching the VM. Dagster is deployed with the Kubernetes Run Launcher via Helm.
+\end{description}
+
+This approach provides:
+
+\begin{itemize}
+  \item \textbf{Zero cloud cost}---no budget dependency or risk of mid-experiment credit exhaustion.
+  \item \textbf{Full control}---exact CPU/memory allocation is enforced and reproducible.
+  \item \textbf{Faster iteration}---no cloud provisioning delays between experiment runs.
+  \item \textbf{Reproducibility}---any researcher with a comparable machine can replicate the setup.
+\end{itemize}
+
+The shared physical host is an intentional design choice: it ensures both environments have access to the same underlying hardware, making the comparison about \emph{execution model architecture} (VM Docker containers vs.\ Kubernetes pods) rather than about hardware differences.
+
+\subsection{Optional Cloud Validation Phase}
+\label{subsec:cloud-validation}
+
+If GCP budget permits (free tier credits or education grants), a subset of experiments will be repeated on:
+
+\begin{description}
+  \item[VM] Google Compute Engine instance (e2-standard-2: 2~vCPU, 8~GB RAM).
+  \item[Kubernetes] Google Kubernetes Engine (GKE) standard cluster with Kubernetes Run Launcher.
+\end{description}
+
+Cloud results serve as a \textbf{directional validation} of local findings, not as the primary dataset. If cloud validation is not possible, this is documented as a delimitation, and the thesis argues that the architectural comparison (shared vs.\ isolated execution) is valid regardless of whether the underlying host is a laptop or a cloud instance---a position supported by the infrastructure-agnostic nature of resource contention theory \citep{nanda1991}.
+
+\subsection{Infrastructure Specifications}
+\label{subsec:infra-specs}
+
+\begin{table}[H]
+  \centering
+  \caption{Infrastructure comparison between VM and Kubernetes environments.}
+  \label{tab:infra-specs}
+  \small
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Component} & \textbf{VM Baseline} & \textbf{Kubernetes (Kind)} \\
+    \midrule
+    Provisioning        & Multipass (Ubuntu 22.04)       & Kind v0.20+ on Docker \\
+    CPU                 & 4 vCPU (fixed)                 & 4 vCPU (node resource limit) \\
+    Memory              & 4 GB RAM (fixed)               & 8 GB RAM (node resource limit) \\
+    Dagster executor    & DockerRunLauncher              & K8sRunLauncher via Helm \\
+    Resource isolation  & Per-container (shared host kernel OOM) & Per-pod CPU/memory requests and limits \\
+    Autoscaling         & Not applicable                 & No autoscaling (single-node Kind cluster) \\
+    IaC                 & Shell script / Multipass config & Kind config YAML + Helm \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

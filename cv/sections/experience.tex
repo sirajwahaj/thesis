@@ -1,0 +1,59 @@
+% ── EXPERIENCE ───────────────────────────────────────────────
+% Each role uses \role{Title}{Company · Location}{Dates}
+% followed by an itemize block.
+%
+% TICKET MAP (keep for reference, strip before sharing externally)
+% IN-1103 (spike, 8pt) — K8sRunLauncher evaluation + log persistence + team playback
+% IN-1154 (spike, 5pt) — Figure out K8s config to deploy Dagster OSS itself on the cluster
+% IN-1147 (task, 8pt, abandoned) — GKE setup, Helm charts, Workload Identity, IAM
+% IN-1384 (task, 5pt) — Docker run launcher: isolate runs so deploys don't interrupt them
+% IN-1454 (task, 8pt, current) — Split Docker Compose into 5 services, remove dagster dev
+% PRs: #627 #684 #725 #732 #737 #739 #743 #755 #763 #776 #785 #840 #845 #848 #851 #854 #885 #887
+\section*{Experience}
+
+\role{DevOps Engineer \textnormal{(Intern)}}{Insighta Inc · Malm\"{o}, Sweden}{Sep 2025 – May 2026}
+\begin{itemize}
+
+  \item Researched \texttt{K8sRunLauncher} as a path to zero-downtime Dagster deploys.
+        Tested GCS log persistence across container restarts, documented findings, and presented them to the team.
+
+  \item Scoped the Kubernetes configuration needed to host the Dagster instance itself on GKE.
+        Documented the approach and refined follow-up tickets with the team.
+
+  \item Configured the Docker run launcher so each pipeline job runs in its own container.
+        Dagster can now be redeployed without interrupting jobs in progress.
+
+  \item Built Helm chart templates for Dagster on GKE: Workload Identity, RBAC, and
+        cross-project Artifact Registry access.
+
+  \item Fixed a series of GCP IAM issues blocking CI/CD and GKE deployments: Artifact Registry
+        permissions, GCS write access for logs, and GitHub Actions rights to manage cluster resources.
+
+  \item Refactoring the Docker Compose setup into five production services (postgres, webserver,
+        daemon, two code-location servers), replacing \texttt{dagster dev} in live environments.
+
+  \item Used GitHub Copilot and Claude throughout the internship for Helm templates, IAM debugging,
+        and documentation. Reviewed all AI output before committing, particularly for permissions-related changes.
+
+\end{itemize}
+
+\vspace{5pt}
+\role{IT Support Engineer \textnormal{(Intern)}}{ReDi School of Digital Integration · Malm\"{o}, Sweden}{Mar – May 2024}
+\begin{itemize}
+  \item Provided day-to-day IT support for staff and students across Windows and Linux machines.
+  \item Configured laptops, classroom equipment, and peripherals for teaching environments.
+  \item Wrote troubleshooting documentation so common issues could be resolved without escalating.
+\end{itemize}
+
+\vspace{5pt}
+\role{IT Infrastructure Engineer}{High Security Printing House}{2019 – 2020}
+\begin{itemize}
+  \item Set up and maintained Windows/Linux servers, VMs, and BareOS backup systems in a secure environment.
+  \item Acted as the contact point between technical staff and other departments for IT and access issues.
+\end{itemize}
+
+\vspace{5pt}
+\role{PHP Developer}{Development and Registry Addressing Service}{Sep – Dec 2017}
+\begin{itemize}
+  \item Built and maintained internal web tools; fixed bugs and made minor performance improvements.
+\end{itemize}

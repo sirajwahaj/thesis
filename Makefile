@@ -5,15 +5,19 @@
 # This Makefile provides unified targets for:
 #   - LaTeX thesis building (pdf)
 #   - Container image building and pushing (build, push)
-#   - Multi-service orchestration with podman-compose (compose-up, compose-down)
+#   - VM lifecycle: create, deploy, destroy (vm-up, deploy, destroy)
+#   - Multi-service orchestration with docker compose (compose-up, compose-down)
 #   - Infrastructure validation (validate)
 #   - Experiment execution (experiments)
 #
 # Usage:
-#   make pdf                    — Build thesis PDF
-#   make build                  — Build container images locally
-#   make push                   — Push images to ghcr.io (requires auth)
-#   make compose-up             — Start all services with podman-compose
+#   make vm-up                  — Create VM via Multipass + install Docker
+#   make build                  — Build Docker image locally
+#   make push                   — Push image to ghcr.io (set GHCR_TOKEN)
+#   make deploy                 — SCP files to VM + docker compose up
+#   make destroy                — Delete the VM (DESTRUCTIVE)
+#   make truncate               — Delete all experiment data
+#   make compose-up             — Start all services with docker compose
 #   make compose-down           — Stop all services
 #   make validate               — Run validation tests (local build + compose)
 #   make experiments            — Run all experiments
@@ -21,8 +25,8 @@
 #
 # Configuration:
 #   - Container registry: ghcr.io/sirajwahaj
-#   - Container runtime: podman (not Docker)
-#   - Compose tool: podman-compose
+#   - Container runtime: Docker
+#   - Compose tool: docker compose (v2)
 #   - Default image tag: v0.1
 
 # ==========================
@@ -38,7 +42,7 @@ RESULTS           = results
 REGISTRY          = ghcr.io/sirajwahaj
 WORKLOAD_IMAGE    = $(REGISTRY)/thesis-workload
 WORKLOAD_TAG      ?= v0.1
-BUILD_SCRIPT      = scripts/02_img_build_push.sh
+BUILD_SCRIPT      = scripts/bash/02_img_build_push.sh
 COMPOSE_FILE      = infrastructure/docker-compose.yml
 COMPOSE_DIR       = infrastructure
 
@@ -51,7 +55,8 @@ VALIDATE_TIMEOUT  = 30  # seconds to wait for services to start
 
 .PHONY: all help \
         bootstrap \
-        vm-provision vm-validate \
+        vm-up vm-provision vm-validate \
+        deploy destroy truncate \
         k8s-create k8s-metrics k8s-deploy-dagster k8s-setup k8s-validate k8s-destroy \
         validate-setup \
         pdf copy-figures clean \
@@ -89,51 +94,54 @@ help:
 	@echo "THESIS MAKEFILE — Build, Deploy, Validate, Experiment"
 	@echo "================================================================"
 	@echo ""
-	@echo "One-Command Workflows:"
-	@echo "  make all              — Bootstrap -> VM provision -> K8s setup -> experiments -> analyze"
-	@echo "  make k8s-only         — Bootstrap -> K8s setup -> K8s experiments -> analyze (no VM)"
-	@echo ""
-	@echo "Bootstrap / Setup Targets:"
-	@echo "  make bootstrap        — Detect OS, install deps, configure podman (VM discovery optional)"
-	@echo "  make vm-provision     — Provision VM via Ansible (Python, Dagster, Docker CE, PostgreSQL)"
+	@echo "VM Lifecycle (Multipass / Vagrant):"
+	@echo "  make vm-up            — Create thesis-vm via Multipass + install Docker CE"
+	@echo "  make deploy           — SCP compose files to VM + docker compose up"
+	@echo "  make destroy          — Delete thesis-vm (Multipass or Vagrant) — DESTRUCTIVE"
+	@echo "  make truncate         — Delete all experiment data (data/raw, processed, results)"
+	@echo "  make vm-provision     — Re-run Ansible provisioning (Docker CE) on existing VM"
 	@echo "  make vm-validate      — Verify VM is ready for experiments"
+	@echo "  make vm-ssh           — SSH into the VM"
+	@echo ""
+	@echo "Container Build & Push:"
+	@echo "  make build            — Build Docker image locally"
+	@echo "  make push             — Build and push to ghcr.io (set GHCR_TOKEN)"
+	@echo ""
+	@echo "Local Dev (docker compose):"
+	@echo "  make compose-up       — Start all services (postgres, workload, webserver, daemon)"
+	@echo "  make compose-down     — Stop all services"
+	@echo "  make compose-logs     — Stream service logs"
+	@echo "  make compose-clean    — Stop services and remove volumes"
+	@echo ""
+	@echo "Kubernetes (for experiments SQ2/SQ3):"
 	@echo "  make k8s-create       — Create Kind cluster 'thesis'"
 	@echo "  make k8s-metrics      — Deploy Metrics Server (kubectl top)"
 	@echo "  make k8s-deploy-dagster — Deploy Dagster + workload via Helm"
 	@echo "  make k8s-setup        — Full K8s setup (create + metrics + dagster)"
 	@echo "  make k8s-validate     — Verify K8s setup is ready for experiments"
 	@echo "  make k8s-destroy      — Delete Kind cluster (destructive)"
-	@echo "  make validate-setup   — Validate all systems (VM + K8s + local)"
 	@echo ""
-	@echo "LaTeX Targets:"
-	@echo "  make pdf              — Show Overleaf upload instructions (no local build)"
-	@echo "  make clean            — Remove LaTeX aux files (from Overleaf downloads)"
-	@echo ""
-	@echo "Container Targets (podman):"
-	@echo "  make build            — Build workload image locally"
-	@echo "  make push             — Build and push to ghcr.io"
-	@echo ""
-	@echo "Orchestration Targets (podman-compose):"
-	@echo "  make compose-up       — Start all services (postgres, workload, webserver, daemon)"
-	@echo "  make compose-down     — Stop all services"
-	@echo "  make compose-logs     — Stream service logs"
-	@echo "  make compose-clean    — Stop services and remove volumes"
-	@echo ""
-	@echo "Validation Targets:"
-	@echo "  make validate         — Full validation (build + compose test)"
-	@echo "  make validate-build   — Validate local build only"
-	@echo "  make validate-compose — Validate compose setup (requires build)"
-	@echo ""
-	@echo "Experiment Targets:"
-	@echo "  make exp1-vm          — Run Experiment 1 (VM degradation)"
-	@echo "  make exp2a-k8s        — Run Experiment 2A (K8s isolation)"
-	@echo "  make exp2b-blast      — Run Experiment 2B (Blast radius)"
-	@echo "  make exp2c-spike      — Run Experiment 2C (Spike observation)"
+	@echo "Experiments:"
+	@echo "  make exp1-vm          — Experiment 1 (VM degradation, SQ1)"
+	@echo "  make exp2a-k8s        — Experiment 2A (K8s isolation, SQ2)"
+	@echo "  make exp2b-blast      — Experiment 2B (Blast radius, SQ2)"
+	@echo "  make exp2c-spike      — Experiment 2C (Spike observation, SQ3)"
 	@echo "  make experiments      — Run all experiments in sequence"
 	@echo "  make dry-run          — Preview experiments without execution"
 	@echo "  make analyze          — Run analysis notebook"
 	@echo ""
-	@echo "GitHub Targets:"
+	@echo "Validation:"
+	@echo "  make validate         — Full validation (build + compose test)"
+	@echo "  make validate-build   — Validate local Docker build only"
+	@echo "  make validate-compose — Validate compose setup (requires build)"
+	@echo "  make validate-setup   — Validate all systems (VM + K8s + local)"
+	@echo ""
+	@echo "LaTeX:"
+	@echo "  make pdf              — Show Overleaf upload instructions"
+	@echo "  make copy-figures     — Copy results/*.png → docs/figures/"
+	@echo "  make clean            — Remove LaTeX aux files"
+	@echo ""
+	@echo "GitHub:"
 	@echo "  make labels           — Sync GitHub labels"
 	@echo "  make issues           — Sync GitHub issues"
 	@echo ""
@@ -151,32 +159,67 @@ bootstrap:
 	@echo "----------------------------------------------------------------"
 	@echo "Bootstrap: Cross-Platform Environment Setup"
 	@echo "----------------------------------------------------------------"
-	bash scripts/bootstrap.sh
+	bash scripts/bash/bootstrap.sh
 
 bootstrap-deps:
 	@echo "Installing dependencies only (no VM creation)..."
-	bash scripts/bootstrap.sh --deps-only
+	bash scripts/bash/bootstrap.sh --deps-only
 
 bootstrap-validate:
 	@echo "Validating bootstrap dependencies..."
-	bash scripts/bootstrap.sh --validate-only
+	bash scripts/bash/bootstrap.sh --validate-only
 
 # ==========================
 # VM Targets
 # ==========================
 
+vm-up:
+	@echo "----------------------------------------------------------------"
+	@echo "Creating thesis-vm (Multipass) + installing Docker CE"
+	@echo "----------------------------------------------------------------"
+	bash scripts/bash/vm-up.sh
+
+deploy:
+	@echo "----------------------------------------------------------------"
+	@echo "Deploying thesis app to VM (docker compose up)"
+	@echo "----------------------------------------------------------------"
+	bash scripts/bash/deploy-vm.sh
+
+destroy:
+	@echo "----------------------------------------------------------------"
+	@echo "WARNING: Deleting thesis-vm — all VM data will be lost."
+	@echo "Press Ctrl+C within 5 seconds to cancel..."
+	@echo "----------------------------------------------------------------"
+	@sleep 5
+	@if command -v multipass >/dev/null 2>&1 && multipass info thesis-vm >/dev/null 2>&1; then \
+		multipass delete --purge thesis-vm && echo "[OK] VM deleted"; \
+	elif [ -d infrastructure ] && command -v vagrant >/dev/null 2>&1; then \
+		cd infrastructure && vagrant destroy -f && echo "[OK] Vagrant VM destroyed"; \
+	else \
+		echo "[INFO] No VM found to destroy"; \
+	fi
+
+truncate:
+	@echo "----------------------------------------------------------------"
+	@echo "Deleting all experiment data (data/raw, data/processed, results)"
+	@echo "----------------------------------------------------------------"
+	find data/raw -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + 2>/dev/null || true
+	find data/processed -name "*.csv" -delete 2>/dev/null || true
+	find results -name "*.png" -delete 2>/dev/null || true
+	@echo "[OK] Experiment data cleared"
+
 vm-provision:
 	@echo "----------------------------------------------------------------"
-	@echo "Provisioning VM via Ansible"
+	@echo "Provisioning VM via Ansible (Docker CE)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/provision-vm.sh || echo "WARNING: VM provision skipped — check vm-ip.txt and retry: make vm-provision"
+	@bash scripts/bash/provision-vm.sh || echo "WARNING: VM provision skipped — check vm-ip.txt and retry: make vm-provision"
 
 vm-validate:
 	@echo "Validating VM setup..."
-	bash scripts/validate-experiment-setup.sh --vm
+	bash scripts/bash/validate-experiment-setup.sh --vm
 
 vm-ssh:
-	@test -f $(VM_IP_FILE) || (echo "ERROR: $(VM_IP_FILE) not found. Run: make bootstrap"; exit 1)
+	@test -f $(VM_IP_FILE) || (echo "ERROR: $(VM_IP_FILE) not found. Run: make vm-up"; exit 1)
 	@ssh -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$$(cat $(VM_IP_FILE))
 
 # ==========================
@@ -187,19 +230,19 @@ k8s-create:
 	@echo "----------------------------------------------------------------"
 	@echo "Creating Kind Cluster 'thesis'"
 	@echo "----------------------------------------------------------------"
-	bash scripts/create-kind-cluster.sh
+	bash scripts/bash/create-kind-cluster.sh
 
 k8s-metrics:
 	@echo "----------------------------------------------------------------"
 	@echo "Deploying Metrics Server"
 	@echo "----------------------------------------------------------------"
-	bash scripts/deploy-metrics-server.sh
+	bash scripts/bash/deploy-metrics-server.sh
 
 k8s-deploy-dagster:
 	@echo "----------------------------------------------------------------"
 	@echo "Deploying Dagster + Workload to K8s"
 	@echo "----------------------------------------------------------------"
-	bash scripts/deploy-dagster-k8s.sh
+	bash scripts/bash/deploy-dagster-k8s.sh
 
 k8s-setup: k8s-create k8s-metrics k8s-deploy-dagster
 	@echo ""
@@ -209,13 +252,13 @@ k8s-setup: k8s-create k8s-metrics k8s-deploy-dagster
 
 k8s-validate:
 	@echo "Validating K8s setup..."
-	bash scripts/validate-experiment-setup.sh --k8s
+	bash scripts/bash/validate-experiment-setup.sh --k8s
 
 k8s-reset:
 	@echo "Resetting Kind cluster (deletes all data)..."
-	bash scripts/create-kind-cluster.sh --reset
-	bash scripts/deploy-metrics-server.sh
-	bash scripts/deploy-dagster-k8s.sh
+	bash scripts/bash/create-kind-cluster.sh --reset
+	bash scripts/bash/deploy-metrics-server.sh
+	bash scripts/bash/deploy-dagster-k8s.sh
 
 k8s-destroy:
 	@echo "Deleting Kind cluster 'thesis'..."
@@ -230,7 +273,7 @@ validate-setup:
 	@echo "----------------------------------------------------------------"
 	@echo "Validating all experiment systems"
 	@echo "----------------------------------------------------------------"
-	bash scripts/validate-experiment-setup.sh
+	bash scripts/bash/validate-experiment-setup.sh
 
 # ==========================
 # LaTeX / Overleaf Targets
@@ -293,14 +336,14 @@ push: build-workload
 	@echo ""
 
 # ==========================
-# Orchestration Targets (podman-compose)
+# Orchestration Targets (docker compose)
 # ==========================
 
 compose-up:
 	@echo "----------------------------------------------------------------"
-	@echo "Starting services with podman-compose..."
+	@echo "Starting services with docker compose..."
 	@echo "----------------------------------------------------------------"
-	cd $(COMPOSE_DIR) && podman-compose up -d
+	cd $(COMPOSE_DIR) && docker compose up -d
 	@echo ""
 	@echo "Waiting for services to start ($(VALIDATE_TIMEOUT)s)..."
 	@sleep $(VALIDATE_TIMEOUT)
@@ -317,20 +360,20 @@ compose-down:
 	@echo "----------------------------------------------------------------"
 	@echo "Stopping services..."
 	@echo "----------------------------------------------------------------"
-	cd $(COMPOSE_DIR) && podman-compose down
+	cd $(COMPOSE_DIR) && docker compose down
 	@echo "[OK] Services stopped"
 	@echo ""
 
 compose-logs:
 	@echo "Streaming service logs (Ctrl+C to exit)..."
 	@echo ""
-	cd $(COMPOSE_DIR) && podman-compose logs -f
+	cd $(COMPOSE_DIR) && docker compose logs -f
 
 compose-clean:
 	@echo "----------------------------------------------------------------"
 	@echo "Cleaning up services and volumes..."
 	@echo "----------------------------------------------------------------"
-	cd $(COMPOSE_DIR) && podman-compose down -v
+	cd $(COMPOSE_DIR) && docker compose down -v
 	@echo "[OK] Clean complete"
 	@echo ""
 
@@ -351,7 +394,7 @@ validate: validate-build validate-compose
 	@echo "  [OK] PostgreSQL backend ready"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Provision VM: make vm-provision (requires UTM VM running)"
+	@echo "  1. Provision VM: make vm-provision (requires Multipass VM running)"
 	@echo "  2. Set up K8s: make k8s-setup"
 	@echo "  3. Run experiments: make experiments"
 	@echo ""
@@ -360,15 +403,15 @@ validate-build: build-workload
 	@echo ""
 	@echo "Phase 1: Testing local build..."
 	@echo "Verifying image exists..."
-	@podman images | grep thesis-workload || (echo "ERROR: Image not found"; exit 1)
+	@docker images | grep thesis-workload || (echo "ERROR: Image not found"; exit 1)
 	@echo "[OK] Phase 1 passed: Local build successful"
 	@echo ""
 
 validate-compose: compose-down compose-up
 	@echo ""
-	@echo "Phase 2: Testing docker-compose setup..."
+	@echo "Phase 2: Testing docker compose setup..."
 	@echo "Checking workload gRPC server..."
-	@cd $(COMPOSE_DIR) && podman-compose logs workload | grep -i "grpc" && echo "[OK] Phase 2 passed: gRPC server running" || echo "[WARN] Check service logs with: make compose-logs"
+	@cd $(COMPOSE_DIR) && docker compose logs workload | grep -i "grpc" && echo "[OK] Phase 2 passed: gRPC server running" || echo "[WARN] Check service logs with: make compose-logs"
 	@echo ""
 
 # ==========================
@@ -379,30 +422,30 @@ exp1-vm:
 	@echo "----------------------------------------------------------------"
 	@echo "Experiment 1: VM Degradation (SQ1)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/validate-experiment-setup.sh --vm || (echo "ERROR: Fix errors above then retry: make exp1-vm"; exit 1)
-	bash scripts/run_experiment.sh exp1 vm
+	@bash scripts/bash/validate-experiment-setup.sh --vm || (echo "ERROR: Fix errors above then retry: make exp1-vm"; exit 1)
+	bash scripts/bash/run_experiment.sh exp1 vm
 
 exp2a-k8s:
 	@echo "----------------------------------------------------------------"
 	@echo "Experiment 2A: Kubernetes Isolation (SQ2)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/validate-experiment-setup.sh --k8s || (echo "ERROR: Fix errors above then retry: make exp2a-k8s"; exit 1)
-	bash scripts/run_experiment.sh exp2a k8s
+	@bash scripts/bash/validate-experiment-setup.sh --k8s || (echo "ERROR: Fix errors above then retry: make exp2a-k8s"; exit 1)
+	bash scripts/bash/run_experiment.sh exp2a k8s
 
 exp2b-blast:
 	@echo "----------------------------------------------------------------"
 	@echo "Experiment 2B: Blast Radius (SQ2)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/validate-experiment-setup.sh || (echo "ERROR: Fix errors above then retry: make exp2b-blast"; exit 1)
-	bash scripts/run_experiment.sh exp2b vm
-	bash scripts/run_experiment.sh exp2b k8s
+	@bash scripts/bash/validate-experiment-setup.sh || (echo "ERROR: Fix errors above then retry: make exp2b-blast"; exit 1)
+	bash scripts/bash/run_experiment.sh exp2b vm
+	bash scripts/bash/run_experiment.sh exp2b k8s
 
 exp2c-spike:
 	@echo "----------------------------------------------------------------"
 	@echo "Experiment 2C: Spike Observation (SQ3)"
 	@echo "----------------------------------------------------------------"
-	@bash scripts/validate-experiment-setup.sh --k8s || (echo "ERROR: Fix errors above then retry: make exp2c-spike"; exit 1)
-	bash scripts/run_experiment.sh exp2c k8s
+	@bash scripts/bash/validate-experiment-setup.sh --k8s || (echo "ERROR: Fix errors above then retry: make exp2c-spike"; exit 1)
+	bash scripts/bash/run_experiment.sh exp2c k8s
 
 experiments: exp1-vm exp2a-k8s exp2b-blast exp2c-spike
 	@echo ""
@@ -420,17 +463,17 @@ dry-run:
 	@echo "----------------------------------------------------------------"
 	@echo ""
 	@echo "Exp1 (VM):"
-	bash scripts/run_experiment.sh exp1 vm --dry-run
+	bash scripts/bash/run_experiment.sh exp1 vm --dry-run
 	@echo ""
 	@echo "Exp2A (K8s):"
-	bash scripts/run_experiment.sh exp2a k8s --dry-run
+	bash scripts/bash/run_experiment.sh exp2a k8s --dry-run
 	@echo ""
 	@echo "Exp2B (Blast Radius — both envs):"
-	bash scripts/run_experiment.sh exp2b vm --dry-run
-	bash scripts/run_experiment.sh exp2b k8s --dry-run
+	bash scripts/bash/run_experiment.sh exp2b vm --dry-run
+	bash scripts/bash/run_experiment.sh exp2b k8s --dry-run
 	@echo ""
 	@echo "Exp2C (Spike K8s):"
-	bash scripts/run_experiment.sh exp2c k8s --dry-run
+	bash scripts/bash/run_experiment.sh exp2c k8s --dry-run
 	@echo ""
 
 # ==========================

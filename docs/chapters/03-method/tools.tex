@@ -1,0 +1,90 @@
+% =============================================================================
+% 3.3 Tool Stack
+% =============================================================================
+
+\section{Tool Stack}
+\label{sec:tools}
+
+The following tools are required to execute this thesis. All are open source or freely available.
+
+\subsection{Infrastructure Tools}
+\label{subsec:infra-tools}
+
+\begin{table}[H]
+  \centering
+  \caption{Infrastructure tools used in this thesis.}
+  \label{tab:infra-tools}
+  \small
+  \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    \textbf{Tool} & \textbf{Version} & \textbf{Purpose} \\
+    \midrule
+    Docker Desktop  & Latest stable   & Container runtime for Kind and Dagster images \\
+    Kind            & v0.20+          & Local Kubernetes cluster for comparison environment \\
+    Multipass       & Latest stable   & Lightweight Ubuntu VM provisioning for baseline environment \\
+    Helm            & v3.x            & Package manager for deploying Dagster on Kubernetes \\
+    kubectl         & Matching K8s    & Kubernetes CLI for cluster management and pod inspection \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Application and Orchestration}
+\label{subsec:app-tools}
+
+\begin{table}[H]
+  \centering
+  \caption{Application and orchestration tools.}
+  \label{tab:app-tools}
+  \small
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Tool} & \textbf{Purpose} \\
+    \midrule
+    Dagster (OSS)           & Workflow orchestration framework---the system under test \\
+    Dagster Helm chart      & Official Helm chart for Kubernetes deployment with Run Launcher \\
+    Python 3.13+            & Runtime for Dagster pipelines and test harness \\
+    Dagster GraphQL API     & Programmatic triggering of concurrent pipeline runs \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Measurement and Observability}
+\label{subsec:measurement-tools}
+
+\begin{table}[H]
+  \centering
+  \caption{Measurement and observability tools.}
+  \label{tab:measurement-tools}
+  \small
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Tool} & \textbf{Purpose} \\
+    \midrule
+    Prometheus                  & Metrics collection from Kubernetes (CPU, memory, pod states) \\
+    cAdvisor                    & Container-level resource usage metrics \\
+    kubectl top / docker stats  & Quick resource utilisation snapshots \\
+    Python (pandas, matplotlib) & Data analysis and chart generation \\
+    Custom Python test harness  & Automated concurrent run submission, metric collection, CSV export \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Development and Documentation}
+\label{subsec:dev-tools}
+
+\begin{table}[H]
+  \centering
+  \caption{Development and documentation tools.}
+  \label{tab:dev-tools}
+  \small
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Tool} & \textbf{Purpose} \\
+    \midrule
+    Git + GitHub              & Version control for all code, configurations, and data \\
+    GitHub Actions (optional) & CI pipeline for automated deployment validation \\
+    \LaTeX{} (Overleaf)       & Thesis document formatting \\
+    VS Code                   & Primary development environment \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

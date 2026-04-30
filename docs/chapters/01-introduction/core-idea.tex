@@ -1,0 +1,10 @@
+% =============================================================================
+% 1.4 The Core Idea
+% =============================================================================
+
+\section{The Core Idea}
+\label{sec:core-idea}
+
+This thesis measures how reliability, failure behaviour, execution performance, and system stability change under increasing concurrent workload when a workflow orchestration system moves from a shared execution model on a single VM to an isolated distributed model on Kubernetes. It identifies the specific workload level at which that migration becomes net beneficial.
+
+This thesis is \textbf{not} a proof that Kubernetes is better than a VM. It is not a Kubernetes benchmark, a tool comparison, or a cloud provider comparison. It focuses specifically on behavioural differences between two architectural execution models---VM-hosted Docker containers (DockerRunLauncher) versus Kubernetes-managed pods (K8sRunLauncher)---measured at the workflow job execution level under controlled conditions. If results show the VM performs better across all tested concurrency levels, that is an equally valid and valuable finding.

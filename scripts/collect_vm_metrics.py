@@ -3,10 +3,21 @@
 Collect system-wide and per-container VM metrics using psutil + docker.
 
 Writes CSV with: timestamp, system_cpu_pct, system_mem_pct,
-system_mem_used_mb, dagster_process_count, docker_container_count
+system_mem_used_mb, system_mem_available_mb, swap_used_mb, swap_pct,
+dagster_process_count, docker_container_count
 
-Contribution to RQ: Provides SQ1 data — CPU/memory utilisation
-curves that show the degradation profile of Docker container execution.
+The memory columns are critical for detecting the OOM failure mode:
+  - system_mem_available_mb: drops to near-zero before OOM kills
+  - swap_used_mb: spikes when the kernel starts swapping under pressure
+  - system_mem_pct: high-level pressure indicator (SQ1, SQ2 metrics)
+
+On a 4 GB VM with 7+ concurrent jobs each allocating 400 MB
+(memory_pressure op), available memory collapses and the kernel
+issues SIGKILL to Docker containers — the failure mode being studied.
+
+Contribution to RQ: Provides SQ1 data — CPU and memory utilisation
+curves that show the degradation profile of Docker container execution,
+including the OOM threshold at L5/L6.
 
 Usage:
     python collect_vm_metrics.py --output data/raw/exp1/L1/run1/vm_metrics.csv
@@ -64,6 +75,9 @@ def collect_vm_metrics(output_file: str, interval: float = 1.0):
             "system_cpu_pct",
             "system_mem_pct",
             "system_mem_used_mb",
+            "system_mem_available_mb",
+            "swap_used_mb",
+            "swap_pct",
             "dagster_process_count",
             "docker_container_count",
         ])
@@ -74,6 +88,7 @@ def collect_vm_metrics(output_file: str, interval: float = 1.0):
         print(f"Collecting VM metrics to {output_file} every {interval}s...")
         while _running:
             mem = psutil.virtual_memory()
+            swap = psutil.swap_memory()
             dagster_procs = [
                 p for p in psutil.process_iter(["name", "cmdline"])
                 if "dagster" in " ".join(p.info.get("cmdline") or [])
@@ -83,6 +98,9 @@ def collect_vm_metrics(output_file: str, interval: float = 1.0):
                 psutil.cpu_percent(interval=None),
                 mem.percent,
                 round(mem.used / (1024 * 1024), 1),
+                round(mem.available / (1024 * 1024), 1),
+                round(swap.used / (1024 * 1024), 1),
+                swap.percent,
                 len(dagster_procs),
                 _count_docker_containers(),
             ])
