@@ -1,0 +1,82 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, dev, staging]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventional-commits:
+    name: Conventional commit title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            chore
+            docs
+            refactor
+            test
+            ci
+            release
+          requireScope: false
+          subjectPattern: ^.{1,100}$
+          subjectPatternError: "PR title must be ≤100 chars"
+
+  changed-files:
+    name: Detect changed file types
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      shell: ${{ steps.filter.outputs.shell }}
+      yaml: ${{ steps.filter.outputs.yaml }}
+      latex: ${{ steps.filter.outputs.latex }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - 'scripts/**/*.py'
+              - 'src/**/*.py'
+            shell:
+              - 'scripts/bash/**/*.sh'
+              - 'project/scripts/**/*.sh'
+            yaml:
+              - '**/*.yml'
+              - '**/*.yaml'
+            latex:
+              - 'docs/**/*.tex'
+              - 'docs/**/*.bib'
+
+  lint-python-changed:
+    name: Lint changed Python files
+    needs: changed-files
+    if: needs.changed-files.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install ruff
+      - run: ruff check scripts/ src/ --ignore E501
+
+  lint-shell-changed:
+    name: Lint changed shell scripts
+    needs: changed-files
+    if: needs.changed-files.outputs.shell == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y shellcheck
+      - run: shellcheck scripts/bash/*.sh project/scripts/*.sh

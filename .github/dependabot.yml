@@ -1,0 +1,32 @@
+version: 2
+
+updates:
+  # GitHub Actions — keep workflow action versions current
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Python dependencies (uv / pip)
+  - package-ecosystem: "pip"
+    directory: "/src"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore"
+    labels:
+      - "dependencies"
+    # Dagster must stay pinned — ignore automated bumps for it
+    ignore:
+      - dependency-name: "dagster*"
+      - dependency-name: "dagster-*"
