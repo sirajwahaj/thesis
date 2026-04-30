@@ -1,0 +1,103 @@
+---
+# Dagster Webserver — Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster-thesis-webserver
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: dagster-thesis
+    component: webserver
+spec:
+  replicas: {{ .Values.webserver.replicaCount }}
+  selector:
+    matchLabels:
+      app: dagster-thesis
+      component: webserver
+  template:
+    metadata:
+      labels:
+        app: dagster-thesis
+        component: webserver
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Values.dagster.postgresql.host }} {{ .Values.dagster.postgresql.port }}; do
+                echo "Waiting for PostgreSQL..."; sleep 3;
+              done
+        - name: wait-for-workload
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z dagster-thesis-workload 4000; do
+                echo "Waiting for workload gRPC..."; sleep 3;
+              done
+      containers:
+        - name: webserver
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dagster-webserver
+            - -h
+            - "0.0.0.0"
+            - -p
+            - "3000"
+            - -w
+            - {{ .Values.dagster.dagsterHome }}/workspace.yaml
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DAGSTER_HOME
+              value: {{ .Values.dagster.dagsterHome }}
+          volumeMounts:
+            - name: dagster-home-rw
+              mountPath: {{ .Values.dagster.dagsterHome }}
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/dagster.yaml
+              subPath: dagster.yaml
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/workspace.yaml
+              subPath: workspace.yaml
+          resources:
+            requests:
+              memory: {{ .Values.webserver.resources.requests.memory }}
+              cpu: {{ .Values.webserver.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.webserver.resources.limits.memory }}
+              cpu: {{ .Values.webserver.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /server_info
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+      volumes:
+        - name: dagster-home-rw
+          emptyDir: {}
+        - name: dagster-instance
+          configMap:
+            name: dagster-instance
+---
+# Webserver Service (NodePort for local access via Kind port mapping)
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagster-thesis-webserver
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: dagster-thesis
+    component: webserver
+  ports:
+    - port: {{ .Values.webserver.service.port }}
+      targetPort: 3000
+      nodePort: {{ .Values.webserver.service.nodePort }}
+  type: {{ .Values.webserver.service.type }}

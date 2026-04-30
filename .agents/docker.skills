@@ -1,0 +1,71 @@
+# Docker / Podman Skills for Thesis Workload
+
+## Container runtime: podman (macOS), Docker (Windows)
+
+On macOS, `podman` is used instead of Docker. The `thesis` podman machine must be
+running before any container operations:
+
+```bash
+podman machine start thesis
+```
+
+Set `DOCKER_HOST` so docker-compose and other tools work transparently:
+```bash
+export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+```
+
+## Workload image
+
+The workload container is defined in `src/Containerfile` (OCI-compatible, works with both
+podman and Docker).
+
+```bash
+# Build (from repo root)
+podman build -f src/Containerfile -t thesis-workload:latest src/
+
+# Tag for local Kind registry
+podman tag thesis-workload:latest localhost:5001/thesis-workload:latest
+
+# Push to local registry (for Kind to pull)
+podman push localhost:5001/thesis-workload:latest --tls-verify=false
+```
+
+The full build+push+deploy is automated via:
+```bash
+make k8s-deploy-dagster
+```
+
+## docker-compose (local dev stack)
+
+The local development stack runs via `infrastructure/docker-compose.yml`:
+
+```bash
+make compose-up      # start postgres + dagster webserver + daemon
+make compose-down    # stop
+make compose-clean   # stop + remove volumes
+```
+
+Services:
+- `postgres`: PostgreSQL 16 on port 5432
+- `webserver`: Dagster webserver on port 3001
+- `daemon`: Dagster daemon (run launcher)
+- `workload`: gRPC server on port 4000 (thesis_workload job)
+
+## Container image for K8s
+
+The image pushed to `localhost:5001/thesis-workload:latest` is pulled by Kind cluster.
+Kind is configured to trust the local registry via a ConfigMap in `kube-system`.
+
+Registry contents:
+```bash
+curl http://localhost:5001/v2/_catalog    # list images
+curl http://localhost:5001/v2/thesis-workload/tags/list   # list tags
+```
+
+## Containerfile notes
+
+- Base: `python:3.12-slim` (keeps image small for quick pulls in Kind)
+- Installs: `uv` + `dagster 1.12.22` + `dagster-k8s 1.12.22`
+- Entry point: `dagster api grpc --host 0.0.0.0 --port 4000`
+- Working dir: `/opt/thesis/workload`
+- No root: runs as `dagster` user (UID 1000)

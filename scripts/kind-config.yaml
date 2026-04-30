@@ -1,0 +1,38 @@
+# =============================================================================
+# Kind Cluster Configuration — thesis-benchmarking
+#
+# Single-node Kind cluster for thesis Kubernetes experiments.
+# VM baseline: 4 vCPU, 4 GB RAM (Multipass).
+# Kind node: 4 vCPU, 8 GB RAM (matches thesis Table 3.1).
+#
+# Notable settings:
+#   - containerdConfigPatches: allows pushing images from local podman registry
+#   - featureGates: ServerSideApply for better Helm compatibility
+#   - kubeProxyMode: iptables (default, reliable on macOS)
+# =============================================================================
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+name: thesis
+
+nodes:
+  - role: control-plane
+    # Node labels for workload scheduling
+    labels:
+      node-role: experiment
+    # Extra port mappings for local access
+    extraPortMappings:
+      # Dagster webserver
+      - containerPort: 30001
+        hostPort: 3001
+        protocol: TCP
+      # PostgreSQL (for metrics export from host)
+      - containerPort: 30432
+        hostPort: 5432
+        protocol: TCP
+
+# Allow loading images from local registry (podman build → kind load)
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]

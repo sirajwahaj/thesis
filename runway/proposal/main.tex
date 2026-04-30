@@ -1,0 +1,31 @@
+% ============================================================
+%  Runway — Business Proposal
+%  Predictive pipeline monitoring for data engineering teams
+%
+%  Compile: pdflatex main.tex (twice for cross-references)
+% ============================================================
+\documentclass[a4paper, 11pt]{article}
+
+\input{preamble}
+
+\begin{document}
+\pagestyle{empty}
+
+% ── Cover page ───────────────────────────────────────────────
+\input{sections/cover}
+
+% ── Main content (restore page style) ────────────────────────
+\pagestyle{fancy}
+\setcounter{page}{1}
+
+\input{sections/executive-summary}
+\input{sections/problem}
+\input{sections/solution}
+\input{sections/market}
+\input{sections/business-model}
+\input{sections/product}
+\input{sections/traction}
+\input{sections/risks}
+\input{sections/ask}
+
+\end{document}
