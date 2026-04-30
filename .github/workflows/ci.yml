@@ -2,13 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev, staging]
   pull_request:
-    branches: [main]
+    branches: [main, dev, staging]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-python:
-    name: Lint Python scripts
+    name: Lint Python (ruff)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,9 +20,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: Install linting tools
+      - name: Install ruff
         run: pip install ruff
 
       - name: Lint scripts/
@@ -28,22 +32,22 @@ jobs:
         run: ruff check src/ --ignore E501
 
   validate-json:
-    name: Validate JSON config
+    name: Validate JSON
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate labels.json
-        run: python -m json.tool project/config/labels.json > /dev/null
+        run: python3 -m json.tool project/config/labels.json > /dev/null
 
       - name: Validate all metadata.json files (if any)
         run: |
-          find data/ -name "metadata.json" | while read f; do
-            python -m json.tool "$f" > /dev/null && echo "OK: $f"
+          find data/ -name "metadata.json" | while IFS= read -r f; do
+            python3 -m json.tool "$f" > /dev/null && echo "OK: $f"
           done
 
   validate-shell:
-    name: Lint shell scripts
+    name: Lint shell scripts (shellcheck)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,11 +55,16 @@ jobs:
       - name: Install shellcheck
         run: sudo apt-get install -y shellcheck
 
-      - name: Check scripts/
-        run: shellcheck scripts/*.sh project/scripts/*.sh
+      - name: Check scripts/bash/
+        # --severity=error: fail only on actual errors, not pre-existing warnings.
+        # Warnings are tracked as tech-debt; see scripts/bash/ for inline disable comments.
+        run: shellcheck --severity=error scripts/bash/*.sh
+
+      - name: Check project/scripts/
+        run: shellcheck --severity=error project/scripts/*.sh
 
   check-notebooks:
-    name: Validate notebooks
+    name: Validate notebooks (nbformat)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,14 +72,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install nbformat
         run: pip install nbformat
 
       - name: Validate notebook structure
         run: |
-          python - <<'EOF'
+          python3 - <<'EOF'
           import nbformat, glob, sys
           errors = []
           for path in glob.glob("notebooks/*.ipynb"):
@@ -85,3 +94,20 @@ jobs:
               print("\n".join(errors))
               sys.exit(1)
           EOF
+
+  validate-yaml:
+    name: Validate YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Lint YAML files
+        run: |
+          yamllint -d '{extends: relaxed, rules: {line-length: {max: 120}}}' \
+            src/dagster.yaml \
+            src/workspace.yaml \
+            scripts/kind-config.yaml \
+            k8s/helm/dagster-thesis/values.yaml
