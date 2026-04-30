@@ -19,7 +19,7 @@ Based on the experimental findings, the following recommendations are offered to
   Include job success rate in Dagster observability dashboards.
 
   \item \textbf{Design jobs to run for at minimum several minutes before deploying to Kubernetes.}
-  The 4--15\,s startup overhead (local Kind, pre-pulled images, growing with concurrency) is modest for most pipeline workloads. In production clusters with cold image pulls, overhead may be higher (10--60\,s); pre-warming images is recommended.
+  The 4--15\,s startup overhead (local Kind, growing with concurrency) is modest for most pipeline workloads. In production clusters with cold image pulls, overhead may be higher (10--60\,s); pre-warming images is recommended.
   Short-duration Dagster ops should be batched into longer jobs when targeting a Kubernetes executor.
 
   \item \textbf{Account for Kubernetes startup overhead in SLA calculations.}
@@ -28,7 +28,7 @@ Based on the experimental findings, the following recommendations are offered to
 
   \item \textbf{Test blast radius containment under sustained memory pressure, not just nominal load.}
   Both environments successfully contained blast radius at moderate concurrency.
-  The real containment advantage of Kubernetes emerges at extreme load ($>$L7) where VM-level OOM kills can affect multiple containers simultaneously.
+  The real containment advantage of Kubernetes emerges at extreme load ($>$L5) where VM-level OOM kills can affect multiple containers simultaneously.
   Test at your highest expected concurrency before relying on containment assumptions.
 
   \item \textbf{Consider the operational cost of Kubernetes.}

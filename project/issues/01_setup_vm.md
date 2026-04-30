@@ -1,4 +1,4 @@
-# [THESIS-001] Environment Setup — Multipass VM
+# [THESIS-001] Environment Setup — UTM VM
 
 Labels: setup, infra  
 Story Points: 3  

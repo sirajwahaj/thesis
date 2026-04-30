@@ -13,14 +13,14 @@ The failure mechanism is memory exhaustion: with three containers each allocatin
 Individual run records confirm that failing jobs are OOM-killed 37--50\,s into execution --- immediately after the 400\,MB NumPy allocation in the \texttt{memory\_pressure} op.
 
 The Linux OOM killer selects victims based on process memory scores; in a pool of identical containers, the selection is approximately random across the $n$ concurrent runs.
-This explains the observed pattern: at L3, one of three containers is typically killed, yielding a 66.7\,\% success rate; at L10, seven of ten are typically killed, yielding 30\,\%.
+This explains the observed pattern: at L3, one of three containers is typically killed, yielding a 66.7\,\% success rate; at L6, seven of ten are typically killed, yielding 30\,\%.
 
 \paragraph{The reliability crossover falls between L2 and L3.}
 The formal reliability crossover (success rate falling below 95\,\%) occurs between L2 (100\,\%) and L3 (66.7\,\%), at the point where aggregate memory allocation first exceeds the kernel's reclaimable budget on this 4\,GB VM.
 This is the most practically significant finding of SQ1: the VM degradation is not a \emph{gradual} performance curve but a \emph{discrete transition} from reliable to unreliable operation at three concurrent jobs.
 
 \paragraph{Execution time of surviving jobs stays flat.}
-Successful jobs complete in approximately the same time regardless of concurrency level (65--80\,s across L1--L10, a 22\,\% increase over the full range).
+Successful jobs complete in approximately the same time regardless of concurrency level (65--80\,s across L1--L6, a 22\,\% increase over the full range).
 This is a selection effect: only containers that successfully acquire their memory allocation complete, and these experience near-normal execution time.
 OOM-killed containers are accounted in the failure rate, not in the execution time metric.
 
