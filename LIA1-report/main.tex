@@ -1,0 +1,106 @@
+\documentclass[a4paper,12pt]{scrartcl}
+
+% --- Språk, encoding, typografi ---
+\usepackage[swedish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Layout ---
+\usepackage[margin=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Rubriker ---
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+\titlespacing\section{0pt}{18pt}{12pt}
+\titlespacing\subsection{0pt}{14pt}{10pt}
+\titlespacing\subsubsection{0pt}{10pt}{6pt}
+
+% --- Innehållsförteckning ---
+\usepackage{tocloft}
+\setlength{\cftbeforesecskip}{6pt}
+\renewcommand{\cftsecfont}{\normalsize}
+\renewcommand{\cftsecpagefont}{\normalsize}
+\setcounter{tocdepth}{3}
+
+% --- Grafik ---
+\usepackage{graphicx}
+
+% --- Sidhuvud och sidfot ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Dokument ---
+\begin{document}
+
+% ============================
+% TITELSIDA
+% ============================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    \includegraphics[width=0.32\textwidth]{logo.png}
+
+    {\Huge \bfseries LIA-Rapport \par}
+    \vspace{0.8cm}
+
+    {\Large Insighta, Inc \par}
+    \vspace{1.2cm}
+
+    {\Large \bfseries Sirajulhaq Wahaj \par}
+    \vspace{0.4cm}
+    {\large DevOps Engineer \par}
+    \vspace{0.3cm}
+    {\large JENSEN yrkeshögskola \par}
+
+    \vspace{1.2cm}
+
+    {\large Period: September -- December 2023 \par}
+    \vspace{0.6cm}
+
+    % Handledare
+    \vspace{0.8cm}
+    {\large \textbf{Handledare:} Amir Jaber \par}
+    {\large \textbf{E-post:} amir@insighta.io \par}
+
+    \vspace{2cm}
+
+
+    \vfill
+    {\large \today \par}
+\end{titlepage}
+
+\thispagestyle{empty}
+\newpage
+
+% ============================
+% INNEHÅLLSFÖRTECKNING
+% ============================
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+\setcounter{page}{1}
+
+% ============================
+% Import av sektioner
+% ============================
+\input{sections/1_inledning}
+\input{sections/2_arbetsuppgifter}
+\input{sections/3_erfarenheter}
+\input{sections/4_framtida_planer}
+\input{sections/5_reflektion}
+\input{sections/6_improvment_knowledge_experience}
+\input{sections/7_slutsatser}
+
+\end{document}

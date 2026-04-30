@@ -1,0 +1,50 @@
+% ============================================================
+%  sections/problem.tex
+% ============================================================
+
+\section{The Problem}
+
+\subsection{What teams experience today}
+
+Every data engineering team eventually hits this wall:
+
+\begin{enumerate}
+  \item A Dagster or Airflow pipeline has been running fine for weeks.
+  \item Job latency has been quietly climbing. Nobody notices — there is no alert for "slow trend."
+  \item Concurrency increases as the business grows. Resource pressure accumulates.
+  \item At 2am, the pipeline fails. Dashboards show stale data. Customers call.
+  \item The on-call engineer spends 3–4 hours diagnosing something that was visible in the
+        data for two weeks.
+\end{enumerate}
+
+\begin{callout}
+\textbf{The root cause is not the failure itself — it is the absence of a system that connects
+performance trends to infrastructure limits.} Every failure has a predictable precursor.
+No current tool surfaces it.
+\end{callout}
+
+\subsection{Why existing tools do not solve this}
+
+\begin{center}
+\small
+\begin{tabularx}{0.96\textwidth}{l X X}
+  \toprule
+  \textbf{Tool} & \textbf{What it does} & \textbf{What it misses} \\
+  \midrule
+  Monte Carlo, Bigeye     & Detects data quality anomalies after the fact    & No performance trend; no infra recommendation \\
+  Datadog, Grafana        & Infrastructure metrics and alerting              & No pipeline-level semantics; alert fatigue \\
+  Great Expectations, dbt & Schema and value assertion testing               & Requires manual rule-writing; misses unknown failures \\
+  PagerDuty               & Incident routing after failure                   & Reactive only; no prediction \\
+  \textbf{Runway}         & \textbf{Predicts failure date, recommends action} & \textbf{—} \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\vspace{4pt}
+
+\subsection{The gap in one sentence}
+
+\begin{insight}
+No tool connects pipeline performance degradation trends to a specific failure date and
+a concrete infrastructure recommendation. Runway fills exactly this gap.
+\end{insight}

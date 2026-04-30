@@ -1,0 +1,64 @@
+% ============================================================
+%  sections/market.tex
+% ============================================================
+
+\section{Market Opportunity}
+
+\subsection{Addressable market}
+
+\begin{multicols}{3}
+\metriccard{\$4.1B}{Total addressable market}{Data observability \& pipeline monitoring, 2026}
+\columnbreak
+\metriccard{\$820M}{Serviceable addressable market}{SMB/mid-market DataOps teams using open-source orchestration}
+\columnbreak
+\metriccard{\$82M}{Initial target (Year 1--2)}{Data-eng-led SaaS companies, 20--200 engineers}
+\end{multicols}
+
+\vspace{6pt}
+
+\subsection{Why now}
+
+Three converging trends create the window:
+
+\begin{enumerate}
+  \item \textbf{Dagster adoption accelerating.} Dagster crossed 10,000 GitHub stars in 2024
+        and is displacing Airflow at data-engineering-led companies. It has no native predictive
+        monitoring tooling.
+
+  \item \textbf{Data teams are shrinking their infra budgets.} After 2023--2024 layoffs, small
+        data teams (3--8 engineers) are expected to maintain the same pipeline SLAs with fewer
+        people. They need automation, not dashboards.
+
+  \item \textbf{Kubernetes adoption in data engineering is reaching the early majority.}
+        Teams know they \emph{should} migrate but lack the data to justify the decision to
+        their CTO. Runway gives them that data.
+\end{enumerate}
+
+\subsection{Competitive differentiation}
+
+\begin{insight}
+\textbf{Runway's moat is the crossover methodology}: an empirically validated,
+published framework (Wahaj, 2026) that maps pipeline stress signals to infrastructure
+decisions. This cannot be replicated without the underlying experimental data.
+It is defensible as a trade secret and potentially as a patent on the predictive
+infrastructure recommendation algorithm.
+\end{insight}
+
+\vspace{4pt}
+
+\begin{center}
+\small
+\begin{tabularx}{0.96\textwidth}{l c c c c}
+  \toprule
+  & \textbf{Monte Carlo} & \textbf{Datadog} & \textbf{Bigeye} & \textbf{Runway} \\
+  \midrule
+  Pipeline-native                & \checkmark & — & \checkmark & \checkmark \\
+  Latency trend detection        & —          & \checkmark & — & \checkmark \\
+  Failure date prediction        & —          & — & — & \checkmark \\
+  Infrastructure recommendation  & —          & — & — & \checkmark \\
+  Dagster-native plugin          & —          & — & — & \checkmark \\
+  Runs on-premise / self-hosted  & —          & — & — & \checkmark \\
+  Pricing (entry)                & \$1,200+/mo & \$27+/mo & \$750+/mo & \$49/mo \\
+  \bottomrule
+\end{tabularx}
+\end{center}
