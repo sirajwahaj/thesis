@@ -1,0 +1,134 @@
+# =============================================================================
+# Monitoring Stack — Prometheus + Grafana + Exporters
+#
+# Provides real-time observability into the thesis experiment infrastructure:
+#   - Prometheus: metrics collection and storage
+#   - Grafana: dashboards (auto-provisioned with thesis-specific panels)
+#   - node-exporter: host CPU, memory, disk, network metrics
+#   - cAdvisor: per-container resource usage (critical for VM Docker experiments)
+#   - postgres-exporter: PostgreSQL connection pool and query metrics
+#
+# Usage:
+#   docker compose -f monitoring/docker-compose.monitoring.yml up -d
+#
+# Access:
+#   - Grafana:    http://localhost:3000  (admin/admin)
+#   - Prometheus: http://localhost:9090
+#
+# This stack runs alongside the main infrastructure/docker-compose.yml
+# and connects to the same Docker network to scrape Dagster containers.
+# =============================================================================
+
+name: thesis-monitoring
+
+services:
+  # ── Prometheus ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: thesis-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Grafana ────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: thesis-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/experiment-overview.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Node Exporter (host metrics) ───────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: thesis-node-exporter
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    volumes:
+      - "/:/host:ro,rslave"
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    pid: host
+
+  # ── cAdvisor (container metrics) ───────────────────────────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: thesis-cadvisor
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    restart: unless-stopped
+    privileged: true
+
+  # ── PostgreSQL Exporter ────────────────────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: thesis-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://dagster:dagster@postgres:5432/dagster?sslmode=disable"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+networks:
+  monitoring:
+    driver: bridge
+  # Connect to the Dagster compose network to scrape container metrics
+  thesis_dagster_network:
+    external: true
+    name: thesis_dagster_network
+
+volumes:
+  prometheus_data:
+  grafana_data:

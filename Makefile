@@ -497,3 +497,27 @@ labels:
 issues:
 	@echo "Syncing GitHub issues..."
 	bash project/scripts/issues.sh
+
+# ==========================
+# Monitoring (Prometheus + Grafana)
+# ==========================
+
+monitoring-up:
+	@echo "Starting monitoring stack (Prometheus + Grafana)..."
+	bash scripts/bash/monitoring-up.sh up
+
+monitoring-down:
+	@echo "Stopping monitoring stack..."
+	bash scripts/bash/monitoring-up.sh down
+
+monitoring-status:
+	@bash scripts/bash/monitoring-up.sh status
+
+monitoring-k8s:
+	@echo "Deploying kube-prometheus-stack on Kind cluster..."
+	bash scripts/bash/monitoring-k8s.sh install
+
+monitoring-k8s-down:
+	@echo "Removing K8s monitoring stack..."
+	bash scripts/bash/monitoring-k8s.sh uninstall
+

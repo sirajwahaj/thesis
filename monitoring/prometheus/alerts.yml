@@ -1,0 +1,53 @@
+# Prometheus alerting rules for thesis experiments
+# These fire during experiment runs to flag anomalies in real-time
+groups:
+  - name: thesis_experiment_alerts
+    rules:
+      # High CPU — indicates resource contention (relevant to SQ1)
+      - alert: HighCpuUsage
+        expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[2m])) > 0.90
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 90% for 1+ minute"
+          description: "Host CPU is at {{ $value | humanizePercentage }}. Experiment may be experiencing resource contention."
+
+      # Memory pressure — OOM risk
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Available memory is critically low ({{ $value | humanizePercentage }} used). OOM kills likely."
+
+      # Container OOMKilled — signals workload exceeding limits
+      - alert: ContainerOOMKilled
+        expr: increase(container_oom_events_total[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container OOM killed: {{ $labels.name }}"
+          description: "Container {{ $labels.name }} was OOM-killed. Check memory limits."
+
+      # Too many containers (VM experiment) — over-subscription detection
+      - alert: HighContainerCount
+        expr: count(container_memory_usage_bytes{name=~".+"}) > 15
+        for: 30s
+        labels:
+          severity: info
+        annotations:
+          summary: "High container count: {{ $value }}"
+          description: "Many containers running simultaneously — expected during high-concurrency experiments."
+
+      # PostgreSQL connection saturation
+      - alert: PostgresConnectionsHigh
+        expr: sum(pg_stat_activity_count) > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connections above 50"
+          description: "Dagster may be saturating the PostgreSQL connection pool during high-concurrency runs."
