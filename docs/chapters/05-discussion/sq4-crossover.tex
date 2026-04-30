@@ -12,7 +12,7 @@ The reliability crossover --- the concurrency level at which the VM's success ra
 This is the primary crossover point for production decision-making: at three concurrent Dagster jobs, the VM already fails one in three runs due to memory exhaustion, while Kubernetes completes all runs successfully within its per-pod limits.
 
 \paragraph{K8s overhead is not flat and grows with load.}
-Container startup overhead grows from $\approx$24\,s at L1 to $\approx$57\,s at L6 (mean across levels: $\approx$30\,s), representing 36--59\,\% of the 68--96\,s total K8s pod time.
+Container startup overhead grows from $\approx$4\,s at L1 to $\approx$15\,s at L6 (mean across levels: $\approx$10\,s), representing 7--18\,\% of the 68--96\,s total K8s pod time.
 Startup overhead increases with concurrency as more containers initialise simultaneously on the single-node cluster, competing for PostgreSQL connections and Python interpreter init.
 K8s Dagster execution time also increases with concurrency: from 43.2\,s (L1) to 57.1\,s (L5), as the single-node Kind cluster experiences aggregate resource pressure at higher levels.
 
@@ -34,7 +34,7 @@ The combined crossover is therefore at \textbf{L3 (3 concurrent jobs)}, and the 
 \paragraph{Node-level observations at L6.}
 Both environments experience increasing overhead at L6 but from different mechanisms.
 The VM fails at the per-container level (OS kills individual containers) from L3 onwards, delivering only 30\% success at L6.
-Kubernetes maintained 100\% reliability at L6 in the measured session, with total wall-clock time of 96.5\,s (execution 39.9\,s + startup 56.6\,s).
+Kubernetes maintained 100\% reliability at L6 in the measured session, with total wall-clock time of 96.5\,s (execution 39.9\,s + startup 14.9\,s).
 The K8s reliability advantage over the VM holds across the entire L1--L6 range at this hardware configuration.
 
 \paragraph{The crossover is hardware-configuration dependent.}
@@ -43,7 +43,7 @@ The observed crossover at L3 is specific to this configuration:
   \item 4\,vCPU, 4\,GB RAM VM with 2\,GB per-container Docker limit
   \item 4\,vCPU, 8\,GB Kind node with 2\,GiB per-pod memory limit
   \item 60-second two-phase workload with 400\,MB memory allocation per job
-  \item 24--57\,s Kubernetes startup overhead (local Kind cluster, pre-pulled images, single node)
+  \item 4--15\,s Kubernetes startup overhead (local Kind cluster, pre-pulled images, single node)
 \end{itemize}
 If the VM had less RAM, the crossover would occur at a lower concurrency level.
 In a production K8s cluster (GKE, EKS) with cold image pulls, startup overhead would be higher (20--60\,s additional), potentially shifting the total K8s cost while the reliability crossover remains determined by VM memory exhaustion.
@@ -51,11 +51,11 @@ In a production K8s cluster (GKE, EKS) with cold image pulls, startup overhead w
 \paragraph{Consistency with the hypothesis.}
 The pre-experiment hypothesis (Section~\ref{sec:hypothesis}) predicted that at low concurrency the VM outperforms Kubernetes due to startup overhead, and at high concurrency Kubernetes outperforms the VM.
 The data partly confirms this: at L1, the VM has a small execution time advantage.
-However, the hypothesis underestimated how early VM reliability would collapse (L3, not L4--L5) and the significance of K8s startup overhead (24--57\,s, not a few seconds).
+However, the hypothesis underestimated how early VM reliability would collapse (L3, not L4--L5) and the significance of K8s startup overhead (4--15\,s, not a few seconds).
 The main finding is that despite substantial startup overhead, K8s becomes net beneficial at L3 because VM reliability collapses so sharply.
 
 \paragraph{What the crossover means in practice.}
 Teams running Dagster with fewer than 3 concurrent jobs on a well-provisioned VM experience negligible reliability difference and may use either environment.
-Teams expecting 3 or more concurrent jobs should migrate to Kubernetes: K8s adds 24--57\,s per-run startup overhead (growing with concurrency) while providing 100\,\% reliability versus the VM's 66.7\,\% or lower success rates at these concurrency levels.
+Teams expecting 3 or more concurrent jobs should migrate to Kubernetes: K8s adds 4--15\,s per-run startup overhead (growing with concurrency) while providing 100\,\% reliability versus the VM's 66.7\,\% or lower success rates at these concurrency levels.
 The migration decision threshold is 3 concurrent jobs, and given the clear reliability benefit, earlier migration is also rational for teams anticipating growth in workload concurrency.
 

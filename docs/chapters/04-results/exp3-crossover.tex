@@ -23,12 +23,12 @@ Net execution time differences between the two environments are computed from th
     \toprule
     \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Pod Sched. Latency (s)} & \textbf{Startup Overhead (s)} & \textbf{K8s Total (s)} \\
     \midrule
-    L1  & 1  & $<$1 & 24.4 & 67.7 \\
-    L2  & 2  & $<$1 & 20.9 & 68.7 \\
-    L3  & 3  & $<$1 & 21.7 & 69.7 \\
-    L4  & 5  & $<$1 & 24.6 & 74.9 \\
-    L5  & 7  & $<$1 & 35.1 & 92.2 \\
-    L6  & 10 & $<$1 & 56.6 & 96.5 \\
+    L1  & 1  & $<$1 & 4.3  & 67.7 \\
+    L2  & 2  & $<$1 & 4.6  & 68.7 \\
+    L3  & 3  & $<$1 & 5.1  & 69.7 \\
+    L4  & 5  & $<$1 & 6.8  & 74.9 \\
+    L5  & 7  & $<$1 & 11.6 & 92.2 \\
+    L6  & 10 & $<$1 & 14.9 & 96.5 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -40,7 +40,7 @@ This is consistent with the theoretical minimum for a lightly loaded local clust
 \paragraph{Container startup time.}
 The dominant overhead component is \emph{container startup time}: the interval from pod submission until the Dagster job process begins executing.
 This is measured as total pod lifetime (submitted\_ts to container exit) minus the Dagster execution duration (\texttt{end\_time} $-$ \texttt{start\_time} from dagster\_runs.csv), joined on \texttt{run\_id}.
-At L1 this yields 24.4\,s, rising to 56.6\,s at L6.
+At L1 this yields 4.3\,s, rising to 14.9\,s at L6.
 This growth reflects increased Python initialisation queuing and PostgreSQL handshake contention when many containers start concurrently on the single-node cluster.
 
 Note that the pod scheduling latency itself is essentially zero ($<$1\,s) on a single-node Kind cluster with pre-pulled images, so the startup overhead is dominated by container initialisation: Python interpreter start, dependency import, and the Dagster gRPC handshake with the code server.
@@ -77,7 +77,7 @@ This contrasts with the $\approx$25\,s median scheduling latency reported by \ci
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{sq3_k8s_overhead.png}
-  \caption{Kubernetes scheduling overhead analysis (SQ3). Left: total startup overhead per concurrency level (mean $\pm$ std across 3 reps). Right: overhead breakdown stacked with job execution, compared to VM baseline. Overhead grows from 24.4\,s at L1 to 56.6\,s at L6 due to concurrent initialisation contention on the single-node Kind cluster.}
+  \caption{Kubernetes scheduling overhead analysis (SQ3). Left: total startup overhead per concurrency level (mean $\pm$ std across 3 reps). Right: overhead breakdown stacked with job execution, compared to VM baseline. Overhead grows from 4.3\,s at L1 to 14.9\,s at L6 due to concurrent initialisation contention on the single-node Kind cluster.}
   \label{fig:k8s-overhead}
 \end{figure}
 
@@ -99,7 +99,7 @@ This result directly answers SQ1: the VM begins to degrade significantly at 3 co
 \paragraph{Performance crossover (Metric 12).}
 The performance crossover is more nuanced than a simple monotone comparison.
 K8s execution time itself \emph{increases} with concurrency---from 63.4\,s (L1) to 80.6\,s (L5)---because the single-node Kind cluster experiences node-level resource contention at higher concurrency despite per-pod limits.
-Adding the measured startup overhead (24--57\,s, growing with concurrency), K8s total wall-clock is:
+Adding the measured startup overhead (4--15\,s, growing with concurrency), K8s total wall-clock is:
 L1 $\approx$68\,s, L2 $\approx$69\,s, L3 $\approx$70\,s, L4 $\approx$75\,s, L5 $\approx$92\,s, L6 $\approx$97\,s.
 
 Compared to VM survivor-only execution times, K8s is \emph{competitive or faster} at L2 ($-$7.5\,s), L3 ($-$0.2\,s), L4 ($-$1.4\,s), but \emph{slower} at L5 ($+$14.5\,s), L6 ($+$16.6\,s) and L1 ($+$2.4\,s).
@@ -109,7 +109,7 @@ However, the VM's 42.9\,\% success rate at L5 means that 57\% of jobs are failin
 \paragraph{Combined crossover point.}
 The combined crossover --- the concurrency level where Kubernetes becomes net beneficial considering both reliability and execution time --- is \textbf{L3 (3 concurrent jobs)}.
 At this level: (1) the VM drops below 95\,\% success rate (66.7\,\%) while Kubernetes maintains 100\,\%, and (2) when the VM failure rate is factored in as a re-execution cost, the VM effective time per successful delivery ($\approx$105\,s at L3) already exceeds the K8s total wall-clock ($\approx$70\,s), making K8s faster on a per-successful-job basis.
-The 24--57\,s pre-execution startup overhead per run represents 36--59\,\% of total K8s time; however, this cost is outweighed at L3+ by the VM's inability to reliably complete jobs at all.
-At higher concurrency (L4--L5), K8s continues to deliver 100\,\% reliability despite pod startup overhead growing to 35--57\,s; the VM continues to fail at 43--47\,\% rates.
+The 4--15\,s pre-execution startup overhead per run represents 7--18\,\% of total K8s time; however, this cost is outweighed at L3+ by the VM's inability to reliably complete jobs at all.
+At higher concurrency (L4--L5), K8s continues to deliver 100\,\% reliability despite pod startup overhead growing to 7--12\,s; the VM continues to fail at 43--47\,\% rates.
 Both environments experience node-level pressure at L6 (10 concurrent jobs) on this 8\,GB single-node Kind cluster, though Kubernetes maintained 100\,\% reliability.
 

@@ -30,8 +30,8 @@ The experimental results, taken together, reveal a nuanced trade-off rather than
 
 \begin{description}[style=nextline]
   \item[Container startup overhead.]
-  Every Kubernetes run job incurs 24--57\,s of pre-execution overhead (pod creation + Python startup), growing from $\approx$24\,s at L1 to $\approx$57\,s at L6 under increasing concurrency.
-  For the tested $\approx$63-second workload, this represents a 36--59\,\% wall-clock overhead, shrinking in relative importance for longer jobs.
+  Every Kubernetes run job incurs 4--15\,s of pre-execution overhead (pod creation + Python startup), growing from $\approx$4\,s at L1 to $\approx$15\,s at L6 under increasing concurrency.
+  For the tested $\approx$63-second workload, this represents a 7--18\,\% wall-clock overhead, shrinking in relative importance for longer jobs.
   At L1--L2 where the VM is 100\% reliable, the VM is strictly faster in wall-clock time.
   From L3 onward, the VM's reliability failure makes raw speed comparison less meaningful.
 

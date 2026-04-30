@@ -25,7 +25,7 @@ The crossover point may differ for I/O-bound, memory-bound, or network-bound wor
 \paragraph{Statistical power.}
 With three repetitions per concurrency level, the study has limited statistical power to detect small effects.
 Results should be interpreted as directional rather than definitive.
-The reliability failure rates (66.7\% at L3 through 30.0\% at L6) are large effects with clear statistical significance. The startup overhead range (24--57\,s) grows with concurrency and would require additional investigation under colder image conditions or in production clusters to assess variance.
+The reliability failure rates (66.7\% at L3 through 30.0\% at L6) are large effects with clear statistical significance. The startup overhead range (4--15\,s) grows with concurrency and would require additional investigation under colder image conditions or in production clusters to assess variance.
 
 \paragraph{Reliability threshold exceeded early.}
 The formal reliability threshold (success rate $<$95\%) was crossed at L3, earlier than hypothesised.
@@ -33,7 +33,7 @@ This is the primary finding, but it also means the crossover analysis is dominat
 Future work with a VM having more RAM (8--16\,GB) would permit exploration of the performance-only crossover regime.
 
 \paragraph{Dagster-specific startup overhead.}
-Container startup time (24--57\,s in this local Kind environment, growing with concurrency) is specific to the combination of pre-pulled images, in-cluster networking, and the Dagster framework's initialisation sequence. In a production cluster with cold image pulls, startup overhead would be higher.
+Container startup time (4--15\,s in this local Kind environment, growing with concurrency) is specific to the combination of pre-pulled images, in-cluster networking, and the Dagster framework's initialisation sequence. In a production cluster with cold image pulls, startup overhead would be higher.
 Other workflow frameworks with lighter runtime footprints may have substantially lower startup overhead, which would shift the performance crossover point to lower concurrency levels.
 
 \paragraph{Infrastructure configuration changes during experiments.}

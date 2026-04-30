@@ -19,7 +19,7 @@ Several directions emerge from the findings and limitations of this study:
   Future work should characterise the crossover point across a taxonomy of workload types.
 
   \item \textbf{Job duration sensitivity analysis.}
-  Container startup overhead ($\approx$24--57\,s in the local Kind environment, growing with concurrency) is the main cost for short-duration jobs.
+  Container startup overhead ($\approx$4--15\,s in the local Kind environment, growing with concurrency) is the main cost for short-duration jobs.
   A systematic sensitivity analysis varying job duration from 30\,s to 30\,min would produce a two-dimensional crossover surface (concurrency $\times$ job duration) that gives a more complete decision framework.
 
   \item \textbf{Production Kubernetes scheduler comparison.}

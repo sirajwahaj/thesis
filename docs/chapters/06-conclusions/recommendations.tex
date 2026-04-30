@@ -19,7 +19,7 @@ Based on the experimental findings, the following recommendations are offered to
   Include job success rate in Dagster observability dashboards.
 
   \item \textbf{Design jobs to run for at minimum several minutes before deploying to Kubernetes.}
-  The 24--57\,s startup overhead (local Kind, growing with concurrency) is modest for most pipeline workloads. In production clusters with cold image pulls, overhead may be higher (10--60\,s); pre-warming images is recommended.
+  The 4--15\,s startup overhead (local Kind, growing with concurrency) is modest for most pipeline workloads. In production clusters with cold image pulls, overhead may be higher (10--60\,s); pre-warming images is recommended.
   Short-duration Dagster ops should be batched into longer jobs when targeting a Kubernetes executor.
 
   \item \textbf{Account for Kubernetes startup overhead in SLA calculations.}

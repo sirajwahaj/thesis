@@ -15,7 +15,7 @@ In a production cluster under load, scheduling latency would be higher and more 
 
 \paragraph{Container startup overhead grows with concurrency.}
 Container startup overhead --- the difference between total K8s wall-clock time (pod creation to run completion) and Dagster-measured execution time --- was not constant across concurrency levels.
-At L1 (1 job), startup overhead was 24.4\,s; at L2 it was 20.9\,s; at L3, 21.7\,s; at L4 (5 jobs), 24.6\,s; at L5 (7 jobs), 35.1\,s; and at L6 (10 jobs), 56.6\,s.
+At L1 (1 job), startup overhead was 4.3\,s; at L2 it was 4.6\,s; at L3, 5.1\,s; at L4 (5 jobs), 6.8\,s; at L5 (7 jobs), 11.6\,s; and at L6 (10 jobs), 14.9\,s.
 The growth is explained by concurrent Python interpreter initialisation and PostgreSQL connection pool contention: when multiple pods start simultaneously, they compete for shared database connections and the single-node Kind cluster's I/O bandwidth during framework import.
 
 \textbf{Note on pod\_timing.csv measurement:} The \texttt{job\_start\_ts} column in \texttt{pod\_timing.csv} was collected from the Kubernetes \texttt{ContainersReady} condition's \texttt{lastTransitionTime}, which fires when the container \emph{exits} (transitioning from Ready to NotReady on successful completion), not when execution begins.
@@ -32,22 +32,22 @@ At low concurrency, the startup time decomposition is approximately:
 At higher concurrency (L5--L6), concurrent startup of 7--10 pods inflates these durations significantly through resource contention during initialisation.
 
 \paragraph{Overhead is substantial relative to execution time.}
-At L6 (10 concurrent jobs), the 56.6\,s startup overhead represents $\approx$59\% of the 96.5\,s total K8s pod time.
-At L1, the 24.4\,s overhead is $\approx$36\% of the 67.7\,s total.
+At L6 (10 concurrent jobs), the 14.9\,s startup overhead represents $\approx$18\% of the 96.5\,s total K8s pod time.
+At L1, the 4.3\,s overhead is $\approx$7\% of the 67.7\,s total.
 These figures reflect the overhead of running containerised Python workloads on a resource-constrained single-node Kind cluster; in production multi-node clusters, per-pod initialisation would be distributed, reducing contention.
 
 \paragraph{Comparison to VM overhead.}
 The VM DockerRunLauncher also incurs container startup overhead (Docker container creation + Python import), estimated at $\approx$2--3\,s per run.
-The K8s startup overhead is substantially higher (24--57\,s) due to the additional Kubernetes control plane handshake, gRPC code server connection, and PostgreSQL connection establishment per pod.
+The K8s startup overhead is substantially higher (4--15\,s) due to the additional Kubernetes control plane handshake, gRPC code server connection, and PostgreSQL connection establishment per pod.
 However, this overhead is a fixed cost per job; at higher concurrency it is offset by the VM's reliability collapse: the VM fails to complete 57--70\% of its jobs at L5--L6.
 
 \paragraph{Comparison to Liu et al.\ (2024).}
 \citet{liu2024} identified pod scheduling as a bottleneck for short-duration workloads.
-In this experiment, the scheduling component is negligible ($<$1\,s); the startup overhead ranges from 24\,s to 57\,s depending on concurrency.
-For the tested 60-second workload, K8s adds 36--59\% overhead compared to raw execution time --- meaningful but outweighed by the reliability benefits at L3+.
+In this experiment, the scheduling component is negligible ($<$1\,s); the startup overhead ranges from 4.3\,s to 14.9\,s depending on concurrency.
+For the tested 60-second workload, K8s adds 7--18\% overhead compared to raw execution time --- meaningful but outweighed by the reliability benefits at L3+.
 
 \paragraph{Overhead grows with concurrency but remains bounded.}
-Container startup overhead increased from 24.4\,s at L1 to 56.6\,s at L6, growing with the number of concurrent pods.
+Container startup overhead increased from 4.3\,s at L1 to 14.9\,s at L6, growing with the number of concurrent pods.
 This growth is attributable to concurrent initialisation contention, not to Kubernetes scheduling itself.
 In a production multi-node cluster, this contention would be distributed across nodes, likely reducing per-pod startup times at high concurrency.
 
