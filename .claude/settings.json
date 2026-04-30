@@ -1,0 +1,76 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(bash scripts/*.sh:*)",
+      "Bash(bash scripts/*.sh)",
+      "Bash(python3:*)",
+      "Bash(python3 scripts/*.py:*)",
+      "Bash(uv:*)",
+      "Bash(kubectl:*)",
+      "Bash(kubectl get:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl describe:*)",
+      "Bash(kubectl apply:*)",
+      "Bash(kind:*)",
+      "Bash(helm:*)",
+      "Bash(ansible-playbook:*)",
+      "Bash(podman:*)",
+      "Bash(podman build:*)",
+      "Bash(podman push:*)",
+      "Bash(podman ps:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(echo:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(ssh:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf data/raw*)",
+      "Bash(rm -rf data/processed*)",
+      "Bash(rm -rf src/workload*)",
+      "Bash(rm -rf results*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(kubectl delete namespace*)",
+      "Bash(kind delete cluster*)",
+      "Bash(DROP TABLE*)",
+      "Bash(DROP DATABASE*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/sirajulhaqwahaj/thesis/.claude/hooks/block-data-destruction.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/sirajulhaqwahaj/thesis/.claude/hooks/check-workload-unchanged.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+% =============================================================================
+% 3.7 Experimental Design
+% =============================================================================
+
+\section{Experimental Design}
+\label{sec:experiments}
+
+Three core experiments are defined. Each addresses one or more supporting questions. A deliberate failure injection is folded into Experiment~2 to test blast radius without requiring a separate experiment.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Experiment 1 --- VM Degradation Profile (answers SQ1)}
+\label{subsec:exp1}
+
+\paragraph{Setup.} Dagster deployed on the Multipass VM with the DockerRunLauncher (each run launches a separate Docker container on the VM host).
+
+\paragraph{Procedure.} Run all six workload levels (L1, L2, L3, L5, L7, L10). Each level is repeated 3 times. Record: job success rate, mean execution time, execution time standard deviation, CPU utilisation, and memory utilisation.
+
+\paragraph{Goal.} Produce the VM degradation curve---identifying the exact concurrency level at which success rate drops below 95\% and documenting the shape of the degradation (gradual vs.\ collapse).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Experiment 2 --- Kubernetes Isolation and Blast Radius (answers SQ2)}
+\label{subsec:exp2}
+
+\paragraph{Setup.} Kind cluster with Kubernetes Run Launcher. Identical resource profiles to Experiment~1.
+
+\paragraph{Procedure.}
+
+\begin{description}[style=nextline]
+  \item[Part A --- Isolation comparison]
+  Run identical workload levels (L1, L2, L3, L5, L7, L10) as Experiment~1, 3 repetitions each. Record same metrics.
+
+  \item[Part B --- Blast radius test (folded in)]
+  At level L5 (5 concurrent jobs), after all jobs are running, deliberately kill one pod mid-execution using \texttt{kubectl delete pod --force}. Measure:
+  \begin{enumerate}[label=(\alph*)]
+    \item number of other running jobs affected,
+    \item time until surviving jobs complete,
+    \item success rate of surviving jobs.
+  \end{enumerate}
+  Repeat on VM using \texttt{kill -9} on one process. Compare blast radius between environments.
+
+  \item[Part C --- Spike observation (folded in)]
+  At L10 (10 concurrent jobs, exceeding single-node CPU capacity by 2.5\,$\times$), observe and record: how many jobs are delayed pending scheduling, how long until all jobs begin executing, any job failures due to scheduling timeout. This provides supplementary high-load data without a dedicated experiment.
+\end{description}
+
+\paragraph{Goal.} Calculate the delta in job success rate, execution time variance, and blast radius between VM and Kubernetes at each concurrency level.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Experiment 3 --- Overhead Measurement and Crossover Point (answers SQ3, SQ4)}
+\label{subsec:exp3}
+
+\paragraph{Setup.} Both VM and Kind environments running identical single jobs for overhead isolation, then compared across all concurrency levels.
+
+\paragraph{Procedure.}
+
+\begin{itemize}
+  \item At each concurrency level, record pod scheduling latency and container startup time on Kubernetes (from pod event timestamps).
+  \item Calculate net execution time difference between VM and Kubernetes per job per level.
+  \item Plot both overhead cost (Kubernetes) and contention cost (VM) against concurrency level on the same chart.
+  \item Identify the reliability crossover, performance crossover, and combined crossover point.
+\end{itemize}
+
+\paragraph{Goal.} Produce the crossover chart and identify the primary contribution---the crossover point.

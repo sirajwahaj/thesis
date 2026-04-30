@@ -1,0 +1,12 @@
+# Ansible inventory — dynamically managed by bootstrap scripts.
+# The VM IP is read from vm-ip.txt by the provisioning Makefile target.
+# Do NOT commit this file (it's in .gitignore).
+#
+# To override, set: VM_IP=<ip> make vm-provision
+# Or edit directly:
+
+[thesis_vm]
+thesis-vm ansible_host={{ vm_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/thesis_vm ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[thesis_vm:vars]
+ansible_python_interpreter=/usr/bin/python3

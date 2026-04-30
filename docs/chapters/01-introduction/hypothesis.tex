@@ -1,0 +1,10 @@
+% =============================================================================
+% 1.6 Research Hypothesis
+% =============================================================================
+
+\section{Research Hypothesis}
+\label{sec:hypothesis}
+
+Migrating workflow orchestration execution from a single-VM DockerRunLauncher to a Kubernetes Run Launcher will produce measurable reliability improvements through pod-level resource isolation, but will also introduce measurable scheduling latency and execution overhead that does not exist in the VM deployment.
+
+These advantages are conditional on workload level. At low concurrency, the VM is expected to outperform Kubernetes on execution speed because resource contention has not yet reached critical levels and there is no pod scheduling overhead to pay. At high concurrency, Kubernetes is expected to outperform the VM as pod isolation prevents the contention collapse that a shared execution model cannot avoid.

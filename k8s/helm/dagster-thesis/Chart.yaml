@@ -1,0 +1,15 @@
+apiVersion: v2
+name: dagster-thesis
+description: |
+  Dagster deployment for the thesis benchmarking experiments.
+  Deploys Dagster (webserver + daemon) with K8sRunLauncher,
+  PostgreSQL backend, and the thesis workload gRPC server.
+type: application
+version: 0.1.0
+appVersion: "1.12.22"
+
+dependencies:
+  - name: postgresql
+    version: "18.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled

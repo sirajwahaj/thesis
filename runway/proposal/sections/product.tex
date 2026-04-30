@@ -1,0 +1,54 @@
+% ============================================================
+%  sections/product.tex
+% ============================================================
+
+\section{Product Roadmap}
+
+\subsection{MVP — Version 0.1 (Weeks 1--10)}
+
+\textit{Goal: prove one prediction on real user data.}
+
+\begin{itemize}
+  \item Dagster sensor collecting per-run metrics into local SQLite
+  \item Rolling linear trend on job latency (last 30 runs)
+  \item SLA breach date calculation with confidence interval
+  \item One rule: concurrency threshold → Kubernetes migration recommendation
+  \item Slack bot: weekly digest + immediate alert at $\leq$14-day breach window
+  \item Configuration via single \texttt{runway.yaml} (Slack token, SLA threshold)
+\end{itemize}
+
+\textbf{Not in MVP:} web dashboard, billing, multi-framework support, LLM integration.
+
+\subsection{Version 1.0 (Months 3--6)}
+
+\textit{Goal: five paying teams, measurable prediction accuracy.}
+
+\begin{itemize}
+  \item Airflow sensor support (expands TAM $\times$3)
+  \item Prediction accuracy log (retrospective view: were predictions correct?)
+  \item Web dashboard (read-only, no configuration UI yet)
+  \item dbt model latency tracking (expands to analytics engineering teams)
+  \item Stripe billing integration (Free / Pro / Team tiers)
+\end{itemize}
+
+\subsection{Version 2.0 (Months 7--12)}
+
+\textit{Goal: \texteuro{}50k ARR, enterprise pipeline.}
+
+\begin{itemize}
+  \item ML pipeline support (Kubeflow, Prefect, Metaflow)
+  \item LLM-generated root cause explanations (local Phi-3 via llama.cpp — privacy-preserving)
+  \item Multi-pipeline correlation: "Pipeline A's failure is upstream of Pipeline B's SLA breach"
+  \item SSO, RBAC, audit log — required for enterprise procurement
+  \item Cloud deployment option (AWS Marketplace listing)
+\end{itemize}
+
+\subsection{Expansion path (Year 2+)}
+
+\begin{callout}
+\textbf{The natural expansion} is from pipeline orchestration to the full DataOps stack:
+data warehouses (Snowflake, BigQuery query latency trends), feature stores (Feast, Tecton),
+and ML training pipelines. Each expansion uses the same \emph{detect → predict → recommend}
+architecture. The crossover methodology generalises: the question is always
+``at what point does the current infrastructure fail this workload, and what changes that?''
+\end{callout}

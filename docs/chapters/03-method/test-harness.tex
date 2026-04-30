@@ -1,0 +1,19 @@
+% =============================================================================
+% 3.6 Test Harness
+% =============================================================================
+
+\section{Test Harness}
+\label{sec:test-harness}
+
+A critical component of this thesis is the automated test harness---a Python script that:
+
+\begin{enumerate}
+  \item Uses the \textbf{Dagster GraphQL API} to submit $N$ pipeline runs simultaneously via \texttt{concurrent.futures.ThreadPoolExecutor}.
+  \item Polls run status via the API until all runs complete or fail.
+  \item Records per-run timestamps: submission time, start time, end time, final status.
+  \item On Kubernetes: records pod scheduling latency and container startup time via \texttt{kubectl} timestamps.
+  \item On VM: records process spawn time and CPU/memory utilisation via \texttt{psutil}.
+  \item Exports all data to CSV for analysis.
+\end{enumerate}
+
+This harness ensures that concurrent runs are submitted within a tight time window ($< 1$ second spread) and that all metrics are collected programmatically---no manual observation of the Dagit UI. See Appendix~\ref{app:test-harness} for the test harness pseudocode.
