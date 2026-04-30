@@ -43,7 +43,7 @@
 \newtcolorbox{tipbox}[1][Tip]{
   enhanced, breakable,
   colback=green!5!white, colframe=tipgreen,
-  coltitle=white, fonttitle=\bfseries\small,
+  coltitle=white, colbacktitle=tipgreen, fonttitle=\bfseries\small,
   title={#1}, boxrule=0.8pt, arc=4pt,
   left=8pt, right=8pt, top=5pt, bottom=5pt,
   before skip=8pt, after skip=8pt,
@@ -52,7 +52,7 @@
 \newtcolorbox{warnbox}[1][Warning]{
   enhanced, breakable,
   colback=red!5!white, colframe=warnred,
-  coltitle=white, fonttitle=\bfseries\small,
+  coltitle=white, colbacktitle=warnred, fonttitle=\bfseries\small,
   title={#1}, boxrule=0.8pt, arc=4pt,
   left=8pt, right=8pt, top=5pt, bottom=5pt,
   before skip=8pt, after skip=8pt,
@@ -61,7 +61,7 @@
 \newtcolorbox{infobox}[1][Note]{
   enhanced, breakable,
   colback=blue!4!white, colframe=infoblue,
-  coltitle=white, fonttitle=\bfseries\small,
+  coltitle=white, colbacktitle=infoblue, fonttitle=\bfseries\small,
   title={#1}, boxrule=0.8pt, arc=4pt,
   left=8pt, right=8pt, top=5pt, bottom=5pt,
   before skip=8pt, after skip=8pt,
@@ -70,7 +70,7 @@
 \newtcolorbox{conceptbox}[1][Concept]{
   enhanced, breakable,
   colback=violet!4!white, colframe=conceptpurple,
-  coltitle=white, fonttitle=\bfseries\small,
+  coltitle=white, colbacktitle=conceptpurple, fonttitle=\bfseries\small,
   title={#1}, boxrule=0.8pt, arc=4pt,
   left=8pt, right=8pt, top=5pt, bottom=5pt,
   before skip=8pt, after skip=8pt,
@@ -101,6 +101,7 @@
 \fancyhf{}
 \fancyhead[L]{\small\itshape\leftmark}
 \fancyhead[R]{\small\thepage}
+\setlength{\headheight}{14pt}
 \renewcommand{\headrulewidth}{0.4pt}
 \fancypagestyle{plain}{
   \fancyhf{}
@@ -122,6 +123,6 @@
   \refstepcounter{qnum}%
   \vspace{8pt}%
   \noindent\textbf{\color{chapterblue}\theqnum.\ #1}\par%
-  \noindent\hspace{1.5em}#2\par%
+  {\leftskip=1.5em\relax\noindent#2\par}%
   \vspace{2pt}%
 }
