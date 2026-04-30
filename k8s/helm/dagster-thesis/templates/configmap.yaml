@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dagster-instance
+  namespace: {{ .Values.namespace }}
+data:
+  dagster.yaml: |
+    storage:
+      postgres:
+        postgres_db:
+          username: {{ .Values.dagster.postgresql.user }}
+          password: {{ .Values.dagster.postgresql.password }}
+          hostname: {{ .Values.dagster.postgresql.host }}
+          db_name: {{ .Values.dagster.postgresql.database }}
+          port: {{ .Values.dagster.postgresql.port }}
+
+    run_launcher:
+      module: dagster_k8s
+      class: K8sRunLauncher
+      config:
+        job_namespace: {{ .Values.namespace }}
+        job_image: {{ .Values.dagster.runLauncher.config.image.repository }}:{{ .Values.dagster.runLauncher.config.image.tag }}
+        image_pull_policy: {{ .Values.dagster.runLauncher.config.image.pullPolicy }}
+        instance_config_map: dagster-instance
+        service_account_name: dagster-thesis
+        env_vars:
+          {{- range .Values.dagster.runLauncher.config.envVars }}
+          - {{ .name }}={{ .value }}
+          {{- end }}
+        resources:
+          requests:
+            memory: {{ .Values.dagster.runLauncher.config.resources.requests.memory }}
+            cpu: {{ .Values.dagster.runLauncher.config.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.dagster.runLauncher.config.resources.limits.memory }}
+            cpu: {{ .Values.dagster.runLauncher.config.resources.limits.cpu }}
+        fail_pod_on_run_failure: {{ .Values.dagster.runLauncher.config.failPodOnRunFailure }}
+
+    compute_logs:
+      module: dagster.core.storage.local_compute_log_manager
+      class: LocalComputeLogManager
+      config:
+        base_dir: /tmp/dagster-logs
+
+    telemetry:
+      enabled: false
+
+  workspace.yaml: |
+    load_from:
+      - grpc_server:
+          host: dagster-thesis-workload
+          port: 4000

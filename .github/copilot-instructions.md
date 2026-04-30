@@ -39,13 +39,12 @@ SQ1 (VM degrades at level X) + SQ2 (K8s isolates failures) + SQ3 (K8s overhead Y
 | 3 | Execution time variance | Std deviation of execution time | SQ1, SQ2 |
 | 4 | CPU utilisation | Per-job CPU % | SQ1, SQ2 |
 | 5 | Memory utilisation | Per-job memory % | SQ1, SQ2 |
-| 6 | MTTR | Time from failure detection to successful re-run (s) | SQ1, SQ2 |
-| 7 | Failure blast radius | Does one failure affect other concurrent jobs? (binary) | SQ2 |
-| 8 | Pod scheduling latency | Submission → pod Running state (s, K8s only) | SQ3 |
-| 9 | Container startup time | Pod Running → job executing (s, K8s only) | SQ3 |
-| 10 | Net execution time Δ | VM vs K8s time difference per job per level | SQ3, SQ4 |
-| 11 | Reliability crossover | Level where VM success rate drops below 95% | SQ4 |
-| 12 | Performance crossover | Level where K8s total time < VM total time | SQ4 |
+| 6 | Failure blast radius | Does one failure affect other concurrent jobs? (binary) | SQ2 |
+| 7 | Pod scheduling latency | Submission → pod Running state (s, K8s only) | SQ3 |
+| 8 | Container startup time | Pod Running → job executing (s, K8s only) | SQ3 |
+| 9 | Net execution time Δ | VM vs K8s time difference per job per level | SQ3, SQ4 |
+| 10 | Reliability crossover | Level where VM success rate drops below 95% | SQ4 |
+| 11 | Performance crossover | Level where K8s total time < VM total time | SQ4 |
 
 **Crossover point** = both conditions met simultaneously (reliability + performance).
 
@@ -71,10 +70,10 @@ SQ1 (VM degrades at level X) + SQ2 (K8s isolates failures) + SQ3 (K8s overhead Y
 
 | Concern | Tool | Notes |
 |---------|------|-------|
-| Python | 3.12 only | `requires-python = ">=3.12"` |
+| Python | 3.13+ | `requires-python = ">=3.13"` |
 | Package manager | `uv` only | No pip install directly — use `uv add` or pyproject.toml |
-| Orchestration | Dagster 1.12.7 | Do not upgrade mid-experiment |
-| VM hypervisor | UTM (macOS) / VirtualBox (Windows) | See docs/setup.md |
+| Orchestration | Dagster 1.12.22 | Do not upgrade mid-experiment |
+| VM hypervisor | Multipass | See docs/setup.md |
 | VM provisioner | Ansible | `ansible/playbooks/provision-vm.yml` |
 | Container runtime | podman (macOS local) / Docker Desktop (Windows) | Compose via podman-compose |
 | Kubernetes | Kind single-node cluster named `thesis` | No autoscaling, no multi-node |
@@ -112,15 +111,14 @@ Changes to any stage must propagate to all stages downstream.
 
 | Component | Spec |
 |-----------|------|
-| VM (primary) | UTM (macOS) or VirtualBox (Windows) · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
-| VM (alternative) | Multipass — see docs/multipass-alternative.md |
-| K8s | Kind single-node · same host · matched resource limits |
-| Orchestrator | Dagster 1.12.7 |
-| VM executor | DockerRunLauncher (Docker CE on VM) |
-| K8s executor | K8sRunLauncher (via Helm) |
+| VM | Multipass · Ubuntu 22.04 · 4 vCPU · **4 GB RAM** |
+| K8s | Kind single-node · same host · **8 GB node RAM** |
+| Orchestrator | Dagster 1.12.22 |
+| VM executor | DockerRunLauncher (Docker CE on VM) · 2 GB per-container limit |
+| K8s executor | K8sRunLauncher (via Helm) · 2 GiB per-pod memory limit |
 | Database | PostgreSQL 16 |
-| Python | 3.12 |
-| Workload | CPU-bound SHA-256 hashing, ~30 seconds per job |
+| Python | 3.13+ |
+| Workload | Two-phase CPU-bound SHA-256 + 400 MB memory, ~60 s per job |
 
 ---
 
@@ -154,7 +152,7 @@ Changes to any stage must propagate to all stages downstream.
 
 | What | Where |
 |------|-------|
-| Thesis source | `docs/chapters/` — **canonical**, not `proposal/` (stale) |
+| Thesis source | `docs/chapters/` — **canonical** |
 | Metric definitions | `docs/chapters/03-method/metrics.tex` |
 | Experiment protocols | `docs/chapters/03-method/experiments.tex` |
 | Analysis (single source) | `notebooks/analysis.ipynb` |
@@ -174,7 +172,7 @@ Changes to any stage must propagate to all stages downstream.
 ```bash
 make all              # Full pipeline: bootstrap → provision → k8s-setup → experiments → analyze
 make bootstrap        # Install deps, create VM (macOS/Windows auto-detected)
-make vm-provision     # Ansible: Python 3.12, Dagster, PostgreSQL on VM
+make vm-provision     # Ansible: Python 3.13, Dagster, PostgreSQL on VM
 make k8s-setup        # Kind cluster + Metrics Server + Dagster Helm
 make validate-setup   # Pre-flight: check VM + K8s + local compose
 make experiments      # Run all 4 experiments

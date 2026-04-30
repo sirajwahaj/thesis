@@ -1,0 +1,92 @@
+---
+# Dagster gRPC Workload Server — Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster-thesis-workload
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: dagster-thesis
+    component: workload
+spec:
+  replicas: {{ .Values.workload.replicaCount }}
+  selector:
+    matchLabels:
+      app: dagster-thesis
+      component: workload
+  template:
+    metadata:
+      labels:
+        app: dagster-thesis
+        component: workload
+    spec:
+      containers:
+        - name: workload
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - dagster
+            - api
+            - grpc
+            - -h
+            - "0.0.0.0"
+            - -p
+            - "4000"
+            - -m
+            - workload
+          ports:
+            - containerPort: 4000
+          env:
+            - name: DAGSTER_HOME
+              value: {{ .Values.dagster.dagsterHome }}
+            - name: WORKLOAD_DURATION_SECONDS
+              value: "30"
+          volumeMounts:
+            - name: dagster-home-rw
+              mountPath: {{ .Values.dagster.dagsterHome }}
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/dagster.yaml
+              subPath: dagster.yaml
+            - name: dagster-instance
+              mountPath: {{ .Values.dagster.dagsterHome }}/workspace.yaml
+              subPath: workspace.yaml
+          resources:
+            requests:
+              memory: {{ .Values.workload.resources.requests.memory }}
+              cpu: {{ .Values.workload.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.workload.resources.limits.memory }}
+              cpu: {{ .Values.workload.resources.limits.cpu }}
+          livenessProbe:
+            exec:
+              command:
+                - dagster
+                - api
+                - grpc-health-check
+                - -p
+                - "4000"
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: dagster-home-rw
+          emptyDir: {}
+        - name: dagster-instance
+          configMap:
+            name: dagster-instance
+---
+# Workload gRPC Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagster-thesis-workload
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: dagster-thesis
+    component: workload
+  ports:
+    - port: {{ .Values.workload.service.port }}
+      targetPort: 4000
+  type: ClusterIP

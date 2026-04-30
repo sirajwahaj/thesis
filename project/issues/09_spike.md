@@ -1,8 +1,8 @@
 # [THESIS-009] Run Experiment 2C — Spike Observation
 
-Labels: experiment  
-Story Points: 2  
-Dependencies: THESIS-007  
+Labels: experiment
+Story Points: 2
+Dependencies: THESIS-007
 
 ## Description
 Run L6 (10 concurrent) on K8s and observe scheduling delays. Record how many pods are pending, how long until all start, and any failures.
@@ -13,3 +13,7 @@ Run L6 (10 concurrent) on K8s and observe scheduling delays. Record how many pod
 - [ ] Record any scheduling timeouts or failures
 - [ ] `spike_observation.csv` per run with timestamps
 - [ ] `pod_timing.csv` per run showing scheduling latency at extreme load
+
+## Notes
+Run via: `DAGSTER_PORT=3001 bash scripts/run_experiment.sh exp2c k8s --levels 10`
+or `make exp2c-spike`.
