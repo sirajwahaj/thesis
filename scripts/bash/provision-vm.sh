@@ -76,45 +76,35 @@ if ! ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
 fi
 echo "[OK] SSH connection OK"
 
-# ---- Run playbook (or SSH fallback on Windows) ----
+# ---- Run playbook ----
 echo ""
 echo "----------------------------------------------------------------"
-echo "Running provisioning..."
+echo "Running provisioning via Ansible..."
 echo "----------------------------------------------------------------"
 echo ""
 
-# Ansible doesn't run natively on Windows (no os.get_blocking).
-# On Windows (Git Bash / MINGW), provision via SSH directly.
-if [[ "${MSYSTEM:-}" == MINGW* ]] || [[ "${OS:-}" == "Windows_NT" ]]; then
-  echo "-> Windows detected: provisioning via SSH (Ansible not supported on Windows)"
-  ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "ubuntu@$VM_IP" bash -s << 'SSHSCRIPT'
-set -euo pipefail
-export DEBIAN_FRONTEND=noninteractive
-echo "[1/6] Updating apt..."
-sudo apt-get update -qq
-echo "[2/6] Installing prerequisites..."
-sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release netcat-openbsd git
-echo "[3/6] Adding Docker GPG key..."
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "[4/6] Adding Docker repo..."
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-echo "[5/6] Installing Docker CE..."
-sudo apt-get update -qq
-sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-echo "[6/6] Configuring Docker..."
-sudo systemctl enable docker && sudo systemctl start docker
-sudo usermod -aG docker ubuntu
-echo "[OK] Docker $(docker --version)"
-SSHSCRIPT
-else
-  # Run from ansible directory so ansible.cfg is picked up
-  (cd "$ANSIBLE_DIR" && ansible-playbook \
-    -i "inventory.ini" \
-    "playbooks/provision-vm.yml" \
-    -v)
+# Ansible does not run natively on Windows (missing os.get_blocking).
+# On Windows, run this script from WSL:
+#   wsl bash scripts/bash/provision-vm.sh
+# Or install Ansible inside WSL and invoke from there:
+#   wsl -- ansible-playbook -i ansible/inventory.ini ansible/playbooks/provision-vm.yml
+if ! command -v ansible-playbook &>/dev/null; then
+  echo "[FAIL] ansible-playbook not found."
+  echo ""
+  echo "  On Windows: run this script from WSL, which has Ansible installed:"
+  echo "    wsl bash scripts/bash/provision-vm.sh"
+  echo ""
+  echo "  Or install Ansible in WSL first:"
+  echo "    wsl -- pip install ansible"
+  echo "    wsl bash scripts/bash/provision-vm.sh"
+  exit 1
 fi
+
+# Run from ansible directory so ansible.cfg is picked up
+(cd "$ANSIBLE_DIR" && ansible-playbook \
+  -i "inventory.ini" \
+  "playbooks/provision-vm.yml" \
+  -v)
 
 echo ""
 echo "================================================================"
