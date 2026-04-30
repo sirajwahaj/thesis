@@ -1,0 +1,2 @@
+run_id,pod_name,submitted_ts,scheduled_ts,running_ts,job_start_ts
+e7895b8e-1a12-44bf-a41c-17de7ce6b624,dagster-run-e7895b8e-1a12-44bf-a41c-17de7ce6b624-xb2mx,2026-04-27T09:29:38+00:00,2026-04-27T09:29:38+00:00,2026-04-27T09:29:38+00:00,2026-04-27T09:30:45+00:00
