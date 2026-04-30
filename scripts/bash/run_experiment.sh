@@ -171,6 +171,11 @@ for level in "${LEVELS[@]}"; do
     PG_HOST="localhost"
     PG_PORT="15432"
     PG_FWD_PID=""
+    # Always free port 15432 before opening a new tunnel to avoid EADDRINUSE
+    lsof -ti:15432 2>/dev/null | xargs kill -9 2>/dev/null || true
+    pkill -f "15432:localhost:5432" 2>/dev/null || true
+    pkill -f "15432:5432" 2>/dev/null || true
+    sleep 1
     if [[ "$ENVIRONMENT" == "vm" ]]; then
       # SSH tunnel: local 15432 -> postgres:5432 inside VM Docker network
       _VM_IP="$(cat "$REPO_ROOT/vm-ip.txt" | tr -d '[:space:]')"

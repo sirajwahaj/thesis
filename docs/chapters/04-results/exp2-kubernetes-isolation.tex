@@ -35,21 +35,21 @@ Table~\ref{tab:results-k8s} shows that Kubernetes maintained a 100\% success rat
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{k8s_dashboard.png}
-  \caption{Kubernetes experiment dashboard: success rate, execution time distribution, startup overhead, and total time per job vs.\ concurrency level (Exp2A, $n=3$ reps). Success rate remains 100\% at all levels; execution time grows modestly from 63\,s to 82\,s, reflecting effective pod-level resource isolation.}
+  \caption{Kubernetes experiment dashboard: success rate, execution time distribution, and VM vs.\ K8s comparison (Exp2A, $n=3$ reps). Success rate remains 100\,\% at all levels; execution time grows modestly from 63\,s to 82\,s, reflecting effective pod-level resource isolation.}
   \label{fig:k8s-isolation}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{k8s_success_rate.png}
-  \caption{Kubernetes job success rate by concurrency level (Exp2A, $n=3$ reps per level). All six levels maintained 100\,\% success, well above the 95\,\% reliability threshold.}
+  \includegraphics[width=0.85\textwidth]{sq2_vm_vs_k8s_comparison.png}
+  \caption{VM vs.\ Kubernetes comparison: success rate (left) and execution time (right) by concurrency level (Exp2A, $n=3$ reps). K8s maintains 100\,\% success at all levels while VM reliability collapses at L3+. Shaded bands show $\pm$1 standard deviation.}
   \label{fig:k8s-success-rate}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{k8s_exec_time_distribution.png}
-  \caption{Kubernetes job execution time distribution by concurrency level (Exp2A, $n=3$ reps). Boxes show interquartile range; whiskers extend to 1.5$\times$ IQR. The distribution widens at L7 and L10 as node-level memory pressure increases, but remains tightly bounded at lower levels.}
+  \caption{Kubernetes job execution time distribution by concurrency level (Exp2A, $n=3$ reps). Boxes show interquartile range; whiskers extend to 1.5$\times$~IQR. The distribution widens at L5--L6 as node-level memory pressure increases, but remains tightly bounded at lower levels.}
   \label{fig:k8s-exec-dist}
 \end{figure}
 
@@ -61,11 +61,8 @@ Execution time variance remained low and stable across all levels, confirming th
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{vm_vs_k8s.png}
-  \caption{Execution time comparison: VM vs.\ Kubernetes across concurrency levels.
-  The VM curve rises steeply due to CPU contention; the Kubernetes curve remains
-  nearly flat due to pod isolation. The crossover point --- where K8s begins
-  outperforming the VM --- is identified in Section~\ref{sec:results-exp3}.}
+  \includegraphics[width=0.85\textwidth]{sq4_crossover_point.png}
+  \caption{Crossover analysis: cost per successful job delivery (left) and reliability divergence (right) vs.\ concurrency level. Left: VM effective time accounts for failed runs; K8s total includes startup overhead. Right: VM success rate collapses at L3 while K8s maintains 100\,\%. Combined crossover at L3 (3 concurrent jobs).}
   \label{fig:vm-vs-k8s}
 \end{figure}
 

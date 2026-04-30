@@ -15,38 +15,39 @@ In a production cluster under load, scheduling latency would be higher and more 
 
 \paragraph{Container startup overhead grows with concurrency.}
 Container startup overhead --- the difference between total K8s wall-clock time (pod creation to run completion) and Dagster-measured execution time --- was not constant across concurrency levels.
-At L1 (1 job), startup overhead was 4.3\,s; at L2 it was 4.6\,s; at L3, 5.1\,s; at L5 (5 jobs), 6.8\,s; at L7 (7 jobs), 11.6\,s; and at L10 (10 jobs), 14.9\,s.
+At L1 (1 job), startup overhead was 24.4\,s; at L2 it was 20.9\,s; at L3, 21.7\,s; at L4 (5 jobs), 24.6\,s; at L5 (7 jobs), 35.1\,s; and at L6 (10 jobs), 56.6\,s.
 The growth is explained by concurrent Python interpreter initialisation and PostgreSQL connection pool contention: when multiple pods start simultaneously, they compete for shared database connections and the single-node Kind cluster's I/O bandwidth during framework import.
 
 \textbf{Note on pod\_timing.csv measurement:} The \texttt{job\_start\_ts} column in \texttt{pod\_timing.csv} was collected from the Kubernetes \texttt{ContainersReady} condition's \texttt{lastTransitionTime}, which fires when the container \emph{exits} (transitioning from Ready to NotReady on successful completion), not when execution begins.
-Using this column as a startup metric would incorrectly yield the total pod run time ($\approx$67\,s = startup + execution), rather than the startup duration itself.
-The correct startup metric is the difference between total wall-clock time and Dagster-measured execution time.
+The total pod lifetime (submitted\_ts to job\_start\_ts) is therefore the complete K8s cost per job.
+Startup overhead is computed as: \texttt{total\_pod\_lifetime} $-$ \texttt{dagster\_exec\_time} (joined on \texttt{run\_id}).
 
 At low concurrency, the startup time decomposition is approximately:
 \begin{itemize}
-  \item Python 3.13 interpreter startup with pre-pulled image: $\approx$1\,s
-  \item Dagster framework import and initialisation: $\approx$1--2\,s
-  \item PostgreSQL connection pool initialisation over in-cluster networking: $\approx$1\,s
+  \item Kubernetes pod scheduling: $<$1\,s (single-node, no scheduling delay)
+  \item Python 3.13 interpreter startup with pre-pulled image: $\approx$3--5\,s
+  \item Dagster framework import and initialisation: $\approx$10--15\,s
+  \item PostgreSQL connection pool initialisation over in-cluster networking: $\approx$5--8\,s
 \end{itemize}
-At higher concurrency (L5--L6), concurrent startup of 7--10 pods inflates these durations through resource contention during initialisation.
+At higher concurrency (L5--L6), concurrent startup of 7--10 pods inflates these durations significantly through resource contention during initialisation.
 
-\paragraph{Overhead remains modest relative to execution time.}
-Even at L10 (10 concurrent jobs), the 14.9\,s startup overhead is $\approx$18\% of the 81.6\,s K8s execution time.
-At L1, the 4.3\,s overhead is only $\approx$7\% of the 63.4\,s execution time.
-Both are substantially lower than the $\approx$25-second startup overhead reported by \citet{choi2021} for production GKE clusters, owing to pre-pulled images, no image pull step, and fast in-cluster PostgreSQL connectivity on the single-node Kind environment.
+\paragraph{Overhead is substantial relative to execution time.}
+At L6 (10 concurrent jobs), the 56.6\,s startup overhead represents $\approx$59\% of the 96.5\,s total K8s pod time.
+At L1, the 24.4\,s overhead is $\approx$36\% of the 67.7\,s total.
+These figures reflect the overhead of running containerised Python workloads on a resource-constrained single-node Kind cluster; in production multi-node clusters, per-pod initialisation would be distributed, reducing contention.
 
 \paragraph{Comparison to VM overhead.}
-The VM DockerRunLauncher also incurs container startup overhead (Docker container creation + Python import) of $\approx$2--3\,s per run.
-At low concurrency (L1--L3), the \emph{net additional overhead} of K8s over VM is $\approx$2--3\,s per job, which is effectively negligible.
-At high concurrency (L5--L6), the K8s startup overhead grows to 11--15\,s, but this is offset by the VM's reliability collapse: the VM fails to complete 57--70\% of its jobs at these levels, making raw execution time comparison meaningless.
+The VM DockerRunLauncher also incurs container startup overhead (Docker container creation + Python import), estimated at $\approx$2--3\,s per run.
+The K8s startup overhead is substantially higher (24--57\,s) due to the additional Kubernetes control plane handshake, gRPC code server connection, and PostgreSQL connection establishment per pod.
+However, this overhead is a fixed cost per job; at higher concurrency it is offset by the VM's reliability collapse: the VM fails to complete 57--70\% of its jobs at L5--L6.
 
 \paragraph{Comparison to Liu et al.\ (2024).}
 \citet{liu2024} identified pod scheduling as a bottleneck for short-duration workloads.
-In this experiment, the scheduling component of overhead is negligible ($<$1\,s); the startup overhead ranges from 4\,s to 15\,s depending on concurrency.
-For the tested 60-second workload, K8s adds 7--18\% overhead across the concurrency range --- within acceptable bounds for production use, especially given the reliability gains.
+In this experiment, the scheduling component is negligible ($<$1\,s); the startup overhead ranges from 24\,s to 57\,s depending on concurrency.
+For the tested 60-second workload, K8s adds 36--59\% overhead compared to raw execution time --- meaningful but outweighed by the reliability benefits at L3+.
 
 \paragraph{Overhead grows with concurrency but remains bounded.}
-Container startup overhead increased from 4.3\,s at L1 to 14.9\,s at L6, growing sub-linearly with the number of concurrent pods.
-This growth is attributable to concurrent initialisation contention (multiple pods simultaneously importing Python packages and opening PostgreSQL connections on a single-node cluster), not to Kubernetes scheduling itself.
-In a production multi-node cluster, this contention would be distributed across nodes, likely reducing the growth rate.
+Container startup overhead increased from 24.4\,s at L1 to 56.6\,s at L6, growing with the number of concurrent pods.
+This growth is attributable to concurrent initialisation contention, not to Kubernetes scheduling itself.
+In a production multi-node cluster, this contention would be distributed across nodes, likely reducing per-pod startup times at high concurrency.
 

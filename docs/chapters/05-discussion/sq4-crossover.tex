@@ -12,30 +12,30 @@ The reliability crossover --- the concurrency level at which the VM's success ra
 This is the primary crossover point for production decision-making: at three concurrent Dagster jobs, the VM already fails one in three runs due to memory exhaustion, while Kubernetes completes all runs successfully within its per-pod limits.
 
 \paragraph{K8s overhead is not flat and grows with load.}
-Container startup overhead grows from $\approx$4\,s at L1 to $\approx$15\,s at L10 (mean across levels: 7.9\,s), representing 6--19\,\% of the 63-second job execution time.
+Container startup overhead grows from $\approx$24\,s at L1 to $\approx$57\,s at L6 (mean across levels: $\approx$30\,s), representing 36--59\,\% of the 68--96\,s total K8s pod time.
 Startup overhead increases with concurrency as more containers initialise simultaneously on the single-node cluster, competing for PostgreSQL connections and Python interpreter init.
-K8s execution time itself also increases with concurrency: from 63.4\,s (L1) to 81.6\,s (L10), an increase of 29\,\%, as the single-node Kind cluster experiences aggregate memory pressure at higher levels.
+K8s Dagster execution time also increases with concurrency: from 43.2\,s (L1) to 57.1\,s (L5), as the single-node Kind cluster experiences aggregate resource pressure at higher levels.
 
-\paragraph{The performance crossover is nuanced but the reliability crossover remains decisive.}
-In terms of raw wall-clock time per successful job:
-K8s is slightly \emph{slower} at L1 (+2.4\,s) and at L7+ (+14.5\,s at L7, +16.6\,s at L10), and \emph{faster} at L2 ($-$7.5\,s), L3 ($-$0.2\,s), and L5 ($-$1.4\,s).
-There is no single monotone performance crossover; K8s wall-clock advantage holds at L2--L5 where startup overhead remains low (4--7\,s) and execution times are comparable.
-At L7--L10, K8s incurs larger startup overhead (12--15\,s) and higher execution times, making it slower in raw wall-clock time per surviving job; however, the VM delivers fewer than 43\% of those jobs.
-The \emph{reliability crossover} at L3 is therefore the dominant and unambiguous signal.
+\paragraph{The performance crossover and the reliability crossover align at L3.}
+In terms of cost per successfully delivered job (accounting for VM failures as re-execution costs):
+K8s is slightly \emph{more expensive} at L1 ($+$2.4\,s raw, but VM effective = K8s total at this level), and \emph{cheaper} from L2 onwards when VM failure costs are factored in.
+At L3, VM effective time = 104.8\,s (69.9\,s / 0.667) vs K8s total = 69.7\,s: K8s delivers each successful job 35\,s faster in expectation.
+At L4--L6, the VM effective time grows to 163--266\,s while K8s total stays at 75--97\,s.
+The performance and reliability crossovers coincide at \textbf{L3}.
 
 \paragraph{The reliability crossover is the binding constraint.}
 At L3, both conditions for migration are met:
 \begin{enumerate}
   \item VM success rate falls below 95\,\% (66.7\,\%),
-  \item K8s execution time is already competitive ($\approx$69\,s vs 69.9\,s VM survivor mean).
+  \item K8s effective cost per successful job is already lower than the VM's ($\approx$70\,s vs $\approx$105\,s when accounting for reruns).
 \end{enumerate}
-The combined crossover is therefore at \textbf{L3 (3 concurrent jobs)}, and the binding constraint is \emph{reliability}, not performance overhead.
+The combined crossover is therefore at \textbf{L3 (3 concurrent jobs)}, and the binding constraint is \emph{reliability}, not raw execution speed.
 
-\paragraph{Node-level observations at L10.}
-Both environments experience increasing overhead at L10 but from different mechanisms.
-The VM fails at the per-container level (OS kills individual containers) from L3 onwards, delivering only 30\% success at L10.
-Kubernetes maintained 100\% reliability at L10 in the measured session, with total wall-clock time of 96.5\,s (execution 81.6\,s + startup 14.9\,s).
-The K8s reliability advantage over the VM holds across the entire L1--L10 range at this hardware configuration.
+\paragraph{Node-level observations at L6.}
+Both environments experience increasing overhead at L6 but from different mechanisms.
+The VM fails at the per-container level (OS kills individual containers) from L3 onwards, delivering only 30\% success at L6.
+Kubernetes maintained 100\% reliability at L6 in the measured session, with total wall-clock time of 96.5\,s (execution 39.9\,s + startup 56.6\,s).
+The K8s reliability advantage over the VM holds across the entire L1--L6 range at this hardware configuration.
 
 \paragraph{The crossover is hardware-configuration dependent.}
 The observed crossover at L3 is specific to this configuration:
@@ -43,19 +43,19 @@ The observed crossover at L3 is specific to this configuration:
   \item 4\,vCPU, 4\,GB RAM VM with 2\,GB per-container Docker limit
   \item 4\,vCPU, 8\,GB Kind node with 2\,GiB per-pod memory limit
   \item 60-second two-phase workload with 400\,MB memory allocation per job
-  \item 4--15\,s Kubernetes startup overhead (local Kind cluster, pre-pulled images, single node)
+  \item 24--57\,s Kubernetes startup overhead (local Kind cluster, pre-pulled images, single node)
 \end{itemize}
 If the VM had less RAM, the crossover would occur at a lower concurrency level.
-In a production K8s cluster (GKE, EKS) with cold image pulls, startup overhead would be higher (10--60\,s), potentially shifting the performance crossover while the reliability crossover remains determined by VM memory exhaustion.
+In a production K8s cluster (GKE, EKS) with cold image pulls, startup overhead would be higher (20--60\,s additional), potentially shifting the total K8s cost while the reliability crossover remains determined by VM memory exhaustion.
 
 \paragraph{Consistency with the hypothesis.}
 The pre-experiment hypothesis (Section~\ref{sec:hypothesis}) predicted that at low concurrency the VM outperforms Kubernetes due to startup overhead, and at high concurrency Kubernetes outperforms the VM.
-The data partly confirms this: at L1, the VM has a 2\,s execution time advantage.
-However, the hypothesis underestimated how early VM reliability would collapse (L3, not L5--L7) and overestimated K8s startup overhead.
-The main finding is that K8s overhead is small enough that the migration decision is primarily a reliability question, not a performance tradeoff.
+The data partly confirms this: at L1, the VM has a small execution time advantage.
+However, the hypothesis underestimated how early VM reliability would collapse (L3, not L5--L7) and the significance of K8s startup overhead (24--57\,s, not a few seconds).
+The main finding is that despite substantial startup overhead, K8s becomes net beneficial at L3 because VM reliability collapses so sharply.
 
 \paragraph{What the crossover means in practice.}
 Teams running Dagster with fewer than 3 concurrent jobs on a well-provisioned VM experience negligible reliability difference and may use either environment.
-Teams expecting 3 or more concurrent jobs should migrate to Kubernetes: K8s adds 4--15\,s per-run startup overhead (growing with concurrency) while providing 100\,\% reliability versus the VM's 66.7\,\% or lower success rates at these concurrency levels.
-The migration decision threshold is 3 concurrent jobs, and given the negligible overhead, earlier migration is also rational for any team anticipating growth.
+Teams expecting 3 or more concurrent jobs should migrate to Kubernetes: K8s adds 24--57\,s per-run startup overhead (growing with concurrency) while providing 100\,\% reliability versus the VM's 66.7\,\% or lower success rates at these concurrency levels.
+The migration decision threshold is 3 concurrent jobs, and given the clear reliability benefit, earlier migration is also rational for teams anticipating growth in workload concurrency.
 
