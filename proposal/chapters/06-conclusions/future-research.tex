@@ -1,0 +1,21 @@
+\section{Future Research}
+
+Five directions emerge naturally from the scope boundaries of this study:
+
+\begin{enumerate}
+  \item \textbf{Autoscaling response under real spike workloads} --- extend the study to a
+        multi-node cluster with \textsc{hpa} enabled and measure the scale-out window and
+        its job-level impact \citep{tran2022, yuan2024}.
+  \item \textbf{Replication across orchestration frameworks} --- test whether the crossover
+        point and degradation curve profile hold for Airflow and Prefect under equivalent
+        workload conditions.
+  \item \textbf{Cloud-hosted infrastructure} --- repeat the experiments on \textsc{gcp}
+        \textsc{gke} or \textsc{aws} \textsc{eks} to determine whether cloud network
+        overhead shifts the crossover point.
+  \item \textbf{Real workloads with variable resource demand} --- replace synthetic matrix
+        computations with real \textsc{etl} or data processing pipelines where resource
+        consumption is unpredictable.
+  \item \textbf{Multi-tenant environments} --- investigate how the crossover point changes
+        when multiple teams share the same Kubernetes cluster and node resources are
+        contended at the cluster level rather than the pod level.
+\end{enumerate}

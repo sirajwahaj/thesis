@@ -1,0 +1,100 @@
+---
+# Role: dagster
+# Installs Dagster 1.12.7 and dagster-docker into the thesis virtualenv and
+# configures the Dagster instance to use DockerRunLauncher on the VM.
+# Each job run launches a Docker container (thesis-workload:latest) with
+# 1 vCPU and 1 GiB memory limits — matching the K8s pod resource limits.
+
+- name: Install Dagster and dependencies into venv
+  ansible.builtin.pip:
+    name:
+      - "dagster=={{ dagster_version }}"
+      - "dagster-postgres=={{ dagster_version }}"
+      - "dagster-webserver=={{ dagster_version }}"
+      - "dagster-graphql=={{ dagster_version }}"
+      - "dagster-docker=={{ dagster_version }}"
+      - "dagster-grpc>=1.12.22"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_python: python3.12
+  become_user: ubuntu
+
+- name: Create DAGSTER_HOME directory
+  ansible.builtin.file:
+    path: "{{ dagster_home }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0755"
+
+- name: Write dagster.yaml (VM — DockerRunLauncher, PostgreSQL backend)
+  ansible.builtin.copy:
+    dest: "{{ dagster_home }}/dagster.yaml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+    content: |
+      # Dagster instance configuration — VM (DockerRunLauncher)
+      # Each job run launches a Docker container with 1 vCPU and 1 GiB limits.
+      # Resource limits match the K8s pod limits for a fair comparison.
+      storage:
+        postgres:
+          postgres_db:
+            username: {{ postgres_user }}
+            password: {{ postgres_password }}
+            hostname: localhost
+            db_name: {{ postgres_db }}
+            port: 5432
+
+      run_launcher:
+        module: dagster_docker
+        class: DockerRunLauncher
+        config:
+          image: "thesis-workload:latest"
+          network: "host"
+          container_kwargs:
+            auto_remove: true
+            nano_cpus: 1000000000
+            mem_limit: "1g"
+          env_vars:
+            - DAGSTER_HOME
+            - WORKLOAD_DURATION_SECONDS
+            - DAGSTER_PG_USERNAME
+            - DAGSTER_PG_PASSWORD
+            - DAGSTER_PG_HOSTNAME
+            - DAGSTER_PG_DB
+
+      run_coordinator:
+        module: dagster.core.run_coordinator
+        class: DefaultRunCoordinator
+
+      compute_logs:
+        module: dagster.core.storage.local_compute_log_manager
+        class: LocalComputeLogManager
+        config:
+          base_dir: {{ dagster_home }}/logs
+
+- name: Write workspace.yaml (points to local workload module)
+  ansible.builtin.copy:
+    dest: "{{ dagster_home }}/workspace.yaml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+    content: |
+      load_from:
+        - python_module:
+            module_name: workload
+
+- name: Create logs directory
+  ansible.builtin.file:
+    path: "{{ dagster_home }}/logs"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0755"
+
+- name: Set DAGSTER_HOME in ubuntu's environment
+  ansible.builtin.lineinfile:
+    path: /home/ubuntu/.bashrc
+    line: "export DAGSTER_HOME={{ dagster_home }}"
+    regexp: "^export DAGSTER_HOME="
+    state: present

@@ -1,0 +1,286 @@
+% =============================================================================
+% references.bib — All thesis references in BibTeX format
+% =============================================================================
+
+%% ── Pillar 1: Resource Contention ────────────────────────────
+
+@book{queueing_theory,
+  author    = {Kleinrock, Leonard},
+  title     = {Queueing Systems, Volume 1: Theory},
+  year      = {1975},
+  publisher = {Wiley-Interscience},
+  address   = {New York}
+}
+
+@article{little_law,
+  author    = {Little, John D. C.},
+  title     = {A Proof for the Queuing Formula: {$L = \lambda W$}},
+  year      = {1961},
+  journal   = {Operations Research},
+  volume    = {9},
+  number    = {3},
+  pages     = {383--387},
+  doi       = {10.1287/opre.9.3.383}
+}
+
+@inproceedings{multi_tenant_contention,
+  author    = {Nathuji, Ripal and Kansal, Aman and Ghaffarkhah, Alireza},
+  title     = {Q-Clouds: Managing Performance Interference Effects for {QoS}-Aware Clouds},
+  year      = {2010},
+  booktitle = {Proceedings of the 5th European Conference on Computer Systems},
+  pages     = {237--250},
+  doi       = {10.1145/1755913.1755938}
+}
+
+%% ── Pillar 2: Kubernetes Overhead ────────────────────────────
+
+@article{k8s_overhead_study,
+  author    = {Pahl, Claus and Brogi, Antonio and Soldani, Jacopo and Jamshidi, Pooyan},
+  title     = {Cloud Container Technologies: A State-of-the-Art Review},
+  year      = {2019},
+  journal   = {IEEE Transactions on Cloud Computing},
+  volume    = {7},
+  number    = {3},
+  pages     = {677--692},
+  doi       = {10.1109/TCC.2017.2702586}
+}
+
+@inproceedings{container_performance,
+  author    = {Felter, Wes and Ferreira, Alexandre and Rajamony, Ram and Rubio, Juan},
+  title     = {An Updated Performance Comparison of Virtual Machines and {Linux} Containers},
+  year      = {2015},
+  booktitle = {2015 IEEE International Symposium on Performance Analysis of Systems and Software},
+  pages     = {171--172},
+  doi       = {10.1109/ISPASS.2015.7095802}
+}
+
+@book{k8s_scheduling_latency,
+  author    = {Hightower, Kelsey and Burns, Brendan and Beda, Joe},
+  title     = {Kubernetes: Up and Running},
+  year      = {2022},
+  edition   = {3rd},
+  publisher = {O'Reilly Media},
+  address   = {Sebastopol, CA}
+}
+
+%% ── Pillar 3: Autoscaling ────────────────────────────────────
+
+@inproceedings{k8s_autoscaler,
+  author    = {Rattihalli, Gourav and Govindaraju, Madhusudhan and Lu, Haifeng and Tiwari, Devesh},
+  title     = {Exploring Potential for Non-Disruptive Vertical Pod Autoscaling in {Kubernetes}},
+  year      = {2019},
+  booktitle = {Proceedings of the 11th {USENIX} Workshop on Hot Topics in Cloud Computing},
+  publisher = {USENIX Association}
+}
+
+@article{autoscaling_latency,
+  author    = {Barna, Cornel and Ghanbari, Hamoun and Litoiu, Marin and Shtern, Mark},
+  title     = {Proactive Autoscaling and Energy-Aware Resource Management in {PaaS} Cloud},
+  year      = {2017},
+  journal   = {Future Generation Computer Systems},
+  volume    = {77},
+  pages     = {21--31},
+  doi       = {10.1016/j.future.2017.06.017}
+}
+
+@article{autoscaling_reaction,
+  author    = {Lorido-Botran, Tania and Miguel-Alonso, Jose and Lozano, Jose A.},
+  title     = {A Review of Auto-Scaling Techniques for Elastic Applications in Cloud Environments},
+  year      = {2014},
+  journal   = {Journal of Grid Computing},
+  volume    = {12},
+  number    = {4},
+  pages     = {559--592},
+  doi       = {10.1007/s10723-014-9314-7}
+}
+
+%% ── Pillar 4: Fault Isolation ─────────────────────────────────
+
+@book{blast_radius,
+  author    = {Newman, Sam},
+  title     = {Building Microservices: Designing Fine-Grained Systems},
+  year      = {2021},
+  edition   = {2nd},
+  publisher = {O'Reilly Media},
+  address   = {Sebastopol, CA}
+}
+
+@inproceedings{microservices_reliability,
+  author    = {Ntentos, Evangelos and Zdun, Uwe and Plakidas, Konstantinos and Schall, Daniel and Li, Fei and Meixner, Sebastian},
+  title     = {Supporting Architectural Decision Making on Data Management in Microservice Architectures},
+  year      = {2018},
+  booktitle = {Service-Oriented and Cloud Computing},
+  publisher = {Springer},
+  pages     = {69--85},
+  doi       = {10.1007/978-3-319-99819-0_6}
+}
+
+@book{sre_book,
+  author    = {Beyer, Betsy and Jones, Chris and Petoff, Jennifer and Murphy, Niall Richard},
+  title     = {Site Reliability Engineering: How {Google} Runs Production Systems},
+  year      = {2016},
+  publisher = {O'Reilly Media},
+  address   = {Sebastopol, CA}
+}
+
+%% ── DORA Metrics ─────────────────────────────────────────────
+
+@book{dora_metrics,
+  author    = {Forsgren, Nicole and Humble, Jez and Kim, Gene},
+  title     = {Accelerate: The Science of Lean Software and {DevOps}},
+  year      = {2018},
+  publisher = {IT Revolution Press},
+  address   = {Portland, OR}
+}
+
+%% ── Workflow Orchestration ────────────────────────────────────
+
+@book{airflow_study,
+  author    = {Harenslak, Bas and de Ruiter, Julian},
+  title     = {Data Pipelines with {Apache Airflow}},
+  year      = {2021},
+  publisher = {Manning Publications},
+  address   = {Shelter Island, NY}
+}
+
+@misc{dagster_docs,
+  author       = {{Dagster Labs}},
+  title        = {Dagster Documentation: {Kubernetes Run Launcher}},
+  year         = {2024},
+  howpublished = {\url{https://docs.dagster.io/deployment/kubernetes}},
+  note         = {Accessed: 2024}
+}
+
+%% ── IaC and Tooling ──────────────────────────────────────────
+
+@misc{cdktf_docs,
+  author       = {{HashiCorp}},
+  title        = {{CDK} for Terraform Documentation},
+  year         = {2024},
+  howpublished = {\url{https://developer.hashicorp.com/terraform/cdktf}},
+  note         = {Accessed: 2024}
+}
+
+@misc{gke_docs,
+  author       = {{Google Cloud}},
+  title        = {Google Kubernetes Engine Documentation},
+  year         = {2024},
+  howpublished = {\url{https://cloud.google.com/kubernetes-engine/docs}},
+  note         = {Accessed: 2024}
+}
+
+@misc{helm_docs,
+  author       = {{Helm Authors}},
+  title        = {Helm Documentation},
+  year         = {2024},
+  howpublished = {\url{https://helm.sh/docs}},
+  note         = {Accessed: 2024}
+}
+
+%% ── Peer-reviewed entries (retained from original) ───────────
+
+@phdthesis{arora2023,
+  author    = {Arora, Jatin},
+  title     = {Shared Resource Contention-Aware Schedulability Analysis of Hard Real-Time Systems},
+  school    = {CISTER Research Centre, Polytechnic Institute of Porto},
+  year      = {2023},
+  type      = {{PhD} Thesis}
+}
+
+@article{casalicchio2019,
+  author    = {Casalicchio, Emiliano},
+  title     = {A study on performance measures for auto-scaling {CPU}-intensive containerized applications},
+  journal   = {Cluster Computing},
+  volume    = {22},
+  pages     = {995--1006},
+  year      = {2019},
+  doi       = {10.1007/s10586-018-02890-1}
+}
+
+@inproceedings{choi2021,
+  author    = {Choi, Bongmin and Park, Joongheon and Lee, Changhyeon and Han, Dongsu},
+  title     = {{pHPA}: A Proactive Autoscaling Framework for Microservice Chain},
+  booktitle = {APNet 2021: Proceedings of the 5th Asia-Pacific Workshop on Networking},
+  year      = {2021},
+  doi       = {10.1145/3469393.3469401}
+}
+
+@article{cilic2023,
+  author    = {{\v{C}}ili{\'{c}}, Ivan and Krivi{\'{c}}, Petar and Podnar {\v{Z}}arko, Ivana and Ku{\v{s}}ek, Mario},
+  title     = {Performance Evaluation of Container Orchestration Tools in Edge Computing Environments},
+  journal   = {Sensors},
+  volume    = {23},
+  number    = {8},
+  pages     = {4008},
+  year      = {2023},
+  doi       = {10.3390/s23084008}
+}
+
+@article{li2025,
+  author    = {Li, Hengyi and Rao, Weixiong and Hu, Baocheng and Tian, Yuan and Shen, Jianjun},
+  title     = {Energy-aware elastic scaling algorithm for microservices in {Kubernetes} clouds},
+  journal   = {Journal of Network and Computer Applications},
+  volume    = {242},
+  pages     = {104218},
+  year      = {2025},
+  doi       = {10.1016/j.jnca.2025.104218}
+}
+
+@inproceedings{liu2024,
+  author    = {Liu, Qianli and Yang, Yiyu and Du, Dong and Xia, Yubin and Zhang, Peng and Feng, Jianzhong and Larus, James R. and Chen, Haibo},
+  title     = {Harmonizing Efficiency and Practicability: Optimizing Resource Utilization in Serverless Computing with {Jiagu}},
+  booktitle = {2024 USENIX Annual Technical Conference},
+  year      = {2024}
+}
+
+@article{nanda1991,
+  author    = {Nanda, Ashwini K. and Shing, Hong and Tzen, Ten-Hwang and Ni, Lionel M.},
+  title     = {Resource Contention in Shared-Memory Multiprocessors: A Parameterized Performance Degradation Model},
+  journal   = {Journal of Parallel and Distributed Computing},
+  volume    = {12},
+  pages     = {313--328},
+  year      = {1991}
+}
+
+@article{nguyen2020,
+  author    = {Nguyen, Thanh-Tung and Yeom, Young-Jin and Kim, Taehong and Park, Dae-Heon and Kim, Sehan},
+  title     = {Horizontal Pod Autoscaling in {Kubernetes} for Elastic Container Orchestration},
+  journal   = {Sensors},
+  volume    = {20},
+  number    = {16},
+  pages     = {4621},
+  year      = {2020},
+  doi       = {10.3390/s20164621}
+}
+
+@inproceedings{tran2022,
+  author    = {Tran, Manh-Nhat and Vu, Duc-Dung and Kim, Younghan},
+  title     = {A Survey of Autoscaling in {Kubernetes}},
+  booktitle = {International Conference on Ubiquitous and Future Networks (ICUFN)},
+  year      = {2022}
+}
+
+@article{yuan2024,
+  author    = {Yuan, Hao and Liao, Shun},
+  title     = {A Time Series-Based Approach to Elastic {Kubernetes} Scaling},
+  journal   = {Electronics},
+  volume    = {13},
+  number    = {2},
+  pages     = {285},
+  year      = {2024},
+  doi       = {10.3390/electronics13020285}
+}
+
+%% ── Add your own sources below ───────────────────────────────
+%% Follow this format for journal articles:
+%%
+%% @article{citekey,
+%%   author  = {Last, First and Last, First},
+%%   title   = {Title of the Article},
+%%   year    = {YYYY},
+%%   journal = {Journal Name},
+%%   volume  = {X},
+%%   number  = {Y},
+%%   pages   = {A--B},
+%%   doi     = {10.xxxx/xxxxx}
+%% }

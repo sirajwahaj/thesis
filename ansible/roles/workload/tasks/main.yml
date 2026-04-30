@@ -1,0 +1,132 @@
+---
+# Role: workload
+# Copies the thesis workload source to the VM, installs its Python dependencies,
+# and builds the thesis-workload Docker image for DockerRunLauncher.
+#
+# The workload runs as Docker containers (one per Dagster job run) via
+# DockerRunLauncher. The Dagster gRPC server still runs as a systemd service
+# to expose the job repository to the webserver and daemon.
+
+- name: Create workload source directory
+  ansible.builtin.file:
+    path: "{{ install_dir }}/workload"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0755"
+
+- name: Copy workload Python source
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../src/workload/"
+    dest: "{{ install_dir }}/workload/"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Copy pyproject.toml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../src/pyproject.toml"
+    dest: "{{ install_dir }}/pyproject.toml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Copy Containerfile for Docker image build
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../src/Containerfile"
+    dest: "{{ install_dir }}/Containerfile"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Install workload package into venv (pip editable install)
+  ansible.builtin.pip:
+    name: "{{ install_dir }}"
+    extra_args: "--editable"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_python: python3.12
+  become_user: ubuntu
+
+- name: Set WORKLOAD_DURATION_SECONDS environment variable
+  ansible.builtin.lineinfile:
+    path: /home/ubuntu/.bashrc
+    line: "export WORKLOAD_DURATION_SECONDS={{ workload_duration }}"
+    regexp: "^export WORKLOAD_DURATION_SECONDS="
+    state: present
+
+- name: Build thesis-workload Docker image
+  ansible.builtin.command:
+    cmd: >
+      docker build
+      -f {{ install_dir }}/Containerfile
+      -t thesis-workload:latest
+      {{ install_dir }}
+  become_user: ubuntu
+  register: docker_build
+  changed_when: "'Successfully built' in docker_build.stdout or 'writing image' in docker_build.stdout"
+
+- name: Print Docker build result
+  ansible.builtin.debug:
+    msg: "thesis-workload:latest built successfully"
+
+- name: Create systemd service for Dagster gRPC server
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/thesis-workload.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Thesis Dagster gRPC Workload Server
+      After=network.target postgresql.service docker.service
+      Requires=postgresql.service docker.service
+
+      [Service]
+      Type=simple
+      User=ubuntu
+      Group=ubuntu
+      WorkingDirectory={{ install_dir }}
+      Environment="DAGSTER_HOME={{ dagster_home }}"
+      Environment="WORKLOAD_DURATION_SECONDS={{ workload_duration }}"
+      Environment="DAGSTER_PG_USERNAME={{ postgres_user }}"
+      Environment="DAGSTER_PG_PASSWORD={{ postgres_password }}"
+      Environment="DAGSTER_PG_HOSTNAME=localhost"
+      Environment="DAGSTER_PG_DB={{ postgres_db }}"
+      ExecStart={{ venv_dir }}/bin/dagster api grpc -h 0.0.0.0 -p 4000 -m workload
+      Restart=on-failure
+      RestartSec=5
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start thesis-workload service
+  ansible.builtin.systemd:
+    name: thesis-workload
+    state: started
+    enabled: true
+
+- name: Wait for gRPC server to be ready (port 4000)
+  ansible.builtin.wait_for:
+    port: 4000
+    host: localhost
+    timeout: 60
+    msg: "gRPC server did not start on port 4000 within 60s"
+
+- name: Verify gRPC health
+  ansible.builtin.command:
+    cmd: "{{ venv_dir }}/bin/dagster api grpc-health-check -p 4000"
+  register: grpc_health
+  changed_when: false
+  failed_when: grpc_health.rc != 0
+
+- name: Verify Docker image is available
+  ansible.builtin.command:
+    cmd: docker image inspect thesis-workload:latest
+  become_user: ubuntu
+  changed_when: false
+  register: image_check
+  failed_when: image_check.rc != 0

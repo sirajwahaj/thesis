@@ -1,0 +1,49 @@
+\section{Research Questions}
+
+\subsection*{Main Research Question}
+
+\begin{quote}
+\itshape
+How do reliability, system stability, and execution performance change when a workflow
+orchestration system is migrated from a single-\vm{} Docker executor to a Kubernetes Run
+Launcher under increasing concurrent workload, and at what specific workload level does this
+migration become net beneficial as measured by the formally defined crossover point?
+\end{quote}
+
+\subsection*{Supporting Questions}
+
+\begin{description}[leftmargin=2cm, style=nextline]
+
+\item[\sq{1} --- VM Failure Threshold and Degradation Profile]
+At what concurrency level do Docker containers running on a single \vm{} degrade in
+reliability and performance, and how do job success rate, execution time variance, and
+resource utilisation degrade as concurrent load increases toward that threshold?
+
+\item[\sq{2} --- Pod Isolation Effectiveness and Blast Radius Containment]
+To what degree does Kubernetes pod isolation contain failures and reduce execution time
+variance compared to the single-\vm{} deployment under equivalent concurrent workload
+levels?
+
+\item[\sq{3} --- Operational Overhead and the Crossover Point]
+What measurable scheduling latency and execution overhead does Kubernetes introduce compared
+to the \vm{} Docker executor at each concurrency level, and at what concurrency level does
+this overhead become smaller than the reliability gain from pod isolation --- the formally
+defined crossover point?
+
+\item[\sq{4} --- Workload Scalability Ceiling]
+What is the maximum concurrent workload both architectures can sustain while maintaining a
+job success rate above 95\%, and how do mean execution time and execution time variance
+behave as concurrency approaches that ceiling?
+
+\end{description}
+
+\subsection*{How the Questions Form One Argument}
+
+The four supporting questions are not independent. They form a single connected logical
+chain.
+
+\sq{1} establishes the exact failure profile of the \vm{} architecture --- the baseline
+evidence. \sq{2} tests whether Kubernetes actually fixes what \sq{1} measured as broken.
+\sq{3} synthesises \sq{1} and \sq{2} into the crossover point --- the primary contribution.
+\sq{4} characterises the scalability ceiling of both architectures, framing the practical
+limits of each deployment model.

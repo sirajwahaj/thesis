@@ -2,17 +2,21 @@
 
 # When Does Kubernetes Become Worth It?
 
-**A master's thesis on the reliability and performance crossover point of Kubernetes vs a single-VM workflow executor**
+**A YH thesis (JENSEN Yrkeshögskola, DevOps24M) on the reliability and performance crossover point of Kubernetes vs a single-VM workflow executor**
 
 [![CI](https://github.com/sirajwahaj/thesis/actions/workflows/ci.yml/badge.svg)](https://github.com/sirajwahaj/thesis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Dagster](https://img.shields.io/badge/Dagster-1.12.7-purple)](https://dagster.io)
+[![Dagster](https://img.shields.io/badge/Dagster-1.12.22-purple)](https://dagster.io)
 [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://python.org)
 
 </div>
 
 ---
+
+## Background
+
+This thesis originates from a 3-month internship (LIA1) at Insighta Inc., where the author migrated a Dagster data platform from VMs to Kubernetes (GKE). The system works — but was the migration worth the complexity? This thesis answers that question empirically.
 
 ## The Research Question
 
@@ -35,21 +39,35 @@
 # 1. Clone
 git clone https://github.com/sirajwahaj/thesis.git && cd thesis
 
-# 2. Preview what the experiments would do (no actual runs)
-make dry-run
+# 2. Bootstrap (install deps, create VM, set up K8s) — one command
+make bootstrap        # Detects macOS/Windows, installs everything
+make vm-provision     # Provision VM via Ansible
+make k8s-setup        # Kind cluster + Metrics Server + Dagster
 
-# 3. Run the full experiment suite (on the VM / K8s host)
-make exp1-vm         # Experiment 1 — VM degradation
-make exp2a-k8s       # Experiment 2A — K8s isolation
-make exp2b-blast     # Experiment 2B — Blast radius
-make exp2c-spike     # Experiment 2C — Spike observation
+# 3. Validate everything is ready
+make validate-setup
 
-# 4. Analyse results
-make analyze         # → data/processed/ + results/*.png
+# 4. Run all experiments (or individually)
+make experiments      # All 4 experiments in sequence
+# or individually:
+make exp1-vm          # Experiment 1 — VM degradation
+make exp2a-k8s        # Experiment 2A — K8s isolation
+make exp2b-blast      # Experiment 2B — Blast radius
+make exp2c-spike      # Experiment 2C — Spike observation
 
-# 5. Build the thesis PDF
+# 5. Analyse results
+make analyze          # → data/processed/ + results/*.png
+
+# 6. Build the thesis PDF
 make pdf
 ```
+
+**Or run everything in a single command:**
+```bash
+make all   # bootstrap → provision → k8s-setup → experiments → analyze
+```
+
+See [docs/setup.md](docs/setup.md) for full setup instructions (macOS) and [docs/setup-windows.md](docs/setup-windows.md) for Windows.
 
 ---
 
@@ -70,7 +88,7 @@ thesis/
 │   ├── trigger_dagster_runs.py ← Launch N concurrent runs
 │   ├── blast_radius_vm.sh      ← Kill a process, measure impact
 │   ├── blast_radius_k8s.sh     ← Delete a pod, measure impact
-│   └── analyze_results.py      ← Batch analysis (non-interactive)
+│   └── analyze_results.py      ← Runs analysis notebook headlessly
 │
 ├── 🐍 src/workload/            ← The experiment workload
 │   ├── workload_job.py         ← CPU-bound Dagster job (SHA-256)
@@ -96,7 +114,9 @@ thesis/
 │   ├── scripts/issues.sh       ← Sync issues → GitHub
 │   └── issues/                 ← THESIS-001 … THESIS-012
 │
-└── 🤖 CLAUDE.md                ← Full project context for AI agents
+└── CLAUDE.md                ← Full project context for AI agents
+├── PLAN.md                  ← Thesis execution plan (read first)
+├── LIA1-report/             ← Internship report (context)
 ```
 
 ---
@@ -130,7 +150,7 @@ thesis/
 |---|---|
 | VM | Multipass · Ubuntu 22.04 · 4 vCPU · 8 GB RAM |
 | Kubernetes | Kind (local) · same host · matched resource limits |
-| Orchestrator | Dagster 1.12.7 |
+| Orchestrator | Dagster 1.12.22 |
 | VM executor | `ProcessExecutor` |
 | K8s executor | `K8sRunLauncher` |
 | Database | PostgreSQL 16 |
@@ -198,7 +218,7 @@ Contributions are welcome! This is an open research project.
 
 ## AI Agent Context
 
-See [`CLAUDE.md`](CLAUDE.md) for the full project context, directory map, research question chain, and conventions — designed for AI coding agents.
+See [`PLAN.md`](PLAN.md) for the strategic execution plan, timeline, and scope. See [`CLAUDE.md`](CLAUDE.md) for directory structure, conventions, and technical reference.
 
 ---
 

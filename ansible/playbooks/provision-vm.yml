@@ -1,0 +1,81 @@
+---
+# =============================================================================
+# Thesis VM Provisioning Playbook
+#
+# Provisions a fresh Ubuntu 26.04 VM with Docker CE and Docker Compose plugin.
+# All thesis applications (Dagster, PostgreSQL, workload) run as Docker
+# containers — nothing is installed on the VM host beyond Docker.
+#
+# Invoked by: make vm-up  (via scripts/vm-up.sh)
+#          or: make vm-provision  (via scripts/provision-vm.sh)
+#
+# Target: hosts in [thesis_vm] group in ansible/inventory.ini
+# =============================================================================
+
+- name: Provision Thesis VM — Docker CE
+  hosts: thesis_vm
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Verify Ubuntu 26.04
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_major_version | int >= 26
+        fail_msg: "This playbook requires Ubuntu 26.0 or later"
+
+    - name: Allow apt to tolerate clock skew (Multipass VMs start with drift)
+      ansible.builtin.copy:
+        content: 'Acquire::Check-Valid-Until "false";'
+        dest: /etc/apt/apt.conf.d/99no-check-valid-until
+        mode: "0644"
+
+    - name: Sync system clock via NTP (prevents "not valid yet" apt errors)
+      ansible.builtin.shell: |
+        timedatectl set-ntp true 2>/dev/null || true
+        systemctl restart systemd-timesyncd 2>/dev/null || true
+        sleep 3
+      changed_when: false
+      ignore_errors: true
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 0
+
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - gnupg
+          - ca-certificates
+          - software-properties-common
+          - git
+          - netcat-openbsd
+          - lsof
+        state: present
+
+  roles:
+    - docker
+
+  post_tasks:
+    - name: Verify Docker daemon is running
+      ansible.builtin.command: docker info --format '{{ "{{" }}.ServerVersion{{ "}}" }}'
+      register: docker_info
+      changed_when: false
+
+    - name: Verify Docker Compose plugin
+      ansible.builtin.command: docker compose version
+      register: compose_version
+      changed_when: false
+
+    - name: Provisioning complete
+      ansible.builtin.debug:
+        msg: |
+          VM provisioning complete.
+          Docker:  {{ docker_info.stdout }}
+          Compose: {{ compose_version.stdout }}
+          Status:  Ready — run 'make build && make push && make deploy'
+
