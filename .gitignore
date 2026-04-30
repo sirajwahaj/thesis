@@ -207,6 +207,10 @@ marimo/_lsp/
 __marimo__/
 
 # ── Thesis benchmarking (auto-generated, host-specific) ──────────────────
+# nohup output and temporary run logs
+nohup.out
+/tmp/*.log
+
 # VM IP address (written by bootstrap / create-vm scripts)
 vm-ip.txt
 
