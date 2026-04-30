@@ -1,5 +1,5 @@
 {
-  "annotations": { "list": [{ "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+  "annotations": { "list": [{ "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
   "description": "Kubernetes pod-level resource tracking for Exp2A/2C — pod scheduling latency, container startup time, CPU/memory per pod, and OOM events. Answers SQ2 (isolation) and SQ3 (overhead).",
   "editable": true,
   "id": null,
