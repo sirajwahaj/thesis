@@ -1,0 +1,219 @@
+% ==============================================================
+%  Chapter 2: AI for Developers
+% ==============================================================
+\chapter{AI for Developers}
+\label{ch:developers}
+
+AI has changed software development more than any tool since the internet.
+Used well, it can double productivity on repetitive tasks, compress learning curves, and
+eliminate the blank-page problem.
+Used carelessly, it produces plausible-looking code that doesn't work, introduces subtle
+bugs, and erodes the developer's own skills over time.
+This chapter is about using it well.
+
+\section{Code Generation}
+\label{sec:codegen}
+
+AI excels at generating code for well-understood patterns: CRUD operations, boilerplate
+configuration, script scaffolding, API calls to documented libraries, and data
+transformations.
+These are tasks the model has seen thousands of times across millions of repositories.
+
+\textbf{How to generate code that actually works:}
+\begin{enumerate}
+  \item State language, version, and framework first.
+  \item Describe the input and desired output precisely.
+  \item List constraints (no external libraries, max lines, error handling style).
+  \item Ask for an explanation alongside the code.
+  \item Run it before trusting it.
+\end{enumerate}
+
+\begin{tipbox}[Good Generation Prompt Structure]
+\textit{``Write a Python 3.13 function that accepts a list of integers and returns a
+dict mapping each integer to its square root, rounded to 2 decimal places. Skip
+negative values silently. No external libraries. Include a docstring and one usage
+example.''}
+\end{tipbox}
+
+\textbf{Where generation fails:}
+\begin{itemize}
+  \item Business-specific logic that does not appear in public training data
+  \item Code that requires knowledge of your internal data models or APIs
+  \item Novel algorithm design with non-obvious tradeoffs
+  \item Accurate use of APIs that changed after the model's training cutoff
+\end{itemize}
+
+\begin{warnbox}
+Always verify library function signatures against official documentation.
+AI frequently generates plausible-looking but non-existent method names, especially for
+less popular libraries or recent versions.
+\end{warnbox}
+
+\section{Debugging with AI}
+\label{sec:debugging}
+
+The most common mistake in AI-assisted debugging is pasting only the error message.
+AI cannot know what you expected to happen, what the wider system state is, or what
+you have already tried.
+
+\begin{infobox}[The Complete Debugging Prompt]
+Give AI all five elements:
+\begin{enumerate}
+  \item \textbf{Full error message} --- complete stack trace, not the last line only
+  \item \textbf{Relevant code} --- the failing function plus any callers or dependencies
+  \item \textbf{Expected behaviour} --- what should happen
+  \item \textbf{Actual behaviour} --- what is happening
+  \item \textbf{What you've already tried}
+\end{enumerate}
+Ask: \textit{``What are the three most likely root causes and how would I confirm each?''}
+\end{infobox}
+
+This approach prompts AI to reason diagnostically rather than guess a fix.
+You then test each hypothesis rather than blindly applying the first suggestion.
+
+AI is particularly strong at:
+\begin{itemize}
+  \item Decoding cryptic compiler and runtime error messages
+  \item Identifying off-by-one errors and null-pointer patterns
+  \item Explaining what a stack trace is actually telling you
+  \item Suggesting diagnostic logging or breakpoint placement strategies
+\end{itemize}
+
+\section{Code Review and Refactoring}
+\label{sec:review}
+
+AI makes a useful first-pass reviewer.
+It catches common issues quickly: missing null checks, inefficient loops, inconsistent
+error handling, magic numbers, and style violations.
+It is \emph{not} a replacement for human review of business logic or security-critical
+paths.
+
+\textbf{Effective review prompts:}
+\begin{itemize}
+  \item \textit{``Review this code for correctness, readability, and edge cases. List issues by severity.''}
+  \item \textit{``What design pattern would improve this structure and why?''}
+  \item \textit{``Refactor this to be more readable. Explain every change you make.''}
+  \item \textit{``What would break if the input to this function is null, empty, or very large?''}
+  \item \textit{``Does this code have any performance bottlenecks? What is the time complexity?''}
+\end{itemize}
+
+\begin{warnbox}
+Never skip human code review because AI said the code looks fine.
+AI regularly misses business-logic errors, context-dependent bugs, and subtle security
+flaws. Use AI as a first pass, not a final gate.
+\end{warnbox}
+
+\section{Testing}
+\label{sec:testing}
+
+AI generates test structure and happy-path cases quickly.
+It tends to miss edge cases, negative paths, and integration scenarios unless you
+specifically ask for them.
+
+\textbf{A reliable test-generation workflow:}
+\begin{enumerate}
+  \item Paste the function under test with its docstring.
+  \item Ask AI to \emph{list} the cases to test before generating any code.
+    (\textit{``What are all the cases I should test for this function?''})
+  \item Review the list --- add anything missing.
+  \item Ask AI to generate tests for the full list using your testing framework.
+  \item Review the tests: do they actually exercise the right behaviour?
+    Would they catch a real regression?
+\end{enumerate}
+
+\begin{tipbox}
+Ask for the test list before the test code.
+This catches coverage gaps before implementation and produces measurably better tests
+than asking for code directly.
+\end{tipbox}
+
+\section{Documentation}
+\label{sec:documentation}
+
+Documentation is one of AI's strongest practical contributions.
+It reads existing code accurately and produces docstrings, README sections, API
+references, and Architecture Decision Records quickly.
+
+Useful prompts:
+\begin{itemize}
+  \item \textit{``Write a docstring for this function: parameters, return value, exceptions thrown, and one usage example.''}
+  \item \textit{``Generate a README for this module: what it does, install steps, configuration, and two usage examples.''}
+  \item \textit{``Write an Architecture Decision Record for the choice to use X over Y, given these constraints: [list].''}
+  \item \textit{``Summarise this git diff as a commit message in Conventional Commits format.''}
+\end{itemize}
+
+\section{Learning New Technologies}
+\label{sec:learning}
+
+AI is the fastest onboarding tool available for new languages, frameworks, or tools.
+It explains concepts, provides runnable examples, and answers follow-up questions
+immediately --- without you waiting for a colleague or reading 200-page documentation.
+
+\textbf{Effective learning patterns:}
+\begin{itemize}
+  \item Bridge from what you know:
+    \textit{``I'm an experienced Python developer. Explain Go goroutines using Python
+    async/await as a reference point.''}
+  \item Ask for the pitfalls first:
+    \textit{``What are the top 5 mistakes a Python developer makes when first learning Go?''}
+  \item Learn by doing:
+    \textit{``Give me a working example of channels in Go, then give me an exercise to
+    test my understanding.''}
+\end{itemize}
+
+\begin{warnbox}[Skill Maintenance]
+The risk of AI-assisted learning is passive consumption.
+Deliberately write code without AI assistance regularly.
+If you cannot explain or modify AI-generated code you have committed to your codebase,
+you have a skills debt that will compound.
+\end{warnbox}
+
+\section{Security in AI-Generated Code}
+\label{sec:security}
+
+Security is the highest-risk area of AI-assisted development.
+AI knows security patterns but applies them inconsistently.
+It can generate code with SQL injection, broken authentication, or missing input
+validation without any warning, and will not flag the issue unless you ask.
+
+\begin{warnbox}[Security Non-Negotiables]
+\begin{itemize}
+  \item Manually review all authentication, authorisation, and data-handling code
+  \item Run a static security analyser on AI-generated code (Semgrep, Bandit, ESLint
+        security plugins)
+  \item Never use AI-generated cryptographic implementations without expert review
+  \item Treat AI-generated input validation as a starting point only
+  \item Never commit code containing secrets or credentials, regardless of origin
+\end{itemize}
+\end{warnbox}
+
+\section{Practical Prompt Templates for Developers}
+\label{sec:dev-templates}
+
+\begin{table}[htbp]
+\centering
+\caption{Proven prompt templates by development task}
+\begin{tabularx}{\linewidth}{l X}
+\toprule
+\textbf{Task} & \textbf{Prompt Pattern} \\
+\midrule
+Understand code     & ``Explain this code line by line, then summarise what business
+                       problem it solves.'' \\[4pt]
+Generate boilerplate & ``Write a [type] in [lang/framework] that does [X].
+                       Constraints: [Y]. Include a docstring.'' \\[4pt]
+Debug               & ``Given this code and error, what are 3 possible root causes?
+                       How do I confirm each?'' \\[4pt]
+Refactor            & ``Refactor this for readability using [principle/pattern].
+                       Explain each change.'' \\[4pt]
+Write tests         & ``List test cases for this function, then generate them
+                       in [framework]. Include edge cases.'' \\[4pt]
+Learn a concept     & ``I know [X]. Explain [Y] using [X] as a reference.
+                       Give a concrete runnable example.'' \\[4pt]
+Translate code      & ``Convert this [lang A] to [lang B]. Note any
+                       semantic differences.'' \\[4pt]
+Security review     & ``Review this for OWASP Top 10 issues.
+                       List each issue and how to fix it.'' \\
+\bottomrule
+\end{tabularx}
+\label{tab:dev-prompts}
+\end{table}

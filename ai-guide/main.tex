@@ -1,0 +1,57 @@
+\documentclass[12pt,a4paper]{report}
+
+\input{preamble}
+
+\begin{document}
+
+% ── Title Page ────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\Huge\bfseries\color{chapterblue} Using AI as a Professional\par}
+  \vspace{0.8cm}
+  {\large\itshape
+    A Practical, Deep-Dive Guide for Developers, DevOps Engineers,\\[0.3em]
+    Cloud Architects, Data Scientists, Teachers,\\[0.3em]
+    Managers, and Problem Solvers\par}
+  \vspace{2cm}
+  {\color{chapterblue}\rule{0.55\linewidth}{1.5pt}}\\[1cm]
+  {\normalsize
+    \textbf{What's inside:}\\[0.6em]
+    \begin{tabular}{ll}
+      Ch.~1  & The AI Landscape --- what exists and when to use it \\
+      Ch.~2  & AI for Developers \\
+      Ch.~3  & AI for DevOps Engineers \\
+      Ch.~4  & AI for Cloud Engineers \\
+      Ch.~5  & AI for Data Scientists \\
+      Ch.~6  & AI for Teachers \\
+      Ch.~7  & AI for Managers \\
+      Ch.~8  & AI as a Problem-Solving Partner \\
+      Ch.~9  & Do's and Don'ts \\
+      Ch.~10 & Top 10 Concepts You Must Understand \\
+      Ch.~11 & 50 Essential Q\&As for Developers \& Professionals \\
+      Ch.~12 & 50 Essential Q\&As for Managers \\
+    \end{tabular}\par}
+  \vfill
+  {\large\today\par}
+\end{titlepage}
+
+% ── Table of Contents ─────────────────────────────────────────
+\tableofcontents
+\clearpage
+
+% ── Chapters ──────────────────────────────────────────────────
+\input{chapters/01-overview}
+\input{chapters/02-developers}
+\input{chapters/03-devops}
+\input{chapters/04-cloud}
+\input{chapters/05-data-scientists}
+\input{chapters/06-teachers}
+\input{chapters/07-managers}
+\input{chapters/08-problem-solving}
+\input{chapters/09-dos-donts}
+\input{chapters/10-concepts}
+\input{chapters/11-dev-qa}
+\input{chapters/12-manager-qa}
+
+\end{document}

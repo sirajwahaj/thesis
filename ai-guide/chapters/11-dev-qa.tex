@@ -1,0 +1,347 @@
+% ==============================================================
+%  Chapter 11: 50 Essential Q&As for Developers and Professionals
+% ==============================================================
+\chapter{50 Essential Q\&As for Developers and Professionals}
+\label{ch:dev-qa}
+
+These questions represent the most common, most important, and most misunderstood
+topics when professionals start integrating AI into their technical work.
+The answers are deliberately direct and practical.
+
+\qa{How should I structure prompts for coding tasks?}
+{Always provide: (1) language and version, (2) framework if relevant, (3) what
+the function receives as input, (4) what it should return, (5) constraints such as no
+external libraries or style guide compliance.
+One clear goal per prompt is more effective than a multi-part request.
+State the output format you want --- code only, code with explanation, or code with
+tests.}
+
+\qa{Can I trust AI-generated code in production?}
+{Treat it the way you would treat code from a capable junior developer: review it,
+test it, check edge cases, and confirm it handles your specific business rules.
+AI is right most of the time on common patterns and wrong more often on
+domain-specific or context-sensitive logic.
+Never push AI-generated code to production without review and test coverage.}
+
+\qa{How do I debug effectively with AI?}
+{Don't just paste the error message.
+Provide the full stack trace, the relevant code, what you expected to happen, what
+actually happened, and what you have already tried.
+Ask for the three most likely root causes and how to diagnose each --- not just a fix.
+Reasoning diagnostically gives better results than asking for a direct patch.}
+
+\qa{How do I give AI enough context about my codebase?}
+{Paste only the relevant files or functions --- not the entire repository.
+Summarise your architecture in 2--3 sentences at the top of the prompt.
+For large codebases, use tools like Cursor or GitHub Copilot Workspace, which index
+your repository and retrieve relevant context automatically via embeddings.}
+
+\qa{Should I use AI for security-critical code?}
+{Use AI to understand patterns and generate boilerplate, but manually review all
+authentication, authorisation, encryption, and input validation code.
+AI regularly produces plausible-looking security code with subtle flaws.
+Run a static security analyser (Semgrep, Bandit, ESLint security plugins) on any
+AI-generated code regardless, and treat the result as a starting point.}
+
+\qa{How do I avoid AI hallucinations in code?}
+{Test the code rather than reading it.
+Verify all library method names and signatures against official documentation.
+Ask AI ``how would I verify this is correct?'' to surface its own uncertainty.
+For libraries released or updated after the model's training cutoff, hallucinations
+in API details are especially common.}
+
+\qa{How do I use AI to understand legacy code?}
+{Paste the function and ask: ``Explain this code line by line, then summarise what
+business problem it solves and what would break if it were removed.''
+AI is excellent at reverse-engineering intent from code.
+Ask for a dependency summary or call graph to understand broader coupling.}
+
+\qa{Can AI write unit tests I can rely on?}
+{AI generates test structure and happy-path cases quickly, but misses edge cases
+unless you ask for them.
+First, ask AI to list all cases to test.
+Review that list, add anything missing, and then ask for the test code.
+Review tests as carefully as you review production code --- a test that doesn't
+catch a real regression is worse than no test.}
+
+\qa{What is the difference between a chat AI and a coding assistant?}
+{Chat AI (ChatGPT, Claude) is better for reasoning, explanation, architecture
+discussion, and learning --- you work conversationally.
+Coding assistants (Copilot, Cursor) are better for inline completion while you type
+and for keeping you in flow.
+Use both: chat AI for the thinking, coding assistants for the implementation.
+They are complementary, not alternatives.}
+
+\qa{How do I maintain my own skills while using AI?}
+{Deliberately solve problems without AI at regular intervals.
+Before accepting AI output, try to predict what the answer should be.
+Ensure you can explain and modify every line of AI-generated code you commit.
+Use AI to accelerate work you already understand --- not to skip understanding
+entirely.}
+
+\qa{How do I use AI for refactoring?}
+{Paste the code and say: ``Refactor this for readability. Apply [principle/pattern].
+Explain every change you make.''
+Then compare the before and after carefully.
+Ask ``does this refactor change any behaviour?'' to catch semantic drift.
+AI refactoring is reliable for obvious patterns but can introduce subtle bugs in
+complex conditional logic.}
+
+\qa{Can AI help with architecture decisions?}
+{AI is excellent for generating options and tradeoffs.
+Provide your constraints explicitly: team size, skill set, existing services, budget,
+latency requirements, and compliance needs.
+Ask for three approaches with tradeoffs rather than one recommendation.
+AI cannot know your organisation's risk appetite or team dynamics --- you supply those.}
+
+\qa{How do I use AI for performance optimisation?}
+{Profile first to confirm the actual bottleneck before asking AI to optimise anything.
+Paste the slow function and ask: ``Identify performance bottlenecks and suggest
+optimisations with their big-O complexity impact.''
+Always benchmark before and after to verify the improvement is real.}
+
+\qa{How do I use AI for regex?}
+{Describe what you want to match in plain English and give 3--4 concrete examples
+of input strings that should match and strings that should not.
+Ask AI to explain the regex pattern it generates alongside the code.
+Always test against your actual data --- edge cases and encoding issues are common.}
+
+\qa{How do I use AI for SQL queries?}
+{Give the table names, column names, and data types.
+Describe the result you want.
+Ask for an explanation of the JOIN strategy and whether the query is index-friendly.
+Review any user-supplied input handling carefully for SQL injection risk.}
+
+\qa{How do I use AI for shell scripting?}
+{Describe the task step by step.
+Ask for explanations of each command.
+Ask: ``What could go wrong with this script, and what safeguards should I add?''
+Test in a non-production environment first.
+AI shell scripts often lack error handling --- ask for it explicitly.}
+
+\qa{How do I verify AI suggestions before committing?}
+{Run the code and its tests.
+Read the diff carefully --- every line, not just the changed lines.
+Search for any new library calls in official documentation to verify accuracy.
+Run a linter and static analyser as a final pass.
+If you cannot explain a line, that is a signal to investigate before committing.}
+
+\qa{Can AI help with concurrency and threading problems?}
+{AI knows common patterns (mutex, semaphore, actor model, CSP) and can explain
+them clearly.
+It misses race conditions in complex real-world scenarios regularly.
+Treat any multithreaded code AI generates as a starting point requiring careful review.
+Ask specifically: ``What are the race conditions possible in this code?''}
+
+\qa{What is the best way to use AI in a team setting?}
+{Agree on what categories of code require human review (all production code, at
+minimum).
+Share effective prompt templates in your team wiki.
+Don't use AI to bypass your code review process --- use it to make code review
+faster by providing better-quality first drafts.}
+
+\qa{How do I use AI for onboarding to a new codebase?}
+{Paste key files and ask: ``What does this service do, what are its main components,
+and what is the entry point?''
+Follow up: ``If I needed to add a new endpoint, what files would I need to change
+and in what order?''
+AI acts as a senior developer guide to codebases it can read.}
+
+\qa{Can AI help with open source contributions?}
+{Yes.
+Paste the issue description and the relevant code, and ask: ``How would I implement
+a fix for this issue?''
+Ask AI to review whether your PR matches the project's coding style.
+AI can also explain unfamiliar code in open-source projects quickly.}
+
+\qa{How do I use AI for dependency management?}
+{Ask: ``What are the risks of upgrading [package] from version X to version Y?
+What breaking changes should I check for?''
+Cross-reference with the package's official changelog --- AI may not have the latest
+release notes.
+Ask: ``Are there better-maintained alternatives to this dependency?''}
+
+\qa{Can AI write commit messages?}
+{Yes --- paste your diff and ask for a commit message in Conventional Commits format.
+AI extracts the ``what'' of the change reliably.
+You add the ``why'' if the business context is not obvious from the code.
+Review for accuracy: AI sometimes describes what the code does rather than why it
+was changed.}
+
+\qa{How do I use AI to write release notes?}
+{Paste the git log or PR titles from the release.
+Ask: ``Summarise these changes as user-facing release notes. Group by feature, fix,
+and breaking change. Avoid technical jargon.''
+Edit for your audience and verify that nothing customer-impacting was omitted.}
+
+\qa{How do I avoid over-reliance on AI?}
+{Notice when you feel unable to start a task without AI assistance first.
+Run periodic sessions where you deliberately solve problems without AI.
+Ensure you understand every piece of AI-generated code in your codebase well enough
+to debug it when it breaks in production.}
+
+\qa{Can AI help with compliance requirements?}
+{AI can explain GDPR, HIPAA, SOC 2, and PCI-DSS concepts and suggest implementation
+patterns.
+It can generate compliance documentation drafts and control descriptions.
+It cannot give legal advice.
+All compliance decisions must be reviewed and signed off by a qualified compliance
+professional.}
+
+\qa{How do I use AI for algorithm selection?}
+{Describe the problem: data size, input characteristics, performance requirements,
+and whether interpretability matters.
+Ask for three algorithmic approaches with complexity analysis and tradeoffs.
+Ask: ``When does this algorithm degrade and what is the worst case?''}
+
+\qa{Can AI help me estimate story points?}
+{Paste the ticket description and ask: ``What tasks are involved, what are the
+technical risks, and what dependencies are implied?''
+Use AI's breakdown to inform your estimate --- it does not know your team's velocity,
+technical debt context, or current sprint load, so you adjust accordingly.}
+
+\qa{How do I use AI for interview preparation?}
+{Ask: ``Give me 10 hard interview questions on [topic] with detailed answers.''
+Ask: ``What follow-up questions would an interviewer ask for this answer?''
+Simulate a coding interview by asking AI to pose a system design question and then
+critique your solution.}
+
+\qa{Can AI help with code migration?}
+{AI excels at format migrations (Python 2 to 3, jQuery to vanilla JS, REST to GraphQL).
+Ask for a list of things to verify manually alongside the translated code.
+Test thoroughly --- subtle behavioural differences between equivalent code in two
+paradigms are common.}
+
+\qa{How do I use AI for error handling patterns?}
+{Describe your scenario and ask: ``What is the recommended error handling strategy
+here?''
+Ask for patterns like retry with exponential backoff, circuit breaker, and dead
+letter queues by name if they apply.
+Ask: ``What failure modes am I not handling in this code?''}
+
+\qa{Can AI help me understand third-party SDK code?}
+{Paste the relevant SDK source or documentation section and ask for a plain-English
+explanation with a usage example.
+Ask: ``What is the caller responsible for and what does the SDK handle?''
+Faster than reading full SDK documentation, but always test the example.}
+
+\qa{How do I use AI for API design?}
+{Describe your resource and operations.
+Ask: ``Design a RESTful API for this resource following best practices. Explain naming
+conventions, status code choices, and pagination strategy.''
+Ask: ``What versioning strategy is appropriate for this API and why?''}
+
+\qa{Can AI help with monitoring and observability setup?}
+{Ask: ``What metrics should I instrument for a [service type] running in Kubernetes?''
+AI can generate Prometheus metrics code, Grafana dashboard JSON, and alert rules
+from verbal descriptions.
+Threshold values and SLO definitions are yours to determine based on your system's
+actual behaviour.}
+
+\qa{How do I use AI to write better variable and function names?}
+{Paste the code and ask: ``Suggest better names for these variables and functions.
+Explain your reasoning for each.''
+Good naming comes from AI pattern recognition of common idioms.
+Reject any name that doesn't clearly communicate intent to a reader who has never
+seen the code.}
+
+\qa{Can AI help with web accessibility (a11y) in code?}
+{Ask: ``Review this HTML/JSX for WCAG 2.1 AA accessibility issues.''
+AI reliably identifies missing alt text, incorrect ARIA roles, keyboard navigation
+gaps, and colour contrast issues.
+It cannot run automated accessibility audits --- use axe or Lighthouse for that.}
+
+\qa{How do I use AI when I'm completely stuck on a problem?}
+{Describe the problem to AI as if explaining it to a colleague who knows nothing
+about your system.
+Ask: ``What are five possible causes of this behaviour?''
+The act of constructing a complete explanation often reveals the answer.
+AI's follow-up questions expose assumptions you were not examining.}
+
+\qa{Can AI help write load testing scripts?}
+{Yes.
+Describe your endpoint, expected load, and any authentication flow.
+Ask for a k6, Locust, or JMeter script and explain the ramp-up strategy.
+Review the script for realistic user behaviour --- AI sometimes generates unrealistic
+constant-load patterns that don't represent production traffic.}
+
+\qa{How do I translate code from one language to another using AI?}
+{Paste the source code and say: ``Translate this [language A] to [language B].
+Maintain the same logic. Note any semantic differences.''
+Ask for a list of things to manually verify after translation.
+Test the translated version against the same test suite as the original.}
+
+\qa{How do I use AI to generate documentation?}
+{Paste a function and ask for a docstring with parameters, return value, exceptions,
+and one example.
+Ask for README sections by name (installation, configuration, usage, examples).
+Edit for tone and accuracy --- AI documentation can be generic and miss the
+``why'' behind design decisions.}
+
+\qa{What should I absolutely never use AI for?}
+{Never use AI to generate credentials, secrets, or cryptographic keys.
+Never commit AI output without understanding it.
+Never use AI as the final word on security, legal, or financial decisions.
+Never share PII, customer data, or trade secrets with non-enterprise AI tools.}
+
+\qa{How do I use AI for feature flag design?}
+{Ask: ``What is the cleanest way to implement feature flags in [framework] with these
+requirements: [list]?''
+AI knows patterns from LaunchDarkly, Unleash, and custom implementations well.
+Ask for a comparison of client-side vs server-side evaluation and the tradeoffs.}
+
+\qa{Can AI help me understand compiler or runtime errors?}
+{Always paste the full error message and complete stack trace --- not just the last line.
+Ask: ``Explain this error, where it originates, and what the most common causes are.''
+AI is excellent at translating cryptic compiler messages into plain language and
+pointing to the root location in the call stack.}
+
+\qa{How do I use AI for design patterns?}
+{Describe your problem, not the pattern you think you need.
+\textit{``I need to add behaviour to objects at runtime without modifying their class.''}
+Let AI recommend the pattern with a justification.
+Ask for a concrete example in your language alongside a non-example so you understand
+when not to use it.}
+
+\qa{How do I use AI for prototype development?}
+{State upfront: \textit{``This is a prototype. Prioritise working code over robustness,
+error handling, and tests.''}
+AI is excellent for building fast functional prototypes.
+Expect to rewrite significant portions before it reaches production quality ---
+and plan for it from the start.}
+
+\qa{Can AI help me design a CI/CD pipeline?}
+{Describe your workflow: trigger, test, build, scan, deploy, rollback conditions.
+Ask for a GitHub Actions or GitLab CI YAML and explain each stage.
+Ask: ``What are the failure modes of each step and how should I handle them?''
+Review generated YAML carefully --- secrets handling and environment promotion logic
+are commonly misgenerated.}
+
+\qa{How do I use AI for code style and formatting advice?}
+{Paste the code and ask: ``Does this follow [PEP 8 / Google Java Style / standard Go
+formatting]? List violations and how to fix them.''
+For automation, use a linter (ruff, eslint, gofmt) rather than relying on AI --- linters
+are deterministic and don't hallucinate rule violations.}
+
+\qa{Can AI help with microservice decomposition?}
+{Describe your domain and the monolith's main responsibilities.
+Ask: ``How would you decompose this into microservices using DDD bounded contexts?
+What are the coupling risks?''
+AI generates a useful starting decomposition; your architects validate against actual
+deployment constraints, team structure, and data ownership requirements.}
+
+\qa{Can AI help me write better error messages for users?}
+{Yes.
+Paste your current error messages and ask: ``Rewrite these to be more helpful.
+Each message should tell the user what went wrong, why, and what they can do next.''
+Good error messages reduce support tickets significantly and AI is very good at
+generating them.}
+
+\qa{What is the future of AI in software development?}
+{AI agents will increasingly write, run, and test code autonomously, with humans
+as reviewers and goal-setters rather than primary authors.
+The skill shifts from writing code to knowing what good code looks like and directing
+AI toward it.
+The developers who thrive will be those who learn to evaluate, test, and guide AI
+rather than compete with it.
+Start building that skill now.}

@@ -1,0 +1,110 @@
+% ==============================================================
+%  Chapter 4: AI for Cloud Engineers
+% ==============================================================
+\chapter{AI for Cloud Engineers}
+\label{ch:cloud}
+
+Cloud engineering sits at the intersection of architecture, automation, cost management,
+and security.
+AI helps most in the early design phase (generating options and tradeoffs), in
+translating requirements into policy and configuration, and in diagnosing unfamiliar
+services.
+It cannot know your account structure, existing dependencies, or budget constraints
+unless you provide them.
+
+\section{Architecture Design and Review}
+\label{sec:arch-design}
+
+AI is an excellent architecture sounding board.
+It knows AWS, Azure, and GCP well across compute, storage, networking, and managed
+services.
+Use it to generate options, stress-test a design, and surface considerations you missed.
+
+\textbf{High-value architecture prompts:}
+\begin{itemize}
+  \item \textit{``I need to process 50,000 events per second with at most 5 seconds end-to-end latency. My team knows Python. What are three architectural approaches on AWS, with tradeoffs for cost, operational complexity, and scalability?''}
+  \item \textit{``Review this architecture diagram description for single points of failure, over-provisioned services, and missing observability components.''}
+  \item \textit{``What does the AWS Well-Architected Framework say about data transfer costs between services in different AZs?''}
+\end{itemize}
+
+\begin{tipbox}
+Give AI your constraints explicitly: team skills, existing services, budget ceiling,
+RTO/RPO requirements, and compliance framework.
+Without constraints, AI generates architectures that are technically correct but
+organisationally impractical.
+\end{tipbox}
+
+\section{Cost Optimisation}
+\label{sec:cost}
+
+Cost optimisation involves pattern recognition across pricing models, usage data, and
+service alternatives --- a natural AI use case.
+
+\textbf{Effective cost-review prompts:}
+\begin{itemize}
+  \item \textit{``My EC2 instances run at 15\% average CPU. What rightsizing, Reserved Instance, or Savings Plan options should I consider?''}
+  \item \textit{``We spend \$8,000 per month on data transfer. What architectural changes typically reduce cross-region egress costs?''}
+  \item \textit{``Compare Lambda vs Fargate vs ECS on EC2 for a workload that runs 10,000 short (30 s) tasks per day, with cold start tolerance.''}
+\end{itemize}
+
+\begin{warnbox}
+AI uses pricing data from its training set, which may be out of date.
+Always verify current pricing on the cloud provider's pricing calculator before
+presenting cost estimates to stakeholders.
+\end{warnbox}
+
+\section{Security and IAM}
+\label{sec:cloud-security}
+
+Cloud IAM is one of the most error-prone areas in cloud engineering --- and one of the
+most valuable AI use cases.
+AI can audit policies, generate least-privilege alternatives, and translate compliance
+requirements into concrete controls.
+
+\textbf{IAM audit workflow:}
+\begin{enumerate}
+  \item Export the IAM policy JSON from your cloud console.
+  \item Paste it and ask: \textit{``Identify any permissions violating the principle of
+        least privilege, and suggest a tighter replacement policy.''}
+  \item Ask: \textit{``What is the blast radius if this role is compromised?''}
+  \item Ask: \textit{``Does this policy expose any data exfiltration risk?''}
+\end{enumerate}
+
+\textbf{Generating service control policies and guardrails:}
+\begin{itemize}
+  \item \textit{``Write an AWS SCP that prevents any IAM user from disabling CloudTrail, deleting S3 buckets with versioning, or creating resources outside eu-west-1.''}
+  \item \textit{``Generate an Azure Policy that enforces required tags on all resources.''}
+\end{itemize}
+
+\section{Multi-Cloud and Migration}
+\label{sec:multi-cloud}
+
+AI understands the conceptual mapping between cloud providers:
+AWS $\leftrightarrow$ Azure $\leftrightarrow$ GCP equivalents for compute, storage,
+and managed services.
+
+\textbf{Migration prompts:}
+\begin{itemize}
+  \item \textit{``Map these AWS services to Azure equivalents: EC2, RDS PostgreSQL, S3, SQS, Lambda, CloudWatch.''}
+  \item \textit{``What are the main operational differences I should expect when migrating from AWS EKS to Azure AKS?''}
+  \item \textit{``Write a migration plan outline for moving from self-managed Kubernetes to a managed service. What are the top 5 risks?''}
+\end{itemize}
+
+\begin{tipbox}
+Use AI to generate the migration task list and risk register as a first draft.
+Your cloud architects then validate feasibility against your actual environment.
+AI cannot assess undocumented dependencies --- that's your team's value.
+\end{tipbox}
+
+\section{Generating Cloud Documentation}
+\label{sec:cloud-docs}
+
+Cloud engineers maintain architecture diagrams, runbooks, and disaster recovery
+documents.
+AI accelerates first-draft creation significantly:
+
+\begin{itemize}
+  \item \textit{``Write a runbook for rotating the RDS master password with zero downtime.''}
+  \item \textit{``Draft a disaster recovery plan for a three-tier web application hosted on AWS, with RTO 4 hours and RPO 1 hour.''}
+  \item \textit{``Generate a service dependency description for this architecture [describe].''}
+\end{itemize}

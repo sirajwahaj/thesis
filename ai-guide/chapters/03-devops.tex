@@ -1,0 +1,128 @@
+% ==============================================================
+%  Chapter 3: AI for DevOps Engineers
+% ==============================================================
+\chapter{AI for DevOps Engineers}
+\label{ch:devops}
+
+DevOps engineers deal with an unusually wide surface area: infrastructure code,
+pipelines, container orchestration, security policies, monitoring configuration, and
+incident response --- often at the same time.
+AI is a genuine force multiplier here because most of the work involves translating
+intent into configuration syntax, a task AI handles extremely well.
+
+\section{Infrastructure as Code}
+\label{sec:iac}
+
+Writing Terraform, Ansible, Helm, and Pulumi configurations is one of the clearest
+wins for AI assistance.
+The configuration formats are well-documented, schema-constrained, and follow patterns
+the model has seen in millions of public repositories.
+
+\textbf{What works well:}
+\begin{itemize}
+  \item Generating a complete Terraform module from a requirements description
+  \item Converting between IaC formats (e.g., CloudFormation to Terraform)
+  \item Adding lifecycle rules, tags, and provider constraints you forgot
+  \item Explaining what an existing Terraform resource will actually provision
+  \item Writing Ansible playbooks for standard system configuration tasks
+\end{itemize}
+
+\textbf{Effective prompts:}
+\begin{itemize}
+  \item \textit{``Write a Terraform module for an AWS ECS service. Requirements: Fargate, 512 CPU, 1 GB memory, private subnets, ECR image, environment variables from SSM. Include an IAM execution role.''}
+  \item \textit{``Review this Terraform configuration for security issues: over-permissive IAM, public S3 buckets, unencrypted EBS.''}
+  \item \textit{``Convert this Docker Compose file to a Kubernetes Deployment and Service manifest.''}
+\end{itemize}
+
+\begin{warnbox}
+AI does not know your cloud account state, existing resources, or organisation-specific
+naming conventions.
+Always run \texttt{terraform plan} before \texttt{apply} and review the diff carefully.
+AI-generated IaC often uses permissive defaults that need tightening for production.
+\end{warnbox}
+
+\section{CI/CD Pipelines}
+\label{sec:cicd}
+
+Pipeline YAML for GitHub Actions, GitLab CI, and Jenkins follows strict schemas that
+AI handles well.
+Common use cases:
+\begin{itemize}
+  \item Generating a complete pipeline from a description of your workflow (build, test, scan, deploy, rollback)
+  \item Adding matrix builds, caching strategies, and environment-specific deployments
+  \item Translating a Jenkins pipeline to GitHub Actions
+  \item Diagnosing why a pipeline step is failing from logs
+\end{itemize}
+
+\begin{tipbox}[Pipeline Prompt Pattern]
+\textit{``Write a GitHub Actions workflow that: (1) triggers on push to main and PRs, (2) runs pytest with coverage on Python 3.12 and 3.13, (3) builds and pushes a Docker image to GHCR on main only, (4) deploys to staging via SSH after a successful push. Use caching for pip dependencies.''}
+\end{tipbox}
+
+\textbf{Diagnosing failed pipelines:}
+Paste the failing step's full log output and ask:
+\textit{``What is causing this CI failure and what is the fix?''}
+AI is excellent at reading pipeline logs and identifying root causes --- permission
+errors, missing environment variables, incorrect paths, version mismatches.
+
+\section{Containers and Kubernetes}
+\label{sec:k8s}
+
+\textbf{Dockerfile optimisation:}
+Paste your current Dockerfile and ask:
+\begin{itemize}
+  \item \textit{``Optimise this Dockerfile for image size. Explain each change.''}
+  \item \textit{``Reorder these layers to maximise cache hit rate.''}
+  \item \textit{``What security issues exist in this Dockerfile (running as root, secrets in ENV, etc.)?''}
+\end{itemize}
+
+\textbf{Kubernetes manifests:}
+AI generates Deployment, Service, ConfigMap, HPA, and PodDisruptionBudget manifests
+reliably.
+Useful for generating base manifests, then customising for your environment.
+
+\begin{tipbox}
+Ask AI to include resource requests and limits, liveness/readiness probes, and
+non-root user configuration by default.
+These are the settings most often forgotten and most often flagged in security audits.
+\end{tipbox}
+
+\section{Monitoring, Alerting, and Incident Response}
+\label{sec:monitoring}
+
+\textbf{What AI does well:}
+\begin{itemize}
+  \item Generating Prometheus alert rules from verbal descriptions
+    (\textit{``Write an alert that fires if p99 latency exceeds 500 ms for 5 minutes''})
+  \item Writing PromQL and LogQL queries when you describe what you want to measure
+  \item Drafting runbooks and incident response playbooks
+  \item Explaining what a specific alert or metric means in plain language
+\end{itemize}
+
+\textbf{During incidents:}
+Paste your log output and metrics anomaly and ask:
+\textit{``What does this pattern suggest about root cause? What would you check next?''}
+AI cannot see your live systems, but it can reason about log patterns and suggest a
+diagnostic sequence quickly when you are under pressure.
+
+\begin{warnbox}
+AI cannot access your live monitoring dashboards, alert history, or deployment state.
+It works from what you paste. Be precise and complete when describing an incident.
+\end{warnbox}
+
+\section{Security and Compliance Automation}
+\label{sec:sec-compliance}
+
+\textbf{Useful security tasks for AI:}
+\begin{itemize}
+  \item Reviewing IAM policies for over-permission (\textit{``Does this IAM policy follow least-privilege? What can be removed?''})
+  \item Generating security group rules and network policies from verbal requirements
+  \item Writing Semgrep or OPA/Rego rules for custom policy enforcement
+  \item Drafting threat model sections for a new service
+  \item Explaining CVEs and assessing their relevance to your stack
+\end{itemize}
+
+\begin{tipbox}
+For cloud security reviews, paste your policy JSON and ask AI to identify issues against
+the CIS benchmark or AWS Well-Architected Framework security pillar.
+This is faster than reading the benchmark yourself and catches 80\% of common issues.
+\end{tipbox}

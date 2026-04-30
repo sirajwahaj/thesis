@@ -1,0 +1,137 @@
+% ==============================================================
+%  Chapter 9: Do's and Don'ts
+% ==============================================================
+\chapter{Do's and Don'ts}
+\label{ch:dosdontss}
+
+This chapter collects the most important rules in one place.
+They apply across all roles and are derived from what separates effective AI users
+from ineffective ones --- and from what separates safe AI use from dangerous use.
+
+\section{Universal Do's}
+\label{sec:dos}
+
+\begin{enumerate}
+
+  \item \textbf{Give context before asking.}
+    Tell AI who it is, what the goal is, what constraints apply, and what format you
+    want. A well-framed prompt gets a useful answer; a vague prompt gets a vague
+    answer.
+
+  \item \textbf{Iterate, don't expect perfection first time.}
+    The first output is a working draft. Follow up with \textit{``make it shorter''},
+    \textit{``add an example''},\textit{``explain your reasoning''}.
+    Iteration is the skill.
+
+  \item \textbf{Verify before you use.}
+    Read the output. Test the code. Check the facts against a primary source.
+    AI produces plausible text, not verified truth.
+
+  \item \textbf{Keep humans accountable for AI output.}
+    Someone's name goes on everything AI helps produce. That person is responsible for
+    its quality and accuracy.
+
+  \item \textbf{Use AI to accelerate work you understand.}
+    AI is a multiplier for existing skill, not a replacement for skill.
+    The faster you can evaluate AI output, the more value you extract.
+
+  \item \textbf{Ask for explanations, not just answers.}
+    \textit{``Explain why''} and \textit{``what would break this?''} produce
+    much deeper value than simply accepting the first answer.
+
+  \item \textbf{Maintain a prompt library.}
+    When a prompt produces a consistently useful result, save it.
+    Share effective prompts with your team.
+
+  \item \textbf{Update your mental model of AI regularly.}
+    Models improve every few months. A limitation from six months ago may no longer
+    apply. Stay current.
+
+\end{enumerate}
+
+\section{Universal Don'ts}
+\label{sec:donts}
+
+\begin{enumerate}
+
+  \item \textbf{Don't share sensitive data with public AI tools.}
+    This includes: customer PII, employee personal data, unpublished financial results,
+    proprietary source code (unless using an enterprise API with data protection
+    agreements), and active deal details.
+
+  \item \textbf{Don't commit AI-generated code without understanding it.}
+    If you cannot explain what every line does and why, you are not ready to commit it.
+    This is a security risk, a quality risk, and a skills debt.
+
+  \item \textbf{Don't use AI as a primary source for facts.}
+    AI is a reasoning tool, not a research database. For factual claims, verify against
+    primary sources (official docs, peer-reviewed papers, official statistics).
+
+  \item \textbf{Don't skip review because AI said it looks fine.}
+    AI reviewing its own output (or output in the same conversation) is not an
+    independent check. Human review is still required.
+
+  \item \textbf{Don't use AI for legal, medical, or financial decisions without expert review.}
+    AI knows the concepts but cannot take professional responsibility. A lawyer,
+    doctor, or accountant must own those decisions.
+
+  \item \textbf{Don't use AI to generate credentials, secrets, or keys.}
+    Any secret AI generates may exist in its context window or logs.
+    Use a proper secrets manager.
+
+  \item \textbf{Don't accept AI output that you cannot evaluate.}
+    If you lack the domain knowledge to judge whether the output is correct, you need
+    a human expert review --- not more AI confidence.
+
+  \item \textbf{Don't measure AI adoption by volume.}
+    Measuring prompts sent, documents generated, or code lines produced incentivises
+    the wrong behaviour. Measure quality outcomes instead.
+
+  \item \textbf{Don't let AI choose your values or make ethical judgements.}
+    AI will produce an answer to any ethical question. That answer is pattern-matched
+    from training data, not reasoned from principles. Ethical decisions belong to humans.
+
+  \item \textbf{Don't expect AI to know your context without being told.}
+    AI has no memory between sessions (unless explicitly provided), no knowledge of
+    your organisation, and no access to your systems. Every conversation starts fresh.
+
+\end{enumerate}
+
+\section{Role-Specific Rules}
+\label{sec:role-rules}
+
+\begin{table}[htbp]
+\centering
+\caption{Critical rules by professional role}
+\begin{tabularx}{\linewidth}{l X}
+\toprule
+\textbf{Role} & \textbf{Non-Negotiable Rule} \\
+\midrule
+Developer      & Never ship AI-generated code without manual review and test coverage \\[4pt]
+DevOps         & Always run plan/dry-run before applying AI-generated IaC; check for permissive defaults \\[4pt]
+Cloud Engineer & Verify AI-generated cost estimates against the current pricing calculator \\[4pt]
+Data Scientist & Validate that AI-generated code does not introduce data leakage between train and test \\[4pt]
+Teacher        & Personalise and verify all AI-generated feedback before sending to students \\[4pt]
+Manager        & Never share customer PII, employee data, or confidential strategy in public AI tools \\[4pt]
+All roles      & Take full accountability for any AI output that carries your name \\
+\bottomrule
+\end{tabularx}
+\label{tab:role-rules}
+\end{table}
+
+\section{Security and Privacy Non-Negotiables}
+\label{sec:security-privacy}
+
+These apply to everyone, regardless of role:
+
+\begin{itemize}
+  \item Use enterprise AI subscriptions (not free tiers) for any work-related data.
+        Enterprise tiers typically include data processing agreements and opt-out of
+        training use.
+  \item Never paste passwords, API keys, private SSH keys, or OAuth tokens into any
+        AI tool.
+  \item Treat AI prompts as potentially logged. Write prompts as if they could be read
+        by your company's security team.
+  \item Report AI-related data incidents through your normal incident reporting channel.
+        Do not try to resolve them silently.
+\end{itemize}

@@ -1,0 +1,103 @@
+% ==============================================================
+%  Chapter 8: AI as a Problem-Solving Partner
+% ==============================================================
+\chapter{AI as a Problem-Solving Partner}
+\label{ch:problem-solving}
+
+Problem-solving is not a single skill --- it is a set of habits: decomposing complexity,
+generating hypotheses, evaluating evidence, and synthesising a path forward.
+AI can participate in every stage of this process, but only as a collaborator.
+The structured thinking must come from you.
+
+\section{Structured Problem Decomposition}
+\label{sec:decomposition}
+
+The most powerful use of AI in problem-solving is not asking it for an answer ---
+it is asking it to help you structure the problem before you try to solve it.
+
+\textbf{Decomposition prompts:}
+\begin{itemize}
+  \item \textit{``Break this problem into its independent sub-problems.''}
+  \item \textit{``What are the three biggest uncertainties in this situation?''}
+  \item \textit{``What do I need to know before I can make a good decision here?''}
+  \item \textit{``Draw a cause-and-effect chain from the observed symptom to the likely root causes.''}
+\end{itemize}
+
+AI is particularly good at generating a structured first map of a problem.
+You then critique the map, add what it missed, and remove what is not relevant.
+
+\section{The AI Rubber Duck Technique}
+\label{sec:rubberduck}
+
+Rubber duck debugging --- explaining a problem out loud until the act of explanation
+reveals the solution --- works dramatically better with AI than with a real rubber duck,
+because AI responds.
+
+\textbf{How to use it:}
+\begin{enumerate}
+  \item Describe the problem in plain language to AI as if explaining it to a
+        non-expert colleague.
+  \item Let AI ask clarifying questions or point out what you haven't explained.
+  \item Often, the act of constructing a clear explanation surfaces the answer.
+  \item If not, AI's follow-up questions tend to expose the assumption or gap you
+        were not seeing.
+\end{enumerate}
+
+\begin{tipbox}
+When you are stuck, write to AI as if writing to a thoughtful colleague who knows
+nothing about your specific system.
+The constraint of complete explanation often breaks the mental block.
+\end{tipbox}
+
+\section{Root Cause Analysis}
+\label{sec:rca}
+
+AI is useful for structuring root cause analysis (RCA) after an incident or failure.
+It knows common frameworks (5 Whys, Fishbone, Fault Tree) and can apply them to
+your scenario.
+
+\textbf{RCA prompts:}
+\begin{itemize}
+  \item \textit{``Apply the 5 Whys to this incident: [describe]. What is the likely systemic root cause?''}
+  \item \textit{``Generate a Fishbone diagram structure for this failure [describe] across these categories: People, Process, Technology, Environment.''}
+  \item \textit{``What systemic prevention measures would address these root causes, beyond just fixing the immediate trigger?''}
+\end{itemize}
+
+\section{Generating and Evaluating Options}
+\label{sec:options}
+
+One of AI's strongest roles in problem solving is generating options you haven't
+thought of, and then pressure-testing each option against your constraints.
+
+\begin{enumerate}
+  \item \textit{``Give me five different ways to solve [problem], ranging from minimal effort to comprehensive.''}
+  \item \textit{``What are the pros, cons, and risks of each option?''}
+  \item \textit{``Which option would you recommend given these constraints: [list], and why?''}
+  \item \textit{``What's the failure mode of the recommended option?''}
+\end{enumerate}
+
+\begin{warnbox}[Overconfidence Risk]
+AI presents all options with similar confidence regardless of how viable they are.
+A bad option and a good option look identical in format.
+You must apply domain knowledge to evaluate which options are actually feasible
+in your context.
+\end{warnbox}
+
+\section{When AI Hurts Problem Solving}
+\label{sec:ai-hurts}
+
+AI can actively harm problem-solving when:
+
+\begin{itemize}
+  \item \textbf{You outsource thinking too early.} Jumping to AI before forming your
+        own hypothesis degrades your own analytical skill over time.
+  \item \textbf{You accept the first answer.} The first answer is a starting point.
+        Push back, ask for alternatives, challenge the reasoning.
+  \item \textbf{The problem requires tacit knowledge.} Organisation-specific, cultural,
+        or relational problems cannot be solved by an AI that doesn't know your organisation.
+  \item \textbf{You mistake plausibility for correctness.} AI generates fluent,
+        confident-sounding text. Plausible is not the same as accurate.
+\end{itemize}
+
+Use AI in the later stages of problem framing and in option generation, not as a
+replacement for your own initial analysis.

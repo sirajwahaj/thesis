@@ -1,0 +1,100 @@
+% ==============================================================
+%  Chapter 5: AI for Data Scientists
+% ==============================================================
+\chapter{AI for Data Scientists}
+\label{ch:datascience}
+
+Data science involves a mix of programming, statistics, domain knowledge, and
+communication --- all areas where AI adds value at different points.
+The key distinction: AI can help you move faster through the mechanics of data work,
+but it cannot substitute for the judgement required to ask the right question,
+design a valid experiment, or interpret results in context.
+
+\section{Exploratory Data Analysis}
+\label{sec:eda}
+
+EDA is where AI provides the most immediate time savings.
+Generating pandas, Polars, or R code for standard exploration tasks --- distributions,
+correlations, missing value analysis --- takes seconds.
+
+\textbf{EDA prompt patterns:}
+\begin{itemize}
+  \item \textit{``Given this DataFrame schema [list columns and dtypes], write an EDA script that: plots distributions of all numeric columns, computes a correlation matrix, identifies columns with more than 5\% missing values, and flags potential outliers using IQR.''}
+  \item \textit{``Explain what this distribution shape [describe or paste plot] suggests about the data generating process.''}
+  \item \textit{``What are the standard statistical tests to check before assuming linearity between X and Y?''}
+\end{itemize}
+
+\begin{tipbox}
+Use ChatGPT Code Interpreter or Julius by uploading your CSV directly.
+These tools see your actual data and generate analysis code that runs immediately,
+without you needing to describe the schema.
+\end{tipbox}
+
+\section{Feature Engineering}
+\label{sec:features}
+
+Feature engineering is part domain knowledge, part technique.
+AI knows the technique well; you supply the domain knowledge.
+
+\textbf{Effective feature engineering prompts:}
+\begin{itemize}
+  \item \textit{``I'm predicting customer churn for a SaaS product. My features include: login frequency, support ticket count, MRR, and contract length. What derived features and interactions would you add?''}
+  \item \textit{``How should I encode this high-cardinality categorical feature (800 categories) for a gradient boosting model?''}
+  \item \textit{``What are the standard methods for handling class imbalance in this binary classification problem (98\% negative class)?''}
+\end{itemize}
+
+AI generates the code for encoding, scaling, and feature interaction quickly.
+You validate that the engineered features make sense in your business domain.
+
+\section{Model Selection and Development}
+\label{sec:models}
+
+AI is excellent at explaining the tradeoffs between modelling approaches,
+but it cannot run cross-validation on your data or know your latency/accuracy tradeoffs.
+
+\textbf{Model selection prompts:}
+\begin{itemize}
+  \item \textit{``I have 50,000 labelled samples, 150 features (mixed numeric and categorical), a binary target, and a requirement for sub-50 ms inference. Compare XGBoost, LightGBM, and a logistic regression baseline.''}
+  \item \textit{``What hyperparameters matter most for XGBoost on a high-cardinality, sparse dataset?''}
+  \item \textit{``Write a scikit-learn pipeline that: encodes categoricals, scales numerics, trains an XGBoost classifier, and produces a calibrated probability output.''}
+\end{itemize}
+
+\begin{warnbox}
+AI can generate training code but cannot validate that your train/test split is free of
+leakage, that your evaluation metric matches the business objective, or that the
+model will generalise to your production data distribution.
+These require your domain knowledge.
+\end{warnbox}
+
+\section{Statistical Reasoning and Experiment Design}
+\label{sec:stats}
+
+AI is a surprisingly strong statistical reasoning partner.
+It can explain test selection, identify violations of test assumptions, and structure
+A/B test designs.
+
+\textbf{Useful statistical prompts:}
+\begin{itemize}
+  \item \textit{``I want to test whether a new feature increased conversion rate. My current rate is 4.5\%, I want to detect a 0.5 pp improvement, with 80\% power and 5\% significance. What sample size do I need per group?''}
+  \item \textit{``What assumptions does a two-sample t-test make, and how do I check each one in Python?''}
+  \item \textit{``My data has heteroskedasticity. What regression alternatives should I consider?''}
+\end{itemize}
+
+\section{Interpreting and Communicating Results}
+\label{sec:interpret}
+
+Communicating findings to non-technical stakeholders is often harder than the analysis.
+AI helps translate technical results into business language.
+
+\textbf{Communication prompts:}
+\begin{itemize}
+  \item \textit{``I found a statistically significant increase in conversion rate (4.5\% to 5.1\%, p=0.003) from an A/B test. Write a two-paragraph summary for a non-technical VP.''}
+  \item \textit{``Explain what a SHAP value is to a product manager with no ML background.''}
+  \item \textit{``What are the limitations of this analysis I should proactively communicate?''}
+\end{itemize}
+
+\begin{tipbox}
+Ask AI to steelman potential objections to your analysis.
+\textit{``What would a critical statistician say is wrong with this methodology?''}
+This surfaces weaknesses before stakeholders do.
+\end{tipbox}

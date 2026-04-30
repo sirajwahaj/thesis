@@ -1,0 +1,142 @@
+% ==============================================================
+%  Chapter 1: The AI Landscape
+% ==============================================================
+\chapter{The AI Landscape: What Exists and How to Use It}
+\label{ch:overview}
+
+The AI ecosystem has expanded faster than any technology shift since the smartphone.
+There are now hundreds of tools, but they fall into a small number of clear categories.
+Understanding \emph{which tool does what} is the first skill.
+Using the wrong tool --- asking a chat model for real-time stock prices, or an image
+generator to review code --- wastes time and produces bad results.
+This chapter is your map.
+
+\section{Categories of AI Tools}
+\label{sec:categories}
+
+\begin{table}[htbp]
+\centering
+\caption{AI tool categories, primary strengths, and representative examples}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+\textbf{Category} & \textbf{Examples} & \textbf{Best For} \\
+\midrule
+Conversational LLMs    & ChatGPT, Claude, Gemini   & Reasoning, writing, Q\&A, planning, summarisation \\[4pt]
+Code Assistants        & GitHub Copilot, Cursor, Cody & Inline completion, refactoring, codebase chat \\[4pt]
+Agentic AI             & Copilot Agent, Cursor Agent, Devin & Multi-step autonomous task execution \\[4pt]
+Search AI              & Perplexity, Bing Copilot  & Research with live citations \\[4pt]
+Image / Video AI       & Midjourney, DALL-E, Runway & Diagrams, mockups, visual content \\[4pt]
+Voice / Transcript AI  & Whisper, Otter.ai, Teams Copilot & Meeting notes, audio transcription \\[4pt]
+Data Analysis AI       & Code Interpreter, Julius  & EDA, ad-hoc analysis, chart generation \\[4pt]
+RAG / Knowledge AI     & Notion AI, Confluence AI, custom & Q\&A over your own documents \\[4pt]
+Workflow Agents        & CrewAI, LangGraph, n8n    & Chained AI steps, tool use, pipelines \\
+\bottomrule
+\end{tabularx}
+\label{tab:ai-categories}
+\end{table}
+
+Each category has a different strength \emph{and} a different failure mode.
+Chat LLMs reason and write well but hallucinate facts.
+Search AI cites real sources but is shallower on complex reasoning.
+Code assistants stay in your flow but cannot see the big picture.
+Knowing the failure mode of your tool prevents expensive surprises.
+
+\section{One-Sentence Tool Selection Guide}
+\label{sec:choosing}
+
+\begin{itemize}
+  \item \textbf{Explain, reason, plan, write a draft} $\to$ conversational LLM (Claude, ChatGPT)
+  \item \textbf{Inline code while you type} $\to$ code assistant (Copilot, Cursor)
+  \item \textbf{Current facts with verifiable sources} $\to$ search AI (Perplexity)
+  \item \textbf{Your company's internal documents} $\to$ RAG tool (Notion AI, Confluence AI)
+  \item \textbf{Generate an image or diagram} $\to$ Midjourney or DALL-E
+  \item \textbf{Transcribe or summarise a meeting} $\to$ Otter.ai or Teams Copilot
+  \item \textbf{Execute a multi-step automated task} $\to$ agent mode (Cursor Agent, n8n)
+  \item \textbf{Explore and visualise a CSV} $\to$ ChatGPT Code Interpreter or Julius
+\end{itemize}
+
+\begin{tipbox}
+Start with \textbf{one tool per use case} rather than evaluating ten simultaneously.
+Deep proficiency with two tools produces more value than shallow use of ten.
+\end{tipbox}
+
+\section{The Capability Spectrum}
+\label{sec:spectrum}
+
+AI capability is not uniform. Think of it as a spectrum:
+
+\textbf{Strong:} Pattern recognition in well-documented domains (code, writing, common
+knowledge), translation between formats, summarisation, first-draft generation, explaining
+concepts with analogies, refactoring existing structures.
+
+\textbf{Moderate:} Multi-step reasoning, novel combinations of ideas, identifying
+unstated assumptions, evaluating tradeoffs, generating options in complex design
+problems.
+
+\textbf{Weak:} Highly novel problems with no prior art, strict factual accuracy under
+time pressure, knowing what it doesn't know, reasoning about real-world state it hasn't
+been shown, understanding implicit organisational or social context.
+
+The better you understand this spectrum, the better you can direct AI toward what it
+does well and take over where it struggles.
+
+\section{How to Maximise Value from AI}
+\label{sec:maximise}
+
+The professionals who extract the most value from AI share three habits:
+
+\begin{enumerate}
+  \item \textbf{Clear context before asking.}
+    They tell the AI what role it plays, the constraints, the goal, and the format they
+    want --- before asking anything. An AI that knows it is acting as a senior DevOps
+    engineer reviewing infrastructure security gives a different (better) answer than one
+    given a vague question.
+
+  \item \textbf{Iterative refinement, not one-shot hoping.}
+    They treat the first output as a working draft and refine with follow-up prompts
+    (\textit{``make it shorter'', ``add an example'', ``explain why this is better than X''}).
+    One-shot expectations lead to disappointment; iteration leads to quality.
+
+  \item \textbf{Critical evaluation before use.}
+    They read the output before using it. They run code, check facts, question logic,
+    and test edge cases. AI output is a fast first draft, not a final deliverable.
+\end{enumerate}
+
+\section{What AI Fundamentally Cannot Do}
+\label{sec:limitations}
+
+Understanding limitations is more valuable than understanding capabilities, because
+capabilities are obvious while limitations are where costly mistakes happen.
+
+\begin{warnbox}[Hard Limitations]
+\begin{itemize}
+  \item Cannot access data that appeared after its training cutoff
+  \item Cannot access real-time information without explicit tool integration
+  \item Cannot know your specific codebase, business rules, or org context unless you
+        provide them
+  \item Cannot guarantee factual accuracy --- it generates plausible text, not verified facts
+  \item Cannot reason about highly novel, first-principles problems without guidance
+  \item Cannot replace domain expertise, professional judgment, or accountability
+  \item Will agree with you if you push back, even when it was originally correct
+\end{itemize}
+\end{warnbox}
+
+AI is a force multiplier for people who already have skills, not a substitute for
+developing them. The more domain knowledge you bring, the better you direct AI and
+catch its errors.
+
+\section{The Human--AI Collaboration Model}
+\label{sec:collaboration}
+
+Think of AI as a very fast, very well-read junior colleague who:
+
+\begin{itemize}
+  \item Has read almost everything published but has experienced nothing directly
+  \item Can produce a confident first draft of almost anything in seconds
+  \item Sometimes makes up facts with complete conviction
+  \item Has no stake in the outcome and will tend to agree with whoever is talking
+  \item Works best with clear specifications, constraints, and feedback loops
+\end{itemize}
+
+Your job as the human is to be the senior: set direction, supply context, evaluate
+output critically, and take full responsibility for what gets shipped.

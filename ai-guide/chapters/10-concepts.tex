@@ -1,0 +1,309 @@
+% ==============================================================
+%  Chapter 10: Top 10 Concepts You Must Understand
+% ==============================================================
+\chapter{Top 10 Concepts You Must Understand}
+\label{ch:concepts}
+
+These are the ten concepts that separate people who use AI effectively from people who
+are constantly frustrated by it.
+You do not need to understand the mathematics behind them, but you need to understand
+what they \emph{mean in practice}.
+
+% --------------------------------------------------------------
+\section{Concept 1: Prompt Engineering}
+\label{sec:prompt-engineering}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 1: Prompt Engineering]
+The single most important skill for getting value from AI.
+A better prompt almost always produces a better result than a more powerful model.
+\end{conceptbox}
+
+\textbf{What it means:} Prompt engineering is the practice of structuring your input to
+an AI model to get the most useful output.
+It is not magic or trick-taking --- it is clear communication.
+
+\textbf{The core principles:}
+\begin{itemize}
+  \item \textbf{Role:} Tell the model who it should act as.
+    \textit{``You are a senior Python developer performing a security code review.''} \\
+    This activates the relevant knowledge domain and tone.
+  \item \textbf{Context:} Provide the background needed to give a useful answer.
+  \item \textbf{Task:} State the goal precisely.
+  \item \textbf{Format:} State the output format (bullet list, table, code block,
+    one paragraph).
+  \item \textbf{Constraints:} Say what to avoid, what length to target, what style
+    to use.
+\end{itemize}
+
+\textbf{The difference it makes:}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Vague prompt} & \textbf{Engineered prompt} \\
+\midrule
+``Fix my code'' & ``Review this Python function for correctness, edge cases, and \\
+& readability. Return: (1) a list of issues by severity, \\
+& (2) a corrected version, (3) explanation of each change.'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% --------------------------------------------------------------
+\section{Concept 2: Context Windows and Memory}
+\label{sec:context-window}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 2: Context Windows and Memory]
+AI has no persistent memory between conversations.
+Within a conversation, it can only see what fits in its context window.
+\end{conceptbox}
+
+\textbf{What it means:}
+A context window is the maximum amount of text (measured in tokens) that the model
+can ``see'' at once --- your message, its previous responses, and anything you paste.
+Models have context limits ranging from 8,000 to 200,000+ tokens depending on the
+model.
+
+\textbf{Practical implications:}
+\begin{itemize}
+  \item Long conversations or large file pastes eventually push early context out of
+        the window --- the model effectively forgets what was said at the start.
+  \item There is no persistent memory between sessions unless a tool explicitly saves
+        and re-injects it.
+  \item For large codebases, tools like Cursor and Copilot use selective retrieval
+        (embeddings and search) to bring relevant context in, rather than loading
+        everything at once.
+\end{itemize}
+
+\textbf{What to do:}
+Restate important context at the top of each new session.
+Don't assume AI remembers your tech stack, project constraints, or decisions from a
+previous conversation.
+
+% --------------------------------------------------------------
+\section{Concept 3: Hallucination}
+\label{sec:hallucination}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 3: Hallucination]
+AI generates the most statistically likely continuation of your prompt.
+Sometimes that continuation is false, but stated with complete confidence.
+\end{conceptbox}
+
+\textbf{What it means:}
+Hallucination is when AI generates incorrect information --- a non-existent function,
+a wrong date, a fabricated citation, a plausible but false code pattern --- without
+flagging any uncertainty.
+The problem is not that AI is sometimes wrong.
+The problem is that it is wrong and confident in the same way it is right and confident.
+
+\textbf{Where hallucination is most common:}
+\begin{itemize}
+  \item Specific version numbers, release dates, and API signatures
+  \item Citations, paper titles, and author names
+  \item Specific statistics and numerical facts without sources
+  \item Rare or niche topics with less training data
+\end{itemize}
+
+\textbf{How to mitigate it:}
+\begin{itemize}
+  \item Verify all specific facts against primary sources
+  \item Test all code before trusting it
+  \item Ask: \textit{``How confident are you in this and how would I verify it?''}
+  \item Use search AI (Perplexity) when you need cited, verifiable facts
+\end{itemize}
+
+% --------------------------------------------------------------
+\section{Concept 4: RAG (Retrieval-Augmented Generation)}
+\label{sec:rag}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 4: RAG]
+A technique for giving AI access to your specific documents and data without retraining
+the model.
+\end{conceptbox}
+
+\textbf{What it means:}
+RAG works in two steps:
+\begin{enumerate}
+  \item Your documents are converted to numerical vectors (embeddings) and stored in
+        a vector database.
+  \item When you ask a question, the most relevant document chunks are retrieved and
+        injected into the model's context alongside your question.
+\end{enumerate}
+This allows AI to answer questions about your internal knowledge base, documentation,
+or data without the model having been trained on that data.
+
+\textbf{Where you see it:}
+Notion AI, Confluence AI, GitHub Copilot's codebase understanding, and any
+``chat with your documents'' tool is using some form of RAG.
+
+\textbf{Why it matters for professionals:}
+RAG is how you deploy AI over proprietary, private, or up-to-date information.
+Understanding this concept helps you evaluate knowledge-AI tools and assess their
+limitations (retrieval quality and context window constraints).
+
+% --------------------------------------------------------------
+\section{Concept 5: AI Agents and Tool Use}
+\label{sec:agents}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 5: Agents and Tool Use]
+An AI agent takes sequences of actions autonomously: calling tools, writing code,
+reading files, and executing steps --- not just generating text.
+\end{conceptbox}
+
+\textbf{What it means:}
+An agent receives a high-level goal, plans a sequence of steps, calls tools (a web
+browser, a code interpreter, a file system, an API), evaluates the result, and
+continues until the goal is met.
+This is fundamentally different from a chat model that only generates text.
+
+\textbf{Where you see it:}
+Cursor Agent, GitHub Copilot Workspace, Devin, and n8n AI nodes are examples.
+
+\textbf{Practical implications:}
+\begin{itemize}
+  \item Agents can make mistakes that are hard to reverse (deleting files, sending
+        emails, modifying a database). Review before allowing irreversible actions.
+  \item The goal specification matters enormously --- unclear goals lead to
+        incorrect sequences of steps.
+  \item Current agents are good at well-defined, bounded tasks.
+        Open-ended or ambiguous tasks still fail often.
+\end{itemize}
+
+% --------------------------------------------------------------
+\section{Concept 6: Temperature and Sampling}
+\label{sec:temperature}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 6: Temperature]
+Temperature controls how creative vs.\ deterministic the model's outputs are.
+\end{conceptbox}
+
+\textbf{What it means:}
+At low temperature (near 0), the model picks the most likely word at each step ---
+outputs are consistent and conservative.
+At high temperature (near 1), more surprising word choices are possible --- outputs
+are more creative and varied, but also less reliable.
+
+\textbf{Practical implications:}
+\begin{itemize}
+  \item For code generation, debugging, and factual Q\&A: use low temperature (0.0--0.2)
+  \item For brainstorming, creative writing, and generating diverse options: use higher
+        temperature (0.5--0.8)
+  \item Most chat interfaces set temperature for you; but if using an API directly,
+        this is the first setting to configure
+\end{itemize}
+
+% --------------------------------------------------------------
+\section{Concept 7: Fine-Tuning vs.\ Prompting}
+\label{sec:finetuning}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 7: Fine-tuning vs.\ Prompting]
+Prompting instructs a general model. Fine-tuning trains a new model on your data.
+Use prompting first; fine-tune only when prompting hits a real wall.
+\end{conceptbox}
+
+\textbf{What it means:}
+\begin{itemize}
+  \item \textbf{Prompting:} Instructing a general-purpose model with a text prompt.
+    No training required, immediately testable, adjustable at any time.
+  \item \textbf{Fine-tuning:} Training a new model variant on your domain-specific data.
+    Expensive, requires curated data, and produces a model that is better at your
+    specific task but less flexible.
+\end{itemize}
+
+\textbf{When to fine-tune:}
+Fine-tuning makes sense when you have thousands of high-quality examples, your task
+is highly specialised and repetitive (consistent format, domain-specific terminology),
+and prompting has demonstrably hit its limits.
+
+\textbf{What to do instead:} RAG covers most knowledge retrieval needs.
+Few-shot prompting (giving 3--5 examples in your prompt) covers most style and format
+needs.
+Fine-tuning is usually a last resort, not a first step.
+
+% --------------------------------------------------------------
+\section{Concept 8: Embeddings and Semantic Search}
+\label{sec:embeddings}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 8: Embeddings]
+Embeddings are numerical representations of meaning that allow AI to find
+conceptually similar content, not just keyword matches.
+\end{conceptbox}
+
+\textbf{What it means:}
+An embedding converts text into a vector of numbers that encodes its meaning.
+Texts with similar meaning have similar vectors, regardless of the words used.
+This enables semantic search: finding documents about ``container orchestration'' even if
+the document says ``Kubernetes workload scheduling''.
+
+\textbf{Why it matters:}
+Embeddings underpin RAG, code search in Copilot, semantic similarity features, and
+recommendation systems.
+If you are building or evaluating any AI-powered search or knowledge retrieval tool,
+embedding quality is the key variable.
+
+% --------------------------------------------------------------
+\section{Concept 9: The Token Economy}
+\label{sec:tokens}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 9: Tokens and Cost]
+AI models process text as tokens (roughly 0.75 words each).
+Both input (your prompt) and output (the response) cost tokens.
+Cost, latency, and context limits all depend on token count.
+\end{conceptbox}
+
+\textbf{What it means:}
+\begin{itemize}
+  \item Longer prompts cost more to process and count against the context window
+  \item API pricing is usually per 1,000 input tokens and per 1,000 output tokens
+    (output costs more)
+  \item A 100-page document is roughly 75,000 tokens --- expensive to process in
+    full at every query; RAG is the solution
+\end{itemize}
+
+\textbf{Cost management:}
+\begin{itemize}
+  \item Be precise in prompts --- not because AI responds better to brevity,
+    but because concise prompts cost less
+  \item Use smaller/cheaper models for simple classification or extraction tasks;
+    reserve larger models for complex reasoning
+  \item Cache repeated system prompts in API implementations
+\end{itemize}
+
+% --------------------------------------------------------------
+\section{Concept 10: The Human-in-the-Loop Principle}
+\label{sec:hitl}
+% --------------------------------------------------------------
+
+\begin{conceptbox}[Concept 10: Human-in-the-Loop]
+AI generates; humans decide.
+The human in the loop is not a bottleneck --- they are the quality gate, the
+accountability holder, and the source of context AI cannot have.
+\end{conceptbox}
+
+\textbf{What it means:}
+Human-in-the-loop (HITL) is the principle that humans remain in the decision-making
+chain for any consequential AI output.
+The degree of human involvement varies by risk level:
+\begin{itemize}
+  \item \textbf{High risk} (production code, customer communication, financial data):
+    human reviews every output before use
+  \item \textbf{Medium risk} (internal drafts, analysis summaries): human reviews
+    spot-checks and retains override authority
+  \item \textbf{Low risk} (formatting, classification of internal data): automation
+    acceptable with monitoring
+\end{itemize}
+
+\textbf{Why it matters:}
+As AI becomes more capable, the temptation to remove humans from the loop grows.
+But AI failures in high-stakes domains are costly and hard to detect automatically.
+The skill is calibrating the right level of oversight for the right risk --- not
+applying maximum human review everywhere (too slow) or minimum review everywhere
+(too risky).
