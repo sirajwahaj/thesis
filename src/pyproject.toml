@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Dagster workload for thesis VM vs K8s benchmarking"
 requires-python = ">=3.13"
 dependencies = [
-    "dagster==1.12.22",
-    "dagster-postgres==0.28.22",
-    "dagster-webserver==1.12.22",
-    "dagster-docker==0.28.22",
-    "dagster-k8s==0.28.22",
+    "dagster==1.13.1",
+    "dagster-postgres==0.29.1",
+    "dagster-webserver==1.13.1",
+    "dagster-docker==0.29.1",
+    "dagster-k8s==0.29.1",
     "pandas>=3.0.2",
     "matplotlib>=3.10.8",
     "scipy>=1.17.1",
