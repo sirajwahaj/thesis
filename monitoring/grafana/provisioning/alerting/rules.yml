@@ -1,0 +1,124 @@
+# Grafana Managed Alert Rules — provisioned at startup.
+# These complement the Prometheus alerting rules (which Grafana also reads via
+# the Prometheus datasource). Grafana-native rules can query Loki (logs) and
+# combine metrics + logs in a single alert condition.
+#
+# Reference: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
+apiVersion: 1
+
+groups:
+  # ── Log-based alerts (Loki source) ─────────────────────────────────────────
+  - orgId: 1
+    name: dagster-log-alerts
+    folder: Thesis Alerts
+    interval: 1m
+    rules:
+      # Fire when Dagster logs contain ERROR or CRITICAL messages
+      - uid: dagster-log-errors
+        title: "Dagster Log Errors Detected"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: loki
+            model:
+              expr: 'sum(count_over_time({service=~"dagster.*"} |= "ERROR" [5m]))'
+              queryType: range
+              maxLines: 100
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: NoData
+        execErrState: Alerting
+        for: 2m
+        labels:
+          severity: warning
+          component: dagster
+        annotations:
+          summary: "Dagster services are emitting ERROR log lines"
+          description: "More than 1 ERROR log line in the last 5 minutes across Dagster containers."
+
+      # Fire when Dagster daemon logs show it has stopped processing
+      - uid: dagster-daemon-silent
+        title: "Dagster Daemon Log Silence (>5min)"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: loki
+            model:
+              expr: 'count_over_time({container="thesis-dagster-daemon"} [5m])'
+              queryType: range
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: critical
+          component: dagster
+        annotations:
+          summary: "Dagster daemon has produced no log output for 5+ minutes"
+          description: "The dagster-daemon container may have crashed or become unresponsive."
+
+  # ── Experiment health alerts (Prometheus source) ──────────────────────────
+  - orgId: 1
+    name: experiment-health
+    folder: Thesis Alerts
+    interval: 30s
+    rules:
+      # Alert if OOM kill count rises during an experiment run
+      - uid: experiment-oom-spike
+        title: "OOM Kill Detected During Experiment"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: Prometheus
+            model:
+              expr: "increase(container_oom_events_total{name!~\"thesis-.*\"}[2m])"
+              instant: false
+              range: true
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: NoData
+        execErrState: Alerting
+        for: 0s
+        labels:
+          severity: critical
+          component: experiment
+        annotations:
+          summary: "OOM kill detected in workload container"
+          description: "Container {{ $labels.name }} was OOM-killed. This is a valid VM failure event for SQ1/SQ2."

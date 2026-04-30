@@ -1,0 +1,68 @@
+# Promtail configuration — ships Docker container logs to Loki
+# Discovers containers via Docker socket and labels logs by container name
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+    tenant_id: ""
+
+scrape_configs:
+  # ── Docker container logs ───────────────────────────────────────────────
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Use container name as the primary label
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: "container"
+      # Use compose service name
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: "service"
+      # Use compose project name
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_project"]
+        target_label: "project"
+      # Tag Dagster run containers for experiment filtering
+      - source_labels: ["__meta_docker_container_name"]
+        regex: ".*(dagster.*run|workload).*"
+        target_label: "dagster_run"
+        replacement: "true"
+    pipeline_stages:
+      # Parse JSON logs (Dagster uses JSON logging)
+      - json:
+          expressions:
+            level: level
+            message: message
+            timestamp: timestamp
+      - labels:
+          level:
+      # Add timestamp from log if present
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02T15:04:05.000Z"
+          fallback_formats:
+            - "2006-01-02 15:04:05"
+          action_on_failure: fudge
+
+  # ── System logs (syslog) ────────────────────────────────────────────────
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: "^(?P<timestamp>\\w+ \\d+ [\\d:]+) (?P<hostname>\\S+) (?P<process>\\S+): (?P<message>.*)"
+      - labels:
+          hostname:
+          process:

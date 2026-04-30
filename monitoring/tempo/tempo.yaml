@@ -1,0 +1,51 @@
+# Grafana Tempo configuration — single-binary local mode
+# Receives OTEL traces from Dagster ops and exposes them to Grafana.
+#
+# Endpoints:
+#   :3200  — Tempo HTTP API (Grafana queries via datasource)
+#   :4317  — OTLP gRPC (applications send traces here)
+#   :4318  — OTLP HTTP (alternative)
+
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_bytes: 1_000_000     # 1 MB blocks; tiny for VM RAM
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 24h          # Keep traces for 24 hours only (VM disk constraint)
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal
+
+# Expose metrics for Prometheus scraping
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: thesis-vm
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+overrides:
+  max_traces_per_user: 10000
+  max_bytes_per_trace: 5_000_000

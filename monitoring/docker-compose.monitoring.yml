@@ -1,0 +1,274 @@
+# =============================================================================
+# Monitoring Stack — PLG (Prometheus + Loki + Grafana) + Alertmanager
+#
+# Industry-standard observability stack deployed ON THE VM alongside Dagster.
+# Three pillars of observability:
+#   1. METRICS  — Prometheus + node-exporter + cAdvisor + postgres-exporter
+#   2. LOGS     — Loki + Docker log driver (all container logs centralized)
+#   3. ALERTS   — Alertmanager (route alerts, group notifications)
+#   4. VISUALIZE — Grafana (unified dashboards for metrics + logs)
+#
+# Deployment:
+#   bash scripts/bash/monitoring-up.sh      (deploys to VM via SSH)
+#   make monitoring-up                       (same, via Makefile)
+#
+# Access (from host, where $VM_IP = contents of vm-ip.txt):
+#   - Grafana:      http://$VM_IP:3000  (admin/thesis2026)
+#   - Prometheus:   http://$VM_IP:9090
+#   - Alertmanager: http://$VM_IP:9093
+#   - Loki:         http://$VM_IP:3100 (API only)
+#
+# This runs on the same Docker daemon as infrastructure/docker-compose.yml
+# and shares the thesis_dagster_network to scrape Dagster containers.
+# =============================================================================
+
+name: thesis-monitoring
+
+services:
+  # ── Prometheus (Metrics) ───────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: thesis-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--storage.tsdb.retention.size=2GB"
+      - "--web.enable-lifecycle"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Alertmanager (Alert Routing) ───────────────────────────────────────────
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: thesis-alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.listen-address=:9093"
+    environment:
+      # Used in alertmanager.yml for Grafana annotation webhook auth.
+      # Set in .env.monitoring (see monitoring/.env.monitoring.example).
+      GRAFANA_API_KEY: ${GRAFANA_API_KEY:-}
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Loki (Log Aggregation) ─────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: thesis-loki
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Promtail (Log Collector → Loki) ────────────────────────────────────────
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: thesis-promtail
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail_positions:/promtail
+    networks:
+      - monitoring
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Grafana (Visualization) ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: thesis-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      # Set GRAFANA_ADMIN_PASSWORD in your environment or a .env file to override
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-thesis2026}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/experiment-overview.json
+      GF_FEATURE_TOGGLES_ENABLE: "traceToMetrics tempoSearch tempoBackendSearch correlations"
+      GF_EXPLORE_ENABLED: "true"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_ALERTING_ENABLED: "false"
+      GF_USERS_DEFAULT_THEME: dark
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_LOG_LEVEL: warn
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Pushgateway (custom experiment metrics) ────────────────────────────────
+  # Allows scripts to push one-off metrics (e.g. experiment_run_success_total)
+  # that don't fit the pull model. Use scripts/bash/push-grafana-annotation.sh.
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: thesis-pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9091/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Grafana Tempo (distributed tracing) ───────────────────────────────────
+  # Receives OTEL traces from Dagster ops via OTLP gRPC (:4317).
+  # Trace data is correlated with Prometheus metrics via exemplars.
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: thesis-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP API (Grafana queries)
+      - "4317:4317"   # OTLP gRPC (Dagster sends traces here)
+      - "4318:4318"   # OTLP HTTP (alternative endpoint)
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3200/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Node Exporter (Host Metrics) ───────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: thesis-node-exporter
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+      - "--collector.netclass.ignored-devices=^(veth.*|br-.*)$$"
+      - "--collector.textfile.directory=/host/tmp/node_exporter"
+    volumes:
+      - "/:/host:ro,rslave"
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    pid: host
+
+  # ── cAdvisor (Container Metrics) ───────────────────────────────────────────
+  # NOTE: cAdvisor uses Docker-specific mounts (docker.sock, /var/lib/docker).
+  # The VM monitoring stack requires Docker CE; it is not compatible with Podman.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: thesis-cadvisor
+    command:
+      - "--docker_only=true"
+      - "--housekeeping_interval=10s"
+      - "--store_container_labels=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  # ── PostgreSQL Exporter ────────────────────────────────────────────────────
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: thesis-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://dagster:dagster@postgres:5432/dagster?sslmode=disable"
+    networks:
+      - monitoring
+      - thesis_dagster_network
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+networks:
+  monitoring:
+    driver: bridge
+  thesis_dagster_network:
+    external: true
+    name: thesis_dagster_network
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alertmanager_data:
+  promtail_positions:
+  tempo_data:

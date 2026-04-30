@@ -1,0 +1,54 @@
+# Alertmanager configuration for thesis experiments
+# Routes alerts from Prometheus to appropriate receivers
+# In production you'd add email/Slack/PagerDuty — here we log + Grafana
+global:
+  resolve_timeout: 5m
+
+# Inhibition rules — suppress lower severity when critical fires
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ["alertname", "instance"]
+
+route:
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: "default"
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: "critical"
+      group_wait: 10s
+      repeat_interval: 1h
+    - matchers:
+        - severity="info"
+      receiver: "default"
+      group_wait: 1m
+
+receivers:
+  # ── Default receiver: webhook to Grafana annotations API ────────────────
+  - name: "default"
+    webhook_configs:
+      # Push alert events to Grafana as annotations (visible on dashboards).
+      # The Grafana API key must be set via GRAFANA_API_KEY env var in alertmanager.
+      # If not set, this will fail with 401 — alerts still appear in the UI (:9093).
+      # Note: webhook_configs only supports url, send_resolved, http_config, max_alerts.
+      # The standard Alertmanager JSON webhook payload is sent as-is to the endpoint.
+      - url: "http://grafana:3000/api/annotations"
+        send_resolved: true
+        http_config:
+          bearer_token: "${GRAFANA_API_KEY:-}"
+        max_alerts: 10
+
+  # ── Critical receiver: separate route, shorter repeat ────────────────────
+  - name: "critical"
+    webhook_configs:
+      - url: "http://grafana:3000/api/annotations"
+        send_resolved: true
+        http_config:
+          bearer_token: "${GRAFANA_API_KEY:-}"
+        max_alerts: 5

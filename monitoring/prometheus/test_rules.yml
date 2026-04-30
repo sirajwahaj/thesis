@@ -1,0 +1,104 @@
+# promtool unit tests for Prometheus recording rules and alert rules.
+# Run with: promtool test rules monitoring/prometheus/test_rules.yml
+# Or via:   make monitoring-test
+#
+# Reference: https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
+
+rule_files:
+  - recording_rules.yml
+  - alerts.yml
+
+evaluation_interval: 10s
+
+tests:
+  # ── Recording Rule: CPU utilization ───────────────────────────────────────
+  - name: "thesis:node_cpu_utilization:ratio"
+    interval: 10s
+    input_series:
+      - series: 'node_cpu_seconds_total{cpu="0", mode="idle"}'
+        values: "0+10x10"          # 10s of idle per interval = 100% idle = 0% used
+      - series: 'node_cpu_seconds_total{cpu="0", mode="user"}'
+        values: "0+0x10"           # no user time
+    promql_expr_test:
+      - expr: 'thesis:node_cpu_utilization:ratio'
+        eval_time: 2m
+        exp_samples:
+          - value: 0               # 100% idle → 0% used
+
+  # ── Recording Rule: Memory utilization ────────────────────────────────────
+  - name: "thesis:node_memory_utilization:ratio"
+    interval: 10s
+    input_series:
+      - series: 'node_memory_MemTotal_bytes{instance="thesis-vm"}'
+        values: "4294967296+0x30"  # 4 GB constant
+      - series: 'node_memory_MemAvailable_bytes{instance="thesis-vm"}'
+        values: "2147483648+0x30"  # 2 GB available = 50% used
+    promql_expr_test:
+      - expr: 'thesis:node_memory_utilization:ratio'
+        eval_time: 1m
+        exp_samples:
+          - value: 0.5             # 2/4 = 50%
+
+  # ── Alert: HighCpuUsage fires above 85% ───────────────────────────────────
+  - name: "HighCpuUsage fires when CPU > 85%"
+    interval: 10s
+    input_series:
+      # CPU 90% used (10% idle)
+      - series: 'node_cpu_seconds_total{cpu="0", mode="idle"}'
+        values: "0+1x100"          # 1s idle per 10s interval = 10% idle
+      - series: 'node_cpu_seconds_total{cpu="0", mode="user"}'
+        values: "0+9x100"          # 9s user per 10s interval = 90% used
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: HighCpuUsage
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              component: vm
+            exp_annotations:
+              summary: "VM CPU above 85% for 2+ minutes"
+
+  # ── Alert: HighCpuUsage does NOT fire below threshold ─────────────────────
+  - name: "HighCpuUsage does NOT fire when CPU is 50%"
+    interval: 10s
+    input_series:
+      - series: 'node_cpu_seconds_total{cpu="0", mode="idle"}'
+        values: "0+5x100"          # 5s idle = 50% idle
+      - series: 'node_cpu_seconds_total{cpu="0", mode="user"}'
+        values: "0+5x100"          # 5s user = 50% used
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: HighCpuUsage
+        exp_alerts: []
+
+  # ── Alert: CriticalMemoryUsage fires above 95% ────────────────────────────
+  - name: "CriticalMemoryUsage fires when memory > 95%"
+    interval: 10s
+    input_series:
+      - series: 'node_memory_MemTotal_bytes'
+        values: "4294967296+0x30"       # 4 GB
+      - series: 'node_memory_MemAvailable_bytes'
+        values: "107374182+0x30"        # ~100 MB available = ~97.5% used
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: CriticalMemoryUsage
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: vm
+
+  # ── Alert: DiskSpaceLow fires at >85% ─────────────────────────────────────
+  - name: "DiskSpaceLow fires when disk > 85%"
+    interval: 10s
+    input_series:
+      - series: 'node_filesystem_size_bytes{mountpoint="/"}'
+        values: "21474836480+0x60"      # 20 GB total
+      - series: 'node_filesystem_avail_bytes{mountpoint="/"}'
+        values: "2147483648+0x60"       # 2 GB free = 90% used
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: DiskSpaceLow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              component: vm

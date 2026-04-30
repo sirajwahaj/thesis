@@ -126,6 +126,11 @@ for level in "${LEVELS[@]}"; do
     mkdir -p "$RUN_DIR"
     START_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
+    # Push start annotation to Grafana (non-blocking, fails silently if monitoring not running)
+    bash "$SCRIPT_DIR/push-grafana-annotation.sh" \
+        "${EXPERIMENT} L${level} rep${rep} start" \
+        "${EXPERIMENT},${ENVIRONMENT},L${level},rep${rep}" 2>/dev/null || true
+
     # Start metrics collector in background
     METRICS_PID=""
     if [[ "$ENVIRONMENT" == "vm" ]]; then
@@ -227,6 +232,11 @@ for level in "${LEVELS[@]}"; do
 EOF
 
     echo "  Run ${rep} complete. Data saved to ${RUN_DIR}/"
+
+    # Push end annotation to Grafana
+    bash "$SCRIPT_DIR/push-grafana-annotation.sh" \
+        "${EXPERIMENT} L${level} rep${rep} end" \
+        "${EXPERIMENT},${ENVIRONMENT},L${level},rep${rep}" --end 2>/dev/null || true
 
     # Cooldown (skip after last run)
     LAST_LEVEL="${LEVELS[$((${#LEVELS[@]} - 1))]}"

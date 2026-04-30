@@ -110,4 +110,54 @@ jobs:
             src/dagster.yaml \
             src/workspace.yaml \
             scripts/kind-config.yaml \
-            k8s/helm/dagster-thesis/values.yaml
+            k8s/helm/dagster-thesis/values.yaml \
+            monitoring/prometheus/prometheus.yml \
+            monitoring/prometheus/alerts.yml \
+            monitoring/prometheus/recording_rules.yml \
+            monitoring/alertmanager/alertmanager.yml \
+            monitoring/loki/loki.yml \
+            monitoring/promtail/promtail.yml \
+            monitoring/grafana/provisioning/datasources/prometheus.yml \
+            monitoring/grafana/provisioning/dashboards/dashboards.yml \
+            monitoring/grafana/provisioning/alerting/contact-points.yml \
+            monitoring/grafana/provisioning/alerting/rules.yml
+
+  validate-monitoring:
+    name: Lint monitoring configs (promtool + amtool + JSON)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Prometheus (promtool)
+        run: |
+          PROM_VERSION="2.53.0"
+          curl -sL "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 -C /usr/local/bin prometheus-${PROM_VERSION}.linux-amd64/promtool
+
+      - name: Install Alertmanager (amtool)
+        run: |
+          AM_VERSION="0.27.0"
+          curl -sL "https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 -C /usr/local/bin alertmanager-${AM_VERSION}.linux-amd64/amtool
+
+      - name: Check Prometheus config
+        run: promtool check config monitoring/prometheus/prometheus.yml
+
+      - name: Check alert rules
+        run: promtool check rules monitoring/prometheus/alerts.yml
+
+      - name: Check recording rules
+        run: promtool check rules monitoring/prometheus/recording_rules.yml
+
+      - name: Run Prometheus rule unit tests
+        working-directory: monitoring/prometheus
+        run: promtool test rules test_rules.yml
+
+      - name: Check Alertmanager config
+        run: amtool check-config monitoring/alertmanager/alertmanager.yml
+
+      - name: Validate dashboard JSON files
+        run: |
+          for f in monitoring/grafana/dashboards/*.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "OK: $f"
+          done

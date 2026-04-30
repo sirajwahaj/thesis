@@ -1,0 +1,102 @@
+# Prometheus configuration for thesis experiment monitoring
+# Scrapes metrics from: node-exporter (VM/host), cAdvisor (containers),
+# postgres-exporter, Loki, and Alertmanager
+
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  scrape_timeout: 8s
+  external_labels:
+    cluster: "thesis-vm"
+    environment: "experiment"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+rule_files:
+  - "alerts.yml"
+  - "recording_rules.yml"
+
+scrape_configs:
+  # ── Host / VM metrics via node-exporter ─────────────────────────────────
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          instance: "thesis-vm"
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "node_(cpu|memory|disk|network|filesystem|load).*"
+        action: keep
+
+  # ── Container metrics via cAdvisor ──────────────────────────────────────
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          instance: "thesis-vm"
+    metric_relabel_configs:
+      # Only keep container metrics we care about
+      - source_labels: [__name__]
+        regex: "container_(cpu|memory|network|fs|oom|last_seen|start_time).*"
+        action: keep
+      # Drop metrics from monitoring containers (reduce noise)
+      - source_labels: [name]
+        regex: "thesis-(prometheus|grafana|loki|promtail|alertmanager|node-exporter|cadvisor|postgres-exporter)"
+        action: drop
+
+  # ── Prometheus self-monitoring ──────────────────────────────────────────
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ── PostgreSQL metrics ──────────────────────────────────────────────────
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          instance: "dagster-db"
+
+  # ── Loki metrics ───────────────────────────────────────────────────────
+  - job_name: "loki"
+    static_configs:
+      - targets: ["loki:3100"]
+
+  # ── Pushgateway (custom experiment metrics) ────────────────────────────────
+  - job_name: "pushgateway"
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+        labels:
+          instance: "thesis-experiments"
+
+  # ── Alertmanager metrics ───────────────────────────────────────────────
+  - job_name: "alertmanager"
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  # ── K8s Prometheus federation (opt-in) ─────────────────────────────────
+  # Pulls selected K8s metrics into VM Prometheus for unified dashboards.
+  # Only active when K8S_PROMETHEUS_URL is set in monitoring/.env.monitoring
+  # (set to the Kind node IP:30090, e.g. http://172.18.0.2:30090).
+  - job_name: "k8s-federation"
+    honor_labels: true
+    metrics_path: "/federate"
+    params:
+      match[]:
+        - '{job="kube-state-metrics"}'
+        - '{job="node-exporter"}'
+        - '{__name__=~"kube_pod_(status_phase|info|created|ready_time).*", namespace="dagster"}'
+        - '{__name__=~"container_(cpu_usage_seconds_total|memory_usage_bytes).*", namespace="dagster"}'
+        - '{__name__=~"kube_pod_container_status_restarts_total", namespace="dagster"}'
+    static_configs:
+      - targets: ["${K8S_PROMETHEUS_URL:-disabled:9999}"]
+        labels:
+          cluster: "kind-thesis"
+    relabel_configs:
+      # Skip this scrape if target contains "disabled" (K8S_PROMETHEUS_URL not set)
+      - source_labels: [__address__]
+        regex: "disabled:.*"
+        action: drop
