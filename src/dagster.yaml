@@ -1,0 +1,50 @@
+# Dagster instance configuration
+# VM: DockerRunLauncher — each job runs as a Docker container on the VM
+# K8s: K8sRunLauncher is configured via Helm values (k8s/helm/dagster-thesis/values.yaml)
+
+storage:
+  postgres:
+    postgres_db:
+      username:
+        env: DAGSTER_PG_USERNAME
+      password:
+        env: DAGSTER_PG_PASSWORD
+      hostname:
+        env: DAGSTER_PG_HOSTNAME
+      db_name:
+        env: DAGSTER_PG_DB
+      port: 5432
+
+run_launcher:
+  module: dagster_docker
+  class: DockerRunLauncher
+  config:
+    image: "ghcr.io/sirajwahaj/thesis-workload:v0.1"
+    # Use the compose project network so job containers reach postgres by hostname
+    network: "thesis_dagster_network"
+    container_kwargs:
+      auto_remove: true
+      # 1 vCPU limit — matches K8s pod resource limit (1000m)
+      # Docker uses nano_cpus: 1 CPU = 1_000_000_000 nano CPUs
+      nano_cpus: 1000000000
+      # 2 GiB memory limit per run container.
+      # The Dagster multiprocess executor forks child processes; Python + dagster
+      # framework RSS is ~600-800 MB, plus the 400 MB workload allocation = ~1-1.2 GB.
+      # 2g gives headroom so individual containers never artificially OOM.
+      # System-level OOM still occurs when collective usage exceeds the 3 GB VM RAM
+      # (approx. L3-L5), producing the degradation signature captured in SQ1.
+      mem_limit: "2g"
+    env_vars:
+      - DAGSTER_HOME
+      - WORKLOAD_DURATION_SECONDS
+      - DAGSTER_PG_USERNAME
+      - DAGSTER_PG_PASSWORD
+      - DAGSTER_PG_HOSTNAME
+      - DAGSTER_PG_DB
+
+compute_logs:
+  module: dagster.core.storage.local_compute_log_manager
+  class: LocalComputeLogManager
+  config:
+    base_dir:
+      env: DAGSTER_HOME

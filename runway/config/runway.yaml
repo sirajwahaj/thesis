@@ -1,0 +1,23 @@
+# Slack configuration
+slack_token: ""           # or set SLACK_TOKEN env var
+slack_channel: "#data-alerts"
+
+# Database
+database_url: "sqlite://~/.runway/metrics.db"   # or postgres://user:pass@host/db
+
+# SLA configuration
+# Breach threshold = first 5-run baseline * sla_multiplier
+sla_multiplier: 2.0
+
+# Crossover threshold (from Wahaj 2026 — VM degrades at 3 concurrent jobs)
+concurrency_alert_threshold: 3
+
+# Prediction settings
+min_runs_for_prediction: 5    # minimum runs before prediction is attempted
+max_horizon_days: 90          # do not predict beyond this window
+
+# Restrict monitoring to specific pipelines (leave empty to monitor all)
+pipeline_names: []
+#  - orders_etl
+#  - user_sync
+#  - analytics_refresh

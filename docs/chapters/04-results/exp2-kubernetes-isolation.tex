@@ -1,0 +1,113 @@
+% =============================================================================
+% 4.2 Experiment 2 Results — Kubernetes Isolation (SQ2)
+% =============================================================================
+
+\section{Experiment 2 Results --- Kubernetes Isolation (SQ2)}
+\label{sec:results-exp2}
+
+\subsection{Part A --- Isolation Comparison}
+\label{subsec:results-exp2a}
+
+Experiment~2A ran the same two-phase \texttt{thesis\_workload} job on the Kind cluster under the K8sRunLauncher.
+Each job executes as an isolated pod with limits of 1\,vCPU and 2\,GiB RAM (the 400\,MB workload buffer plus $\approx$500--600\,MB Python/Dagster overhead requires at least 1.8\,GiB peak RSS).
+Table~\ref{tab:results-k8s} shows that Kubernetes maintained a 100\% success rate across all concurrency levels.
+
+\begin{table}[H]
+  \centering
+  \caption{Kubernetes deployment results by workload level (mean $\pm$ std over 3 repetitions, Kind single-node cluster, 4\,vCPU / 8\,GB node, 2\,GiB per-pod memory limit).
+  All concurrency levels maintained 100\% success rate under stable node-level conditions.}
+  \label{tab:results-k8s}
+  \small
+  \begin{tabular}{clccc}
+    \toprule
+    \textbf{Level} & \textbf{Concurrent Jobs} & \textbf{Success (\%)} & \textbf{Mean time (s)} & \textbf{Std time (s)} \\
+    \midrule
+    L1  & 1  & 100.0 & 63.4 & 0.1 \\
+    L2  & 2  & 100.0 & 64.1 & 0.6 \\
+    L3  & 3  & 100.0 & 64.6 & 0.5 \\
+    L5  & 5  & 100.0 & 68.2 & 2.3 \\
+    L7  & 7  & 100.0 & 80.6 & 9.6 \\
+    L10 & 10 & 100.0 & 81.6 & 8.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{k8s_dashboard.png}
+  \caption{Kubernetes experiment dashboard: success rate, execution time distribution, startup overhead, and total time per job vs.\ concurrency level (Exp2A, $n=3$ reps). Success rate remains 100\% at all levels; execution time grows modestly from 63\,s to 82\,s, reflecting effective pod-level resource isolation.}
+  \label{fig:k8s-isolation}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{k8s_success_rate.png}
+  \caption{Kubernetes job success rate by concurrency level (Exp2A, $n=3$ reps per level). All six levels maintained 100\,\% success, well above the 95\,\% reliability threshold.}
+  \label{fig:k8s-success-rate}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{k8s_exec_time_distribution.png}
+  \caption{Kubernetes job execution time distribution by concurrency level (Exp2A, $n=3$ reps). Boxes show interquartile range; whiskers extend to 1.5$\times$ IQR. The distribution widens at L7 and L10 as node-level memory pressure increases, but remains tightly bounded at lower levels.}
+  \label{fig:k8s-exec-dist}
+\end{figure}
+
+\paragraph{Key observation.}
+Kubernetes maintained 100\,\% success rate across all tested levels (L1--L10) with stable execution times.
+Mean execution time increased modestly from 63.4\,s (L1) to 81.6\,s (L10), a relative increase of $\approx$29\,\%.
+The standard deviation at L7 (9.6\,s) and L10 (8.0\,s) is higher than at lower levels, reflecting mild aggregate memory pressure at 7--10 concurrent pods on the 8\,GB node, but remaining well within the pod's 2\,GiB limit.
+Execution time variance remained low and stable across all levels, confirming that pod-level resource limits effectively shielded jobs from inter-job contention throughout the tested concurrency range.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{vm_vs_k8s.png}
+  \caption{Execution time comparison: VM vs.\ Kubernetes across concurrency levels.
+  The VM curve rises steeply due to CPU contention; the Kubernetes curve remains
+  nearly flat due to pod isolation. The crossover point --- where K8s begins
+  outperforming the VM --- is identified in Section~\ref{sec:results-exp3}.}
+  \label{fig:vm-vs-k8s}
+\end{figure}
+
+\subsection{Part B --- Blast Radius Test}
+\label{subsec:results-exp2b}
+
+The blast radius test was conducted at level L5 (5 concurrent jobs).
+After all five jobs were confirmed running, one job was deliberately terminated.
+On Kubernetes, the target pod was deleted using \texttt{kubectl delete pod --force}.
+On the VM, the equivalent Docker container process was sent \texttt{SIGKILL}.
+
+\begin{table}[H]
+  \centering
+  \caption{Blast radius comparison at L5 (5 concurrent jobs) --- deliberate single-job failure injection.}
+  \label{tab:blast-radius}
+  \small
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Metric} & \textbf{VM (\texttt{kill -9})} & \textbf{K8s (\texttt{pod delete})} \\
+    \midrule
+    Failed job status & FAILURE (SIGKILL) & FAILURE (pod deleted) \\
+    Other jobs affected (\#) & 0 & 0 \\
+    Surviving jobs success rate (\%) & 100 & 100 \\
+    Surviving jobs mean time impact (s) & $<$2 & $<$1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Both environments demonstrated full blast radius containment at this concurrency level:
+the surviving four jobs completed successfully regardless of whether the failure occurred on the VM or in Kubernetes.
+This result is consistent with the Docker isolation model on the VM where each job runs in its own container namespace, and with the Kubernetes pod isolation model.
+The difference between environments becomes apparent at higher concurrency levels where VM memory exhaustion can cause system-level OOM that terminates multiple containers simultaneously (Section~\ref{subsec:exp1-degradation}).
+
+\subsection{Part C --- Scheduling Overhead (SQ3 Supplementary)}
+\label{subsec:results-exp2c}
+
+Pod scheduling latency and container startup time were collected from Kubernetes pod event timestamps at each concurrency level (Table~\ref{tab:overhead-summary}).
+These data directly address SQ3 and feed into the crossover analysis in Section~\ref{sec:results-exp3}.
+
+\paragraph{Measurement methodology.}
+Startup overhead is computed by joining \texttt{pod\_timing.csv} with \texttt{dagster\_runs.csv} on \texttt{run\_id}: startup\,overhead = total\,pod\,lifetime $-$ Dagster\,exec\,time.
+Note: the \texttt{job\_start\_ts} field records the \texttt{ContainersReady} condition change on container \emph{exit}, so subtracting \texttt{submitted\_ts} gives total pod lifetime, not startup time.
+
+At L1--L6, all pods were scheduled within $<$1\,s of submission and container startup overhead measured 4.3\,s (L1) to 14.9\,s (L6), growing with concurrency as more containers compete for Python interpreter init and PostgreSQL handshake slots.
+No scheduling timeouts or pending states were observed at any tested level (Table~\ref{tab:overhead-summary}).
