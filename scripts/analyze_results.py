@@ -37,7 +37,7 @@ def run_notebook(notebook_path: str, timeout: int = 600) -> int:
     preserved for inspection in VS Code.
     """
     try:
-        import nbformat  # noqa: F401 — just check it's installed
+        import nbformat  # noqa: F401 - just check it's installed
     except ImportError:
         print("Installing nbconvert + nbformat via uv...")
         subprocess.run(
@@ -91,9 +91,9 @@ def main() -> None:
 
     if rc == 0:
         print("\nAnalysis complete.")
-        print(f"  Outputs  → data/processed/")
-        print(f"  Figures  → results/")
-        print(f"  Notebook → {args.notebook}  (outputs saved in-place)")
+        print(f"  Outputs  -> data/processed/")
+        print(f"  Figures  -> results/")
+        print(f"  Notebook -> {args.notebook}  (outputs saved in-place)")
         print()
         print("Run `make copy-figures` to copy PNGs into docs/figures/ for LaTeX.")
     else:
