@@ -21,7 +21,7 @@ DRY_RUN=false
 CUSTOM_LEVELS=""
 REPETITIONS=3
 COOLDOWN=60        # seconds between batches
-  WORKLOAD_SECS=60   # total job duration: 30s cpu_burn + 30s memory_pressure
+WORKLOAD_SECS=60   # total job duration: 30s cpu_burn + 30s memory_pressure
 DEFAULT_LEVELS="1 2 3 5 7 10"  # L1=1, L2=2, L3=3, L5=5, L7=7, L10=10 (locked — non-contiguous to focus on inflection points)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -33,12 +33,18 @@ HOSTNAME_VALUE="$(hostname -s 2>/dev/null || hostname)"
 # For VM experiments, default DAGSTER_HOST and DAGSTER_PG_HOSTNAME to the VM IP
 # (can be overridden by setting those env vars explicitly before running)
 _VM_IP_FILE="$REPO_ROOT/vm-ip.txt"
-if [[ "${2:-}" == "vm" && -f "$_VM_IP_FILE" ]]; then
-  _VM_IP="$(cat "$_VM_IP_FILE" | tr -d '[:space:]')"
-  if [[ -n "$_VM_IP" ]]; then
-    DAGSTER_HOST="${DAGSTER_HOST:-$_VM_IP}"
-    export DAGSTER_PG_HOSTNAME="${DAGSTER_PG_HOSTNAME:-$_VM_IP}"
+if [[ "${2:-}" == "vm" ]]; then
+  if [[ ! -f "$_VM_IP_FILE" ]]; then
+    echo "[FAIL] vm-ip.txt not found. Run: make vm-up"
+    exit 1
   fi
+  _VM_IP="$(cat "$_VM_IP_FILE" | tr -d '[:space:]')"
+  if [[ -z "$_VM_IP" ]]; then
+    echo "[FAIL] vm-ip.txt is empty. Run: make vm-up"
+    exit 1
+  fi
+  DAGSTER_HOST="${DAGSTER_HOST:-$_VM_IP}"
+  export DAGSTER_PG_HOSTNAME="${DAGSTER_PG_HOSTNAME:-$_VM_IP}"
 fi
 DAGSTER_HOST="${DAGSTER_HOST:-localhost}"
 
@@ -91,6 +97,18 @@ case "$EXPERIMENT" in
     exit 1
     ;;
 esac
+
+# -------- HELPERS --------
+# Cleanup function to kill port-forward processes on port 15432
+cleanup_port_forward() {
+  lsof -ti:15432 2>/dev/null | xargs kill -9 2>/dev/null || true
+  pkill -f "15432:localhost:5432" 2>/dev/null || true
+  pkill -f "15432:5432" 2>/dev/null || true
+  sleep 1
+}
+
+# Graceful shutdown on interrupt
+trap 'echo ""; echo "[INTERRUPTED] Experiment interrupted. Cleaning up..."; cleanup_port_forward; exit 130' INT TERM
 
 # -------- BANNER --------
 echo "=============================================="
@@ -172,10 +190,7 @@ for level in "${LEVELS[@]}"; do
     PG_PORT="15432"
     PG_FWD_PID=""
     # Always free port 15432 before opening a new tunnel to avoid EADDRINUSE
-    lsof -ti:15432 2>/dev/null | xargs kill -9 2>/dev/null || true
-    pkill -f "15432:localhost:5432" 2>/dev/null || true
-    pkill -f "15432:5432" 2>/dev/null || true
-    sleep 1
+    cleanup_port_forward
     if [[ "$ENVIRONMENT" == "vm" ]]; then
       # SSH tunnel: local 15432 -> postgres:5432 inside VM Docker network
       _VM_IP="$(cat "$REPO_ROOT/vm-ip.txt" | tr -d '[:space:]')"
@@ -201,8 +216,8 @@ for level in "${LEVELS[@]}"; do
       kill "$PG_FWD_PID" 2>/dev/null || true
       wait "$PG_FWD_PID" 2>/dev/null || true
     fi
-    # Also kill any lingering SSH tunnel on that port
-    pkill -f "15432:localhost:5432" 2>/dev/null || true
+    # Also kill any lingering tunnel on that port
+    cleanup_port_forward
 
     # Collect pod timing for K8s experiments
     if [[ "$ENVIRONMENT" == "k8s" ]]; then

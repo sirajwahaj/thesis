@@ -1,5 +1,5 @@
 [project]
-name = "src"
+name = "thesis-workload"
 version = "0.1.0"
 description = "Dagster workload for thesis VM vs K8s benchmarking"
 requires-python = ">=3.13"

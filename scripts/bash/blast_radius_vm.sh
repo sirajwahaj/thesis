@@ -32,6 +32,9 @@ fi
 
 mkdir -p "$(dirname "$OUTPUT")"
 
+# Ensure we record results even on early exit
+trap 'echo "[INTERRUPTED] Blast radius test interrupted."; exit 130' INT TERM
+
 echo "Blast radius test (VM — DockerRunLauncher) — waiting ${WAIT_BEFORE_KILL}s for containers to start..."
 sleep "$WAIT_BEFORE_KILL"
 

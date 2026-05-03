@@ -1,6 +1,6 @@
 # Dagster workload container
 # Python 3.13-slim matches the uv.lock requires-python = ">=3.13" (dagster 1.12.22)
-FROM python:3.13-slim
+FROM python:3.13.3-slim
 
 # Set working directory
 WORKDIR /opt/dagster/app
@@ -17,7 +17,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install dependencies into the virtual environment
 RUN uv sync --frozen
-RUN uv pip install --editable .
+RUN uv pip install .
 
 # Copy workload code
 COPY workload/ ./workload/
@@ -25,8 +25,21 @@ COPY workload/ ./workload/
 # Set environment variables
 ENV DAGSTER_HOME=/opt/dagster/dagster_home
 ENV WORKLOAD_DURATION_SECONDS=30
-RUN mkdir -p $DAGSTER_HOME
+
+# Create non-root user for security
+RUN useradd -m -u 1000 dagster && \
+    mkdir -p $DAGSTER_HOME && \
+    chown -R dagster:dagster /opt/dagster
 
 # Copy Dagster config files
-COPY dagster.yaml $DAGSTER_HOME/dagster.yaml
-COPY workspace.yaml $DAGSTER_HOME/workspace.yaml
+COPY --chown=dagster:dagster dagster.yaml $DAGSTER_HOME/dagster.yaml
+COPY --chown=dagster:dagster workspace.yaml $DAGSTER_HOME/workspace.yaml
+
+# Switch to non-root user
+USER dagster
+
+# Expose gRPC port
+EXPOSE 4000
+
+# Default command: start Dagster gRPC server
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-m", "workload"]

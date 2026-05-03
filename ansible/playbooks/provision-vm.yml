@@ -37,7 +37,7 @@
         systemctl restart systemd-timesyncd 2>/dev/null || true
         sleep 3
       changed_when: false
-      ignore_errors: true
+      failed_when: false
 
     - name: Update apt cache
       ansible.builtin.apt:

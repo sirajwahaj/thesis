@@ -61,7 +61,7 @@ if [[ "$CHECK_VM" == "true" ]]; then
     else
       echo "  [OK] vm-ip.txt: $VM_IP"
       # 2. SSH accessible
-      if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+      if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 \
           "ubuntu@$VM_IP" "echo ok" &>/dev/null; then
         echo "  [OK] SSH: ubuntu@$VM_IP reachable"
         # 3. Docker is running
@@ -123,7 +123,7 @@ if [[ "$CHECK_K8S" == "true" ]]; then
         -o jsonpath='{.items[*].metadata.name}' 2>/dev/null | tr ' ' '\n' | grep -v '^$' || true)"
       if [[ -z "$NOT_READY" ]]; then
         RUNNING_COUNT="$(kubectl get pods -n dagster --field-selector='status.phase=Running' \
-          -o jsonpath='{.items}' 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" || echo "0")"
+          --no-headers 2>/dev/null | wc -l | tr -d ' ')"
         echo "  [OK] Dagster pods: $RUNNING_COUNT running"
       else
         ERRORS+=("K8s: pods not running: $NOT_READY — run: make k8s-deploy-dagster")

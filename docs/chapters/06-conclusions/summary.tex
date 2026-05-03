@@ -18,7 +18,7 @@ Kubernetes maintained 100\,\% job success rate across all concurrency levels (L1
 Execution time variance was dramatically lower on Kubernetes than on the VM at every level.
 Container startup overhead (pod creation $\rightarrow$ run completion minus Dagster-measured execution time) ranged from 4.3\,s at L1 to 14.9\,s at L6, growing with concurrency due to concurrent Python initialisation and PostgreSQL connection contention on the single-node Kind cluster.
 At L1, this represents $\approx$7\% of job execution time; at L6, $\approx$18\%.
-Blast radius containment tests (Exp 2B, L4: 5 concurrent jobs) demonstrated that VM resource-contention failures cascade (35.6\,\% success rate) while Kubernetes pod-level cgroup isolation fully prevents cross-job interference (100\,\% success rate).
+Blast radius containment tests (Exp 2B, L4: 5 concurrent jobs) demonstrated that VM resource-contention failures cascade (40.0\,\% success rate) while Kubernetes pod-level cgroup isolation fully prevents cross-job interference (100\,\% success rate).
 
 \paragraph{Experiment 3 --- Overhead and crossover (SQ3, SQ4).}
 Kubernetes pod scheduling latency was $<$1\,s in the local Kind cluster.

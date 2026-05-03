@@ -67,7 +67,11 @@ def collect_pod_timing(namespace: str, output_file: str) -> None:
         print(f"Error running kubectl: {result.stderr}", file=sys.stderr)
         sys.exit(1)
 
-    pods = json.loads(result.stdout).get("items", [])
+    try:
+        pods = json.loads(result.stdout).get("items", [])
+    except json.JSONDecodeError as e:
+        print(f"Error parsing kubectl JSON output: {e}", file=sys.stderr)
+        sys.exit(1)
 
     with open(output_file, "w", newline="") as f:
         writer = csv.writer(f)

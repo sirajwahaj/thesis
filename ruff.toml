@@ -1,0 +1,10 @@
+# Ruff configuration for thesis project
+# Applied to scripts/ and src/ Python code
+
+[lint]
+# Ignore line length — many CLI argument strings and docstrings exceed 88 chars
+ignore = ["E501"]
+
+[lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]

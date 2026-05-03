@@ -23,13 +23,13 @@ jobs:
           python-version: "3.13"
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install --no-cache-dir ruff
 
       - name: Lint scripts/
-        run: ruff check scripts/ --ignore E501
+        run: ruff check scripts/
 
       - name: Lint src/
-        run: ruff check src/ --ignore E501
+        run: ruff check src/
 
   validate-json:
     name: Validate JSON
@@ -56,8 +56,7 @@ jobs:
         run: sudo apt-get install -y shellcheck
 
       - name: Check scripts/bash/
-        # --severity=error: fail only on actual errors, not pre-existing warnings.
-        # Warnings are tracked as tech-debt; see scripts/bash/ for inline disable comments.
+        # --severity=error: fail only on actual errors, not pre-existing style warnings.
         run: shellcheck --severity=error scripts/bash/*.sh
 
       - name: Check project/scripts/
@@ -75,7 +74,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install nbformat
-        run: pip install nbformat
+        run: pip install --no-cache-dir nbformat
 
       - name: Validate notebook structure
         run: |
@@ -102,11 +101,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install yamllint
-        run: pip install yamllint
+        run: pip install --no-cache-dir yamllint
 
       - name: Lint YAML files
         run: |
-          yamllint -d '{extends: relaxed, rules: {line-length: {max: 120}}}' \
+          yamllint \
             src/dagster.yaml \
             src/workspace.yaml \
             scripts/kind-config.yaml \

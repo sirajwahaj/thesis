@@ -101,8 +101,11 @@ def graphql_request(host: str, port: int, query: str, variables: dict) -> dict:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.URLError as e:
+        raise ConnectionError(f"Cannot reach Dagster at {url}: {e}") from e
 
 
 def launch_single_run(

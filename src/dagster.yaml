@@ -37,6 +37,7 @@ run_launcher:
     env_vars:
       - DAGSTER_HOME
       - WORKLOAD_DURATION_SECONDS
+      - WORKLOAD_MEMORY_MB
       - DAGSTER_PG_USERNAME
       - DAGSTER_PG_PASSWORD
       - DAGSTER_PG_HOSTNAME
@@ -48,3 +49,7 @@ compute_logs:
   config:
     base_dir:
       env: DAGSTER_HOME
+
+# Disable telemetry to avoid network calls during experiments
+telemetry:
+  enabled: false

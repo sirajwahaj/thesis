@@ -44,9 +44,7 @@ if [[ ! -f "$SSH_KEY" ]]; then
   ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "thesis-vm"
   echo ""
   echo "[INFO] Public key generated. Inject it into the VM:"
-  echo "   multipass exec thesis-vm -- bash -c \"
-
-  echo "     \"mkdir -p ~/.ssh && echo '$(cat "${SSH_KEY}".pub)' >> ~/.ssh/authorized_keys\""
+  echo "   multipass exec thesis-vm -- bash -c \"mkdir -p ~/.ssh && echo '$(cat "${SSH_KEY}.pub")' >> ~/.ssh/authorized_keys\""
   echo ""
 fi
 
@@ -71,9 +69,7 @@ if ! ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
   echo "   Ensure the VM is running:"
   echo "     multipass start thesis-vm"
   echo "   Ensure the SSH key is authorised in the VM:"
-  echo "     multipass exec thesis-vm -- bash -c \"
-
-  echo "       \"echo '$(cat "${SSH_KEY}".pub)' >> ~/.ssh/authorized_keys\""
+  echo "     multipass exec thesis-vm -- bash -c \"mkdir -p ~/.ssh && echo '$(cat "${SSH_KEY}.pub")' >> ~/.ssh/authorized_keys\""
   exit 1
 fi
 echo "[OK] SSH connection OK"

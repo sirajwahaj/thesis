@@ -22,7 +22,7 @@ This thesis answers a question that arises after every Kubernetes migration: **w
 
 The experiment runs the same CPU-bound Dagster workload at six increasing concurrency levels (1, 2, 3, 5, 7, 10 concurrent jobs) on two environments — a single-VM DockerRunLauncher and a Kind-based K8sRunLauncher — and identifies the exact workload level where K8s becomes net beneficial.
 
-This work originates from a 2-year internship (LIA 1 + LIA 2) at Insighta Inc., where the author planned and executed a Dagster migration from VM Docker to Google Kubernetes Engine. See [LIA/](LIA/) for the LIA 2 report.
+This work originates from a 2-year internship (LIA 1 + LIA 2) at Insighta Inc., where the author planned and executed a Dagster migration from VM Docker to Google Kubernetes Engine. See [LIA1-report/](LIA1-report/) for the internship report.
 
 ### Key findings
 
@@ -130,7 +130,7 @@ thesis/
 ├── ⚙️  ansible/                ← VM provisioning playbooks
 ├── ☸️  k8s/helm/dagster-thesis/ ← Helm chart for K8s deployment
 ├── 📋 LIA1-report/             ← LIA 1 internship report
-├── 📋 LIA/                     ← LIA 2 internship report (Jan–May 2026)
+├── 📋 LIA1-report/             ← LIA 1 internship report (Swedish)
 │
 ├── 🗂 project/issues/          ← THESIS-001 … THESIS-013 (all resolved)
 └── CLAUDE.md                   ← Full project context for AI agents
@@ -276,7 +276,7 @@ Contributions are welcome! This is an open research project.
 | Report | Period | Description |
 |--------|--------|-------------|
 | [LIA1-report/](LIA1-report/) | 2025 | LIA 1 at Insighta Inc. — initial K8s migration planning |
-| [LIA/](LIA/) | Jan–May 2026 | LIA 2 at Insighta Inc. — production DevOps, basis for this thesis RQ |
+| [LIA1-report/](LIA1-report/) | 2025 | LIA 1 internship report — production DevOps context for this thesis |
 
 ---
 

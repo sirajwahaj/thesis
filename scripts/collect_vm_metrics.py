@@ -89,10 +89,13 @@ def collect_vm_metrics(output_file: str, interval: float = 1.0):
         while _running:
             mem = psutil.virtual_memory()
             swap = psutil.swap_memory()
-            dagster_procs = [
-                p for p in psutil.process_iter(["name", "cmdline"])
-                if "dagster" in " ".join(p.info.get("cmdline") or [])
-            ]
+            try:
+                dagster_procs = [
+                    p for p in psutil.process_iter(["name", "cmdline"])
+                    if "dagster" in " ".join(p.info.get("cmdline") or [])
+                ]
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                dagster_procs = []
             writer.writerow([
                 time.time(),
                 psutil.cpu_percent(interval=None),

@@ -34,6 +34,9 @@ fi
 
 mkdir -p "$(dirname "$OUTPUT")"
 
+# Ensure graceful exit on interrupt
+trap 'echo "[INTERRUPTED] Blast radius test interrupted."; exit 130' INT TERM
+
 echo "Blast radius test (K8s) — waiting ${WAIT_BEFORE_KILL}s for pods to start..."
 sleep "$WAIT_BEFORE_KILL"
 

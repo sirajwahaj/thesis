@@ -94,11 +94,17 @@ def export_dagster_runs(
     """Export Dagster run records from PostgreSQL to CSV."""
     os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
 
-    conn = psycopg2.connect(
-        host=host, port=port,
-        user=user, password=password,
-        dbname=dbname,
-    )
+    try:
+        conn = psycopg2.connect(
+            host=host, port=port,
+            user=user, password=password,
+            dbname=dbname,
+            connect_timeout=10,
+        )
+    except psycopg2.OperationalError as e:
+        print(f"Error: Cannot connect to PostgreSQL at {host}:{port} — {e}", file=sys.stderr)
+        sys.exit(1)
+
     cur = conn.cursor()
 
     # Main query — joins run_tags to extract level and repetition stored during triggering

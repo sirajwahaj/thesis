@@ -17,7 +17,7 @@ name: thesis
 
 nodes:
   - role: control-plane
-    # Node labels for workload scheduling
+    # Node labels for workload scheduling and identification
     labels:
       node-role: experiment
     # Extra port mappings for local access

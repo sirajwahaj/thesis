@@ -27,7 +27,7 @@ Thank you for your interest in contributing! This is an open research project an
 
 ## Project Overview
 
-This repo is a master's thesis project investigating when Kubernetes becomes worth the overhead compared to a single-VM workflow executor (Dagster). It contains:
+This repo is a YH thesis project investigating when Kubernetes becomes worth the overhead compared to a single-VM workflow executor (Dagster). It contains:
 
 - **LaTeX thesis** (`docs/`)
 - **Experiment scripts** (`scripts/`)

@@ -24,12 +24,14 @@ image:
 namespace: dagster
 
 # -- PostgreSQL (bundled via Bitnami sub-chart) ─────────────────────────────
+# NOTE: Credentials below are for local Kind experimentation only.
+# In production, use K8s Secrets or external secret management.
 postgresql:
   enabled: true
   image:
     registry: docker.io
     repository: bitnami/postgresql
-    tag: latest
+    tag: "16"
     pullPolicy: IfNotPresent
   auth:
     username: dagster

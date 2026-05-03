@@ -57,6 +57,10 @@
       - docker-compose-plugin
     state: present
     update_cache: true
+  register: docker_install
+  retries: 3
+  delay: 5
+  until: docker_install is succeeded
 
 - name: Enable and start Docker daemon
   ansible.builtin.systemd:

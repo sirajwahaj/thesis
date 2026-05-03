@@ -7,6 +7,7 @@ Phase 2 (memory_pressure): 400 MB numpy allocation + hashing — triggers OOM at
 import dagster
 import hashlib
 import os
+import platform
 import resource
 import time
 
@@ -20,7 +21,12 @@ def cpu_burn(context):
     DO NOT MODIFY — this op body is locked for experiment comparability.
     The SHA-256 hash line must remain unchanged.
     """
-    duration = int(os.environ.get("WORKLOAD_DURATION_SECONDS", "30"))
+    duration_raw = os.environ.get("WORKLOAD_DURATION_SECONDS", "30")
+    try:
+        duration = int(duration_raw)
+    except ValueError:
+        context.log.warning(f"Invalid WORKLOAD_DURATION_SECONDS='{duration_raw}', defaulting to 30")
+        duration = 30
     context.log.info(f"Starting CPU burn for {duration}s")
 
     start = time.monotonic()
@@ -50,8 +56,18 @@ def memory_pressure(context, cpu_result: dict) -> dict:
     On K8s, the 2 GiB per-pod cgroup limit prevents cross-pod memory interference,
     demonstrating blast radius containment (SQ2).
     """
-    duration = int(os.environ.get("WORKLOAD_DURATION_SECONDS", "30"))
-    memory_mb = int(os.environ.get("WORKLOAD_MEMORY_MB", "400"))
+    duration_raw = os.environ.get("WORKLOAD_DURATION_SECONDS", "30")
+    memory_mb_raw = os.environ.get("WORKLOAD_MEMORY_MB", "400")
+    try:
+        duration = int(duration_raw)
+    except ValueError:
+        context.log.warning(f"Invalid WORKLOAD_DURATION_SECONDS='{duration_raw}', defaulting to 30")
+        duration = 30
+    try:
+        memory_mb = int(memory_mb_raw)
+    except ValueError:
+        context.log.warning(f"Invalid WORKLOAD_MEMORY_MB='{memory_mb_raw}', defaulting to 400")
+        memory_mb = 400
 
     context.log.info(
         f"Starting memory pressure: allocating {memory_mb} MB, "
@@ -77,10 +93,14 @@ def memory_pressure(context, cpu_result: dict) -> dict:
 
     elapsed = time.monotonic() - start
 
-    # Peak resident set size in MB (resource.RUSAGE_SELF, ru_maxrss is bytes on Linux)
-    rss_bytes = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # Peak resident set size in MB
     # On Linux ru_maxrss is in kilobytes; on macOS it is in bytes
-    peak_rss_mb = round(rss_bytes / 1024 / 1024, 1) if rss_bytes > 1024 * 1024 else round(rss_bytes / 1024, 1)
+    rss_raw = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if platform.system() == "Darwin":
+        peak_rss_mb = round(rss_raw / (1024 * 1024), 1)
+    else:
+        # Linux: ru_maxrss is in KB
+        peak_rss_mb = round(rss_raw / 1024, 1)
 
     context.log.info(
         f"Memory phase complete: {iterations} hashes in {elapsed:.2f}s, "

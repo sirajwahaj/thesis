@@ -3,19 +3,20 @@ name: thesis
 x-dagster-env: &dagster-env
   DAGSTER_HOME: /opt/dagster/dagster_home
   DAGSTER_PG_HOSTNAME: postgres
-  DAGSTER_PG_PORT: 5432
-  DAGSTER_PG_USERNAME: dagster
-  DAGSTER_PG_PASSWORD: dagster
-  DAGSTER_PG_DB: dagster
-  WORKLOAD_DURATION_SECONDS: 30
+  DAGSTER_PG_PORT: "5432"
+  DAGSTER_PG_USERNAME: ${DAGSTER_PG_USERNAME:-dagster}
+  DAGSTER_PG_PASSWORD: ${DAGSTER_PG_PASSWORD:-dagster}
+  DAGSTER_PG_DB: ${DAGSTER_PG_DB:-dagster}
+  WORKLOAD_DURATION_SECONDS: "30"
+  WORKLOAD_MEMORY_MB: "400"
 
 services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: dagster
-      POSTGRES_PASSWORD: dagster
-      POSTGRES_DB: dagster
+      POSTGRES_USER: ${DAGSTER_PG_USERNAME:-dagster}
+      POSTGRES_PASSWORD: ${DAGSTER_PG_PASSWORD:-dagster}
+      POSTGRES_DB: ${DAGSTER_PG_DB:-dagster}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -62,8 +63,8 @@ services:
     environment:
       <<: *dagster-env
     volumes:
-      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
-      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+      - ../src/dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ../src/workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
     ports:
       - "3001:3000"
     networks:
@@ -89,8 +90,8 @@ services:
     environment:
       <<: *dagster-env
     volumes:
-      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
-      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+      - ../src/dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ../src/workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - dagster_network

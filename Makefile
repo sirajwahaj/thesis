@@ -54,17 +54,17 @@ VALIDATE_TIMEOUT  = 30  # seconds to wait for services to start
 # ==========================
 
 .PHONY: all help \
-        bootstrap \
-        vm-up vm-provision vm-validate \
+        bootstrap bootstrap-deps bootstrap-validate \
+        vm-up vm-provision vm-validate vm-ssh \
         deploy destroy truncate \
-        k8s-create k8s-metrics k8s-deploy-dagster k8s-setup k8s-validate k8s-destroy \
+        k8s-create k8s-metrics k8s-deploy-dagster k8s-setup k8s-validate k8s-destroy k8s-reset \
         validate-setup \
         pdf copy-figures clean \
-        build push compose-up compose-down compose-logs compose-clean \
+        build build-workload push compose-up compose-down compose-logs compose-clean \
         validate validate-build validate-compose \
         labels issues \
         exp1-vm exp2a-k8s exp2b-blast exp2c-spike experiments dry-run \
-        analyze
+        analyze k8s-only
 
 # Bootstrap / environment config
 VM_IP_FILE      = vm-ip.txt
@@ -295,13 +295,18 @@ pdf:
 
 copy-figures:
 	@echo "Copying figures from $(RESULTS) to $(FIGURES)..."
-	mkdir -p $(FIGURES)
-	cp -u $(RESULTS)/* $(FIGURES)/ 2>/dev/null || true
-	@echo "[OK] Figures ready in $(FIGURES)/ — zip docs/ and upload to Overleaf."
+	@mkdir -p $(FIGURES)
+	@if ls $(RESULTS)/*.png 1>/dev/null 2>&1; then \
+		cp $(RESULTS)/*.png $(FIGURES)/; \
+		echo "[OK] Figures ready in $(FIGURES)/ — zip docs/ and upload to Overleaf."; \
+	else \
+		echo "[WARN] No PNG files found in $(RESULTS)/ — run 'make analyze' first."; \
+	fi
 
 clean:
 	@echo "Cleaning LaTeX auxiliary files..."
 	find docs/ \( -name "*.aux" -o -name "*.log" -o -name "*.toc" \
+	  -o -name "*.lof" -o -name "*.lot" \
 	  -o -name "*.out" -o -name "*.bbl" -o -name "*.blg" \
 	  -o -name "*.synctex.gz" -o -name "*.fls" -o -name "*.fdb_latexmk" \) \
 	  -delete 2>/dev/null || true
@@ -345,8 +350,8 @@ compose-up:
 	@echo "----------------------------------------------------------------"
 	cd $(COMPOSE_DIR) && docker compose up -d
 	@echo ""
-	@echo "Waiting for services to start ($(VALIDATE_TIMEOUT)s)..."
-	@sleep $(VALIDATE_TIMEOUT)
+	@echo "Waiting for services to become healthy..."
+	@cd $(COMPOSE_DIR) && docker compose ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || sleep $(VALIDATE_TIMEOUT)
 	@echo ""
 	@echo "[OK] Services started"
 	@echo "   Dagster UI: http://localhost:3001"
@@ -482,6 +487,7 @@ dry-run:
 
 analyze:
 	@echo "Running analysis notebook..."
+	@test -f notebooks/analysis.ipynb || (echo "[FAIL] notebooks/analysis.ipynb not found"; exit 1)
 	python3 scripts/analyze_results.py
 	@echo "[OK] Analysis complete"
 	@echo ""

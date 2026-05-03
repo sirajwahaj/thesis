@@ -80,17 +80,17 @@ echo ""
 echo "-> Copying deployment files to VM..."
 
 # docker-compose.yml
-scp -i "$SSH_KEY" -o StrictHostKeyChecking=no \
+scp $SSH_OPTS \
     "$REPO_ROOT/infrastructure/docker-compose.yml" \
     ubuntu@"$VM_IP":"$VM_DIR/docker-compose.yml"
 
 # dagster.yaml (instance config — DockerRunLauncher + PostgreSQL settings)
-scp -i "$SSH_KEY" -o StrictHostKeyChecking=no \
+scp $SSH_OPTS \
     "$REPO_ROOT/src/dagster.yaml" \
     ubuntu@"$VM_IP":"$VM_DIR/dagster.yaml"
 
 # workspace.yaml (code location — points to gRPC workload server)
-scp -i "$SSH_KEY" -o StrictHostKeyChecking=no \
+scp $SSH_OPTS \
     "$REPO_ROOT/src/workspace.yaml" \
     ubuntu@"$VM_IP":"$VM_DIR/workspace.yaml"
 
@@ -164,7 +164,7 @@ echo "   gRPC:        $VM_IP:4000"
 echo ""
 echo "Useful commands:"
 echo "  ssh -i $SSH_KEY ubuntu@$VM_IP"
-echo "  docker compose logs -f       (run from $VM_DIR on the VM)"
+echo "  ssh -i $SSH_KEY ubuntu@$VM_IP 'cd $VM_DIR && docker compose logs -f'"
 echo ""
 echo "  make destroy                 — delete the VM"
 echo "  make truncate                — clear experiment data"
